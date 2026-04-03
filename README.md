@@ -5,7 +5,7 @@
 **AI-powered tokenized stock portfolio on 0G & Dynamic.**
 
 🔗 [Live Demo](https://radegast.app) · 📹 [Video](https://youtube.com) · 🐙 [GitHub](https://github.com/0x11semprez/radegast)
-
+h
 ╔═══════════════════════════════════════════════════════════════════╗
 ║                                                                   ║
 ║   Invest in US stocks from anywhere. 24/7. Fractional.            ║
