@@ -8,5 +8,3 @@ ai/__pycache__/
 node_modules/
 .next/
 .DS_Store
-CLAUDE.md
-**/CLAUDE.md
