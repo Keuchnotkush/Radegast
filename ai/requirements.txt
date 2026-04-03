@@ -1,0 +1,11 @@
+fastapi==0.115.*
+uvicorn[standard]==0.34.*
+pydantic==2.10.*
+xgboost==2.1.*
+onnxruntime==1.20.*
+numpy==2.1.*
+pandas==2.2.*
+yfinance==0.2.*
+aiohttp==3.11.*
+web3==7.6.*
+pytest==8.3.*

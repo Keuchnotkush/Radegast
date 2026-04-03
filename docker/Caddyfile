@@ -1,0 +1,2 @@
+radegast.app { reverse_proxy frontend:3000 }
+api.radegast.app { reverse_proxy ai:8000 }

@@ -1,0 +1,10 @@
+.env
+.installed
+contracts/out/
+contracts/cache/
+contracts/lib/
+ai/.venv/
+ai/__pycache__/
+node_modules/
+.next/
+.DS_Store
