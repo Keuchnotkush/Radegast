@@ -3,27 +3,27 @@
 import { useState } from "react";
 import {
   PhantomCursor,
-  SpotlightCursor,
+  SpiraleCursor,
+  RuneOrbitCursor,
+  VineTrailCursor,
+  ShieldPulseCursor,
+  GoldenDustCursor,
+  ConstellationCursor,
   MagneticRingCursor,
-  CometCursor,
-  CrosshairCursor,
-  BubblesCursor,
-  GlowPulseCursor,
   SnakeCursor,
-  StarDustCursor,
   MinimalDotCursor,
 } from "./cursor-components";
 
 const CURSORS = [
   { name: "Phantom", desc: "Ghost trail with delayed followers", component: PhantomCursor },
-  { name: "Spotlight", desc: "Soft glow that follows the mouse", component: SpotlightCursor },
-  { name: "Magnetic Ring", desc: "Dot + ring that follows with delay", component: MagneticRingCursor },
-  { name: "Comet", desc: "Fading line trail behind the cursor", component: CometCursor },
-  { name: "Crosshair", desc: "Minimal cross + dot", component: CrosshairCursor },
-  { name: "Bubbles", desc: "Rising bubbles from cursor", component: BubblesCursor },
-  { name: "Glow Pulse", desc: "Pulsing ring around cursor", component: GlowPulseCursor },
-  { name: "Snake", desc: "20 dots following in a chain", component: SnakeCursor },
-  { name: "Star Dust", desc: "Diamond particles scatter", component: StarDustCursor },
+  { name: "Spirale", desc: "Rotating spirals — inspired by the R swirl", component: SpiraleCursor },
+  { name: "Rune Orbit", desc: "Elder Futhark runes orbiting the cursor", component: RuneOrbitCursor },
+  { name: "Vine Trail", desc: "Organic vine with leaves — logo volutes", component: VineTrailCursor },
+  { name: "Shield Pulse", desc: "ZK shield pulsing — proof of solvency", component: ShieldPulseCursor },
+  { name: "Golden Dust", desc: "Jade + gold particles — wealth theme", component: GoldenDustCursor },
+  { name: "Constellation", desc: "Stars that connect into constellations", component: ConstellationCursor },
+  { name: "Magnetic Ring", desc: "Dot + delayed ring with inertia", component: MagneticRingCursor },
+  { name: "Snake", desc: "20 dots chasing in a fluid chain", component: SnakeCursor },
   { name: "Minimal Dot", desc: "Single dot, blend mode difference", component: MinimalDotCursor },
 ];
 
@@ -36,8 +36,10 @@ export default function CursorPicker() {
       <ActiveCursor />
 
       <div className="max-w-4xl mx-auto px-8 py-16">
-        <h1 className="text-3xl font-bold mb-2" style={{ color: "#2A2A2A" }}>Cursor Picker</h1>
-        <p className="text-sm mb-10" style={{ color: "#6B6B6B" }}>Move your mouse around. Click to select.</p>
+        <div className="flex items-center gap-4 mb-2">
+          <img src="/logo.svg" alt="Radegast" style={{ height: 28 }} />
+        </div>
+        <p className="text-sm mb-10" style={{ color: "#6B6B6B" }}>Move your mouse around. Click to select a cursor.</p>
 
         <div className="grid grid-cols-2 gap-4">
           {CURSORS.map((c, i) => (
@@ -66,9 +68,11 @@ export default function CursorPicker() {
           ))}
         </div>
 
-        <div className="mt-16 p-10 rounded-2xl text-center" style={{ border: "1.5px dashed #C4C4C4" }}>
+        <div className="mt-16 p-16 rounded-2xl text-center" style={{ border: "1.5px dashed #C4C4C4" }}>
           <p className="text-lg font-semibold mb-2" style={{ color: "#2A2A2A" }}>Test area</p>
-          <p className="text-sm" style={{ color: "#6B6B6B" }}>Move your mouse freely here to see the <span style={{ color: "#38A88A", fontWeight: 600 }}>{CURSORS[active].name}</span> cursor in action.</p>
+          <p className="text-sm" style={{ color: "#6B6B6B" }}>
+            Currently: <span style={{ color: "#38A88A", fontWeight: 600 }}>{CURSORS[active].name}</span>
+          </p>
         </div>
       </div>
     </div>
