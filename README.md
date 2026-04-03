@@ -5,26 +5,18 @@
 **AI-powered tokenized stock portfolio on 0G & Dynamic.**
 
 🔗 [Live Demo](https://radegast.app) · 📹 [Video](https://youtube.com) · 🐙 [GitHub](https://github.com/0x11semprez/radegast)
-h
-╔═══════════════════════════════════════════════════════════════════╗
-║                                                                   ║
-║   Invest in US stocks from anywhere. 24/7. Fractional.            ║
-║   AI watches your portfolio. You choose: advice or autopilot.     ║
-║   Prove your wealth to a bank. Zero-knowledge. No trust needed.   ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
 
-/*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*/
-/*                        THE PROBLEM                               */
-/*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*/
+/*´:°•.°+.\*•´.\*:˚.°\*.˚•´.°:°•.°•.\*•´.\*:˚.°\*.˚•´.°:°•.°+.\*•´.\*:*/
+
+## The problem
 
 A 28-year-old in Lisbon wants to invest in Tesla, Apple, NVIDIA. Today she needs a US brokerage account (she can't get one easily from Portugal), can only trade during Wall Street hours, pays advisor fees, and when she wants a mortgage, her crypto holdings are invisible to the bank.
 
 Radegast solves this in three ways.
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*          USE CASE 1 — INVEST FROM ANYWHERE, 24/7               */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+/*.•°:°.´+˚.\*°.˚:\*.´•\*.+°.•°:´\*.´•\*.•°.•°:°.´:•˚°.\*°.˚:\*.´+°.•*/
+
+## Use case 1 — Invest in US stocks from anywhere, 24/7
 
 Sign in with Google. Pick a strategy. Your money buys tokenized US equities (xStocks by Backed/Kraken) that live in your wallet as ERC-20 tokens. Trade 24/7, fractional from $1, no brokerage needed.
 
@@ -37,9 +29,9 @@ xStocks are real: $25B+ volume, 185k+ holders, backed 1:1 by actual shares held 
 🔥 Aggressive      TSLA 35% + MSTR 25% + NVDA 20% + rotations
 ```
 
-/*▓▒░══════════════════════════════════════════════════════░▒▓*/
-/*          USE CASE 2 — AI ADVISOR / AUTONOMOUS AGENT        */
-/*▓▒░══════════════════════════════════════════════════════░▒▓*/
+/*´:°•.°+.\*•´.\*:˚.°\*.˚•´.°:°•.°•.\*•´.\*:˚.°\*.˚•´.°:°•.°+.\*•´.\*:*/
+
+## Use case 2 — AI advisor that watches (or trades) for you
 
 Three independent AI models on 0G Compute analyze your portfolio in real-time. They vote. Majority wins. Every decision is settled on-chain and auditable on 0G DA.
 
@@ -57,9 +49,9 @@ you learn, you decide                   fully autonomous
 
 The AI consensus uses 3 providers to avoid single-model bias: one XGBoost model (statistical patterns) plus two LLMs (semantic understanding). If 0G goes down, inference falls back to the browser via WebAssembly. The demo cannot crash.
 
-/*✦ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✦*/
-/*      USE CASE 3 — ZK PROOF OF SOLVENCY FOR BANKS          */
-/*✦ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✦*/
+/*.•°:°.´+˚.\*°.˚:\*.´•\*.+°.•°:´\*.´•\*.•°.•°:°.´:•˚°.\*°.˚:\*.´+°.•*/
+
+## Use case 3 — Prove your wealth to a bank without revealing your portfolio
 
 This is real and timely. On March 26, 2026, Fannie Mae began accepting crypto-backed mortgages through Coinbase and Better Home & Finance. Milo, Figure, and Griffin Funding already offer crypto-collateralized home loans. The market exists.
 
@@ -106,28 +98,29 @@ User sends PDF to mortgage broker / bank / Milo / Better
 
 **Real example:** Sarah in Lisbon holds $80,000 in xStocks (TSLAx, NVDAx, AAPLx, SPYx). She wants a mortgage from a European bank. She generates a proof that her portfolio exceeds €50,000, sends the PDF to her broker, and the broker verifies it on-chain in 2 seconds. No screenshots, no exchange logins, no 60-day seasoning. Cryptographic certainty.
 
-/*◈───────────────────────────────────────────────────────◈*/
-/*                  HOW xSTOCKS WORK                       */
-/*◈───────────────────────────────────────────────────────◈*/
+/*´:°•.°+.\*•´.\*:˚.°\*.˚•´.°:°•.°•.\*•´.\*:˚.°\*.˚•´.°:°•.°+.\*•´.\*:*/
+
+## How xStocks work in Radegast
 
 xStocks are **ERC-20 tokens in the user's wallet**. Radegast never holds user assets.
 
 ```
-Buy:       USDC → swap on DEX → xStocks in wallet
-           (testnet: backend mints mock ERC-20 into wallet)
+Buy:   user pays USDC → swap on DEX → xStocks land in user's wallet
+       (testnet: backend mints ERC-20 mock tokens into wallet)
 
-Sell:      xStocks → swap → USDC
-           (testnet: backend burns mock tokens)
+Sell:  xStocks leave wallet → swap → USDC received
+       (testnet: backend burns mock tokens)
 
-Rebalance: AI detects drift → burn overweight + mint underweight
-           tokens move inside the user's own wallet
+Rebalance (trade mode):
+       AI detects drift → burn overweight + mint underweight
+       tokens move inside the user's own wallet
 ```
 
 > xStocks exist as ERC-20 on Ethereum mainnet since Sept 2025 (Backed/Kraken). Testnet mocks replicate the same standard. Production = CCIP bridge + real DEX swaps.
 
-/*┌─────────────────────────────────────────────────────────┐*/
-/*│                      PIPELINE                           │*/
-/*└─────────────────────────────────────────────────────────┘*/
+/*´:°•.°+.\*•´.\*:˚.°\*.˚•´.°:°•.°•.\*•´.\*:˚.°\*.˚•´.°:°•.°+.\*•´.\*:*/
+
+## Pipeline
 
 ```
 User → Dynamic (Google + embedded wallet + onramp USDC)
@@ -148,26 +141,24 @@ ZK:  "Prove my assets" → Noir.js (browser) → UltraVerifier (0G Chain)
      → PDF + QR → bank verifies on-chain
 ```
 
-/*═══‹‹  ✧  ››══════════════════════════════‹‹  ✧  ››═══*/
-/*                  0G FULL STACK (4/4)                     */
-/*═══‹‹  ✧  ››══════════════════════════════‹‹  ✧  ››═══*/
+/*.•°:°.´+˚.\*°.˚:\*.´•\*.+°.•°:´\*.´•\*.•°.•°:°.´:•˚°.\*°.˚:\*.´+°.•*/
+
+## 0G Full Stack (4/4)
 
 ```
-┌──────────┬───────────────────────────────────────────────────┐
-│ Compute  │ 3 AI providers + XGBoost = public service → fees │
-│ Storage  │ ONNX model with provenance (root_hash)           │
-│ Chain    │ consensus settlement + xStocks ERC-20 + ZK       │
-│ DA       │ every AI decision = verifiable audit blob        │
-├──────────┼───────────────────────────────────────────────────┤
-│ auto     │ background agent + trade mode auto-executes      │
-│ verify   │ Chain + DA + daHash cross-reference              │
-│ sustain  │ XGBoost provider earns compute fees              │
-└──────────┴───────────────────────────────────────────────────┘
+Compute    3 AI providers + XGBoost = public service → earns fees
+Storage    ONNX model with provenance (root_hash)
+Chain      consensus settlement + xStocks ERC-20 + ZK verifier
+DA         every AI decision = verifiable audit blob
+
+autonomous       → background agent + trade mode
+verifiable       → Chain + DA + daHash cross-reference
+self-sustaining  → XGBoost provider earns compute fees
 ```
 
-/*»»————————————————————————————————————————————————————««*/
-/*              DYNAMIC SDK (11 FEATURES)                   */
-/*»»————————————————————————————————————————————————————««*/
+/*.•°:°.´+˚.\*°.˚:\*.´•\*.+°.•°:´\*.´•\*.•°.•°:°.´:•˚°.\*°.˚:\*.´+°.•*/
+
+## Dynamic SDK (11 features)
 
 ```
 auth social          Google login — 1-click onboarding
@@ -183,9 +174,9 @@ captcha              anti-bot
 gasless              auto-trades (trade mode)
 ```
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                   CONTRACTS (SOLADY)                            */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+/*´:°•.°+.\*•´.\*:˚.°\*.˚•´.°:°•.°•.\*•´.\*:˚.°\*.˚•´.°:°•.°+.\*•´.\*:*/
+
+## Contracts (Solady)
 
 Gas-optimized using [Solady](https://github.com/Vectorized/solady) — the same library used by Optimism and Coinbase. ~30% cheaper transfers, ~60% cheaper deploys vs OpenZeppelin.
 
@@ -203,9 +194,9 @@ Gas-optimized using [Solady](https://github.com/Vectorized/solady) — the same 
 | ConsensusSettlement | `0x…` |
 | ProofOfSolvency | `0x…` |
 
-/*┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓*/
-/*┃                       SETUP                           ┃*/
-/*┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛*/
+/*´:°•.°+.\*•´.\*:˚.°\*.˚•´.°:°•.°•.\*•´.\*:˚.°\*.˚•´.°:°•.°+.\*•´.\*:*/
+
+## Setup
 
 ```bash
 git clone https://github.com/0x11semprez/radegast.git
@@ -219,9 +210,9 @@ make test         # forge tests
 make up           # docker production
 ```
 
-/*░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░*/
-/*                        STACK                            */
-/*░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░*/
+/*.•°:°.´+˚.\*°.˚:\*.´•\*.+°.•°:´\*.´•\*.•°.•°:°.´:•˚°.\*°.˚:\*.´+°.•*/
+
+## Stack
 
 | | |
 |---|---|
@@ -233,9 +224,7 @@ make up           # docker production
 | Infra | Docker, Caddy, GitHub Actions |
 | Chain | 0G (Compute + Storage + Chain + DA) |
 
-/*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*/
-/*                          TEAM                                    */
-/*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*/
+## Team
 
 | | | |
 |---|---|---|
