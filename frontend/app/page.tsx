@@ -20,6 +20,13 @@ export default function Home() {
         >
           Landing Page (Motion Design)
         </Link>
+        <Link
+          href="/cursors"
+          className="px-6 py-3 rounded-lg text-sm font-semibold text-center transition hover:opacity-90"
+          style={{ background: "transparent", color: "#38A88A", border: "1.5px solid #38A88A" }}
+        >
+          Cursor Picker (10 styles)
+        </Link>
       </div>
     </div>
   );
