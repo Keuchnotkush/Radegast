@@ -4,14 +4,14 @@
 
 **AI-powered tokenized stock portfolio on 0G & Dynamic.**
 
-🔗 [Live Demo](https://radegast.app) · 📹 [Video](https://youtube.com) · 🐙 [GitHub](https://github.com/0x11semprez/radegast)d
-h
+🔗 [Live Demo](https://radegast.app) · 📹 [Video](https://youtube.com) · 🐙 [GitHub](https://github.com/0x11semprez/radegast)
+
 ╔═══════════════════════════════════════════════════════════════════╗
-║                                                                   ║
-║   Invest in US stocks from anywhere. 24/7. Fractional.            ║
-║   AI watches your portfolio. You choose: advice or autopilot.     ║
-║   Prove your wealth to a bank. Zero-knowledge. No trust needed.   ║
-║                                                                   ║
+║ ║
+║ Invest in US stocks from anywhere. 24/7. Fractional. ║
+║ AI watches your portfolio. You choose: advice or autopilot. ║
+║ Prove your wealth to a bank. Zero-knowledge. No trust needed. ║
+║ ║
 ╚═══════════════════════════════════════════════════════════════════╝
 
 /*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*/
@@ -23,8 +23,8 @@ A 28-year-old in Lisbon wants to invest in Tesla, Apple, NVIDIA. Today she needs
 Radegast solves this in three ways.
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*          USE CASE 1 — INVEST FROM ANYWHERE, 24/7               */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+/*USE CASE 1 — INVEST FROM ANYWHERE, 24/7 */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•\*/
 
 Sign in with Google. Pick a strategy. Your money buys tokenized US equities (xStocks by Backed/Kraken) that live in your wallet as ERC-20 tokens. Trade 24/7, fractional from $1, no brokerage needed.
 
@@ -38,7 +38,7 @@ xStocks are real: $25B+ volume, 185k+ holders, backed 1:1 by actual shares held 
 ```
 
 /*▓▒░══════════════════════════════════════════════════════░▒▓*/
-/*          USE CASE 2 — AI ADVISOR / AUTONOMOUS AGENT        */
+/*USE CASE 2 — AI ADVISOR / AUTONOMOUS AGENT */
 /*▓▒░══════════════════════════════════════════════════════░▒▓*/
 
 Three independent AI models on 0G Compute analyze your portfolio in real-time. They vote. Majority wins. Every decision is settled on-chain and auditable on 0G DA.
@@ -58,7 +58,7 @@ you learn, you decide                   fully autonomous
 The AI consensus uses 3 providers to avoid single-model bias: one XGBoost model (statistical patterns) plus two LLMs (semantic understanding). If 0G goes down, inference falls back to the browser via WebAssembly. The demo cannot crash.
 
 /*✦ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✦*/
-/*      USE CASE 3 — ZK PROOF OF SOLVENCY FOR BANKS          */
+/*USE CASE 3 — ZK PROOF OF SOLVENCY FOR BANKS */
 /*✦ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✦*/
 
 This is real and timely. On March 26, 2026, Fannie Mae began accepting crypto-backed mortgages through Coinbase and Better Home & Finance. Milo, Figure, and Griffin Funding already offer crypto-collateralized home loans. The market exists.
@@ -107,7 +107,7 @@ User sends PDF to mortgage broker / bank / Milo / Better
 **Real example:** Sarah in Lisbon holds $80,000 in xStocks (TSLAx, NVDAx, AAPLx, SPYx). She wants a mortgage from a European bank. She generates a proof that her portfolio exceeds €50,000, sends the PDF to her broker, and the broker verifies it on-chain in 2 seconds. No screenshots, no exchange logins, no 60-day seasoning. Cryptographic certainty.
 
 /*◈───────────────────────────────────────────────────────◈*/
-/*                  HOW xSTOCKS WORK                       */
+/*HOW xSTOCKS WORK */
 /*◈───────────────────────────────────────────────────────◈*/
 
 xStocks are **ERC-20 tokens in the user's wallet**. Radegast never holds user assets.
@@ -126,7 +126,7 @@ Rebalance: AI detects drift → burn overweight + mint underweight
 > xStocks exist as ERC-20 on Ethereum mainnet since Sept 2025 (Backed/Kraken). Testnet mocks replicate the same standard. Production = CCIP bridge + real DEX swaps.
 
 /*┌─────────────────────────────────────────────────────────┐*/
-/*│                      PIPELINE                           │*/
+/*│ PIPELINE │*/
 /*└─────────────────────────────────────────────────────────┘*/
 
 ```
@@ -148,9 +148,9 @@ ZK:  "Prove my assets" → Noir.js (browser) → UltraVerifier (0G Chain)
      → PDF + QR → bank verifies on-chain
 ```
 
-/*═══‹‹  ✧  ››══════════════════════════════‹‹  ✧  ››═══*/
-/*                  0G FULL STACK (4/4)                     */
-/*═══‹‹  ✧  ››══════════════════════════════‹‹  ✧  ››═══*/
+/*═══‹‹ ✧ ››══════════════════════════════‹‹ ✧ ››═══*/
+/*0G FULL STACK (4/4) */
+/*═══‹‹ ✧ ››══════════════════════════════‹‹ ✧ ››═══*/
 
 ```
 ┌──────────┬───────────────────────────────────────────────────┐
@@ -166,7 +166,7 @@ ZK:  "Prove my assets" → Noir.js (browser) → UltraVerifier (0G Chain)
 ```
 
 /*»»————————————————————————————————————————————————————««*/
-/*              DYNAMIC SDK (11 FEATURES)                   */
+/*DYNAMIC SDK (11 FEATURES) */
 /*»»————————————————————————————————————————————————————««*/
 
 ```
@@ -184,27 +184,27 @@ gasless              auto-trades (trade mode)
 ```
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                   CONTRACTS (SOLADY)                            */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+/*CONTRACTS (SOLADY) */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•\*/
 
 Gas-optimized using [Solady](https://github.com/Vectorized/solady) — the same library used by Optimism and Coinbase. ~30% cheaper transfers, ~60% cheaper deploys vs OpenZeppelin.
 
-| Contract | Address |
-|----------|---------|
-| TSLAx | `0x…` |
-| AAPLx | `0x…` |
-| NVDAx | `0x…` |
-| GOOGx | `0x…` |
-| AMZNx | `0x…` |
-| METAx | `0x…` |
-| SPYx | `0x…` |
-| NDXx | `0x…` |
-| MSTRx | `0x…` |
-| ConsensusSettlement | `0x…` |
-| ProofOfSolvency | `0x…` |
+| Contract            | Address |
+| ------------------- | ------- |
+| TSLAx               | `0x…`   |
+| AAPLx               | `0x…`   |
+| NVDAx               | `0x…`   |
+| GOOGx               | `0x…`   |
+| AMZNx               | `0x…`   |
+| METAx               | `0x…`   |
+| SPYx                | `0x…`   |
+| NDXx                | `0x…`   |
+| MSTRx               | `0x…`   |
+| ConsensusSettlement | `0x…`   |
+| ProofOfSolvency     | `0x…`   |
 
 /*┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓*/
-/*┃                       SETUP                           ┃*/
+/*┃ SETUP ┃*/
 /*┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛*/
 
 ```bash
@@ -220,29 +220,29 @@ make up           # docker production
 ```
 
 /*░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░*/
-/*                        STACK                            */
+/*STACK */
 /*░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░*/
 
-| | |
-|---|---|
-| Frontend | Next.js 14, Tailwind |
-| Auth | Dynamic JS SDK |
-| Contracts | Solidity 0.8.24, Foundry, Solady |
-| AI | XGBoost, ONNX, FastAPI |
-| ZK | Noir, UltraPlonk, Noir.js (WASM) |
-| Infra | Docker, Caddy, GitHub Actions |
-| Chain | 0G (Compute + Storage + Chain + DA) |
+|           |                                     |
+| --------- | ----------------------------------- |
+| Frontend  | Next.js 14, Tailwind                |
+| Auth      | Dynamic JS SDK                      |
+| Contracts | Solidity 0.8.24, Foundry, Solady    |
+| AI        | XGBoost, ONNX, FastAPI              |
+| ZK        | Noir, UltraPlonk, Noir.js (WASM)    |
+| Infra     | Docker, Caddy, GitHub Actions       |
+| Chain     | 0G (Compute + Storage + Chain + DA) |
 
 /*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*/
 /*                          TEAM                                    */
 /*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*/
 
-| | | |
-|---|---|---|
+|        |                        |                                           |
+| ------ | ---------------------- | ----------------------------------------- |
 | Kassim | Frontend + Dynamic SDK | [@0x11semprez](https://x.com/0x11semprez) |
-| Kamil | AI + 0G Integration | TG: @k1000 |
-| Manny | Smart Contracts | TG: @manny |
-| Keuch | ZK (Noir) | TG: @keuch |
+| Kamil  | AI + 0G Integration    | TG: @k1000                                |
+| Manny  | Smart Contracts        | TG: @manny                                |
+| Keuch  | ZK (Noir)              | TG: @keuch                                |
 
 ---
 
