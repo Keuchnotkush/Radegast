@@ -18,3 +18,4 @@ def health(): return {"status":"ok"}
 @app.post("/api/consensus")
 def consensus(p: dict):
     return {"consensus_label":"MEDIUM","consensus_score":50.0,"confidence":1.0,"suggestions":["Mock"]}
+ ConnectionAbortedError
