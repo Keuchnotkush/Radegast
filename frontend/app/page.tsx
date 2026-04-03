@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function Home() {
   return (
     <div className="flex flex-col flex-1 items-center justify-center min-h-screen gap-6" style={{ background: "#D8D2C8", fontFamily: "Sora, sans-serif" }}>
-      <h1 className="text-3xl font-bold" style={{ color: "#38A88A", fontFamily: "'Cinzel Decorative', serif" }}>Radegast</h1>
+      <img src="/logo.svg" alt="Radegast" style={{ height: 36 }} />
       <p className="text-sm" style={{ color: "#6B6B6B" }}>Design & Prototype</p>
       <div className="flex flex-col gap-3 w-full max-w-sm px-6">
         <Link
@@ -19,13 +19,6 @@ export default function Home() {
           style={{ background: "#38A88A", color: "#FFFFFF" }}
         >
           Landing Page (Motion Design)
-        </Link>
-        <Link
-          href="/cursors"
-          className="px-6 py-3 rounded-lg text-sm font-semibold text-center transition hover:opacity-90"
-          style={{ background: "transparent", color: "#38A88A", border: "1.5px solid #38A88A" }}
-        >
-          Cursor Picker (10 styles)
         </Link>
       </div>
     </div>

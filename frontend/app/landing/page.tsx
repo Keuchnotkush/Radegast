@@ -51,7 +51,7 @@ export default function Landing() {
         className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-8 py-5"
         style={{ backdropFilter: "blur(20px)", background: `${P.bg}CC` }}
       >
-        <span className="text-xl" style={{ color: P.jade, fontFamily: "'Cinzel Decorative', serif", fontWeight: 700 }}>Radegast</span>
+        <img src="/logo.svg" alt="Radegast" style={{ height: 24 }} />
         <div className="flex items-center gap-6">
           <span className="text-[13px] font-medium" style={{ color: P.gray, cursor: "none" }}>How it works</span>
           <span className="text-[13px] font-medium" style={{ color: P.gray, cursor: "none" }}>Strategies</span>
@@ -342,7 +342,7 @@ export default function Landing() {
 
       {/* FOOTER */}
       <footer className="py-8 px-8 text-center" style={{ borderTop: `1px solid ${P.gray}20` }}>
-        <span className="text-sm" style={{ color: P.jade, fontFamily: "'Cinzel Decorative', serif" }}>Radegast</span>
+        <img src="/logo.svg" alt="Radegast" style={{ height: 16, display: "inline" }} />
         <span className="text-[12px] ml-3" style={{ color: P.gray }}>ETHGlobal Cannes 2026</span>
       </footer>
     </div>
