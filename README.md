@@ -1,5 +1,5 @@
 # RADEGAST
-makep
+
 [![CI](https://github.com/0x11semprez/radegast/actions/workflows/ci.yml/badge.svg)](https://github.com/0x11semprez/radegast/actions)
 
 **AI-powered tokenized stock portfolio on 0G & Dynamic.**
