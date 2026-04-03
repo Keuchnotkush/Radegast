@@ -6,6 +6,7 @@ contract ConsensusSettlement is OwnableRoles {
     error ScoreOutOfRange();
     error InvalidProviderCount();
     error NoRecords();
+    error yannis();
 
     uint256 public constant SUBMITTER_ROLE = _ROLE_1;
 
