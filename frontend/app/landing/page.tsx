@@ -44,25 +44,31 @@ export default function Landing() {
       <GhostCursor />
 
       {/* NAV */}
+      {/* LOGO */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="fixed top-6 left-8 z-40"
+      >
+        <img src="/logo.svg" alt="Radegast" style={{ height: 22, cursor: "none" }} />
+      </motion.div>
+
+      {/* NAV */}
       <motion.nav
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-        className="fixed top-0 left-0 right-0 z-40 flex items-center px-8 py-4"
-        style={{ backdropFilter: "blur(20px)", background: `${P.bg}EE` }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+        className="fixed top-4 right-8 z-40 flex items-center gap-6 px-6 py-3 rounded-full"
+        style={{ background: P.white, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
       >
-        <div className="flex items-center gap-10 flex-1">
-          <img src="/logo.svg" alt="Radegast" style={{ height: 22, cursor: "none" }} />
-          <div className="flex items-center gap-8">
-            <a href="#home" className="text-[14px] font-medium transition hover:opacity-70" style={{ color: P.dark, cursor: "none" }}>Home</a>
-            <a href="#how-it-works" className="text-[14px] font-medium transition hover:opacity-70" style={{ color: P.dark, cursor: "none" }}>How it works</a>
-            <a href="#verify" className="text-[14px] font-medium transition hover:opacity-70" style={{ color: P.dark, cursor: "none" }}>Verify</a>
-          </div>
-        </div>
+        <a href="#home" className="text-[13px] font-medium transition hover:opacity-70" style={{ color: P.dark, cursor: "none" }}>Home</a>
+        <a href="#how-it-works" className="text-[13px] font-medium transition hover:opacity-70" style={{ color: P.dark, cursor: "none" }}>How it works</a>
+        <a href="#verify" className="text-[13px] font-medium transition hover:opacity-70" style={{ color: P.dark, cursor: "none" }}>Verify</a>
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          className="px-6 py-2.5 rounded-full text-[13px] font-semibold uppercase tracking-wider"
+          className="px-5 py-2 rounded-full text-[12px] font-semibold uppercase tracking-wider"
           style={{ background: P.dark, color: P.white, cursor: "none" }}
         >
           Get Started
