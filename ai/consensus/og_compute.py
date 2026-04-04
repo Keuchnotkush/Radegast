@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 SCRIPT_PATH = Path(__file__).parent.parent / "scripts" / "og_compute_call.mjs"
 
 
-async def _run_node(args: list, timeout: int = 15) -> dict:
+async def _run_node(args: list, timeout: int = 30) -> dict:
     """Run the Node.js sidecar async and return parsed JSON."""
     cmd = ["node", str(SCRIPT_PATH)] + args
     try:
@@ -57,7 +57,7 @@ async def call_provider(provider_address: str, prompt_json: str) -> Optional[str
     Call an LLM provider via 0G Compute broker.
     Returns the content string or None on failure.
     """
-    result = await _run_node(["call", provider_address, prompt_json], timeout=15)
+    result = await _run_node(["call", provider_address, prompt_json], timeout=45)
     if "error" in result:
         logger.warning(f"[0G Compute] Call failed: {result['error']}")
         return None
