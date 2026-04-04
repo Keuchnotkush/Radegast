@@ -42,8 +42,9 @@ export default function SolvencyPage() {
       const thresholdNum = activeThreshold.replace(/[$,]/g, "");
 
       // TODO: read real balances from on-chain xStock holdings
-      const balances = ["15", "8", "20", "0", "0", "0", "50", "0", "0"];
-      const prices = ["250", "198", "200", "0", "0", "0", "530", "0", "0"];
+      // Mock portfolio: ~$150k total (supports all threshold presets)
+      const balances = ["100", "50", "80", "30", "40", "20", "100", "25", "10"];
+      const prices = ["250", "198", "140", "175", "185", "510", "530", "480", "1700"];
       const secret = "12345678";
 
       // 1. Generate ZK proof client-side (private inputs never leave browser)
