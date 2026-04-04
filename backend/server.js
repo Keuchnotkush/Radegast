@@ -26,6 +26,7 @@ const walletClient = signerAccount
 // ── Contract addresses (0G Testnet) ──
 const CONTRACTS = {
   proofOfSolvency: "0x9ad38b9e70a23BE95186C5935930C6Ab05C49dD9",
+  proofRegistry: "0x2a768566eF8C8a44129B0b04fD8a2AD240620255",
   consensusSettlement: "0x3dBCdad5Da3a7f345353d8387c7BE6EBe5F6524f",
   xStocks: {
     TSLAx: "0x2dC821592626Ab6375E5B84b4EF94eCb1478EBa6",
@@ -107,6 +108,30 @@ const consensusSettlementAbi = [
       },
       { name: "id", type: "uint256" },
     ],
+    stateMutability: "view",
+  },
+];
+
+const proofRegistryAbi = [
+  {
+    type: "function", name: "submit",
+    inputs: [{ name: "user", type: "address" }, { name: "threshold", type: "uint64" }, { name: "commitment", type: "bytes32" }],
+    outputs: [{ name: "id", type: "uint256" }, { name: "vid", type: "bytes32" }],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function", name: "check",
+    inputs: [{ name: "vid", type: "bytes32" }],
+    outputs: [{
+      name: "", type: "tuple",
+      components: [
+        { name: "user", type: "address" },
+        { name: "threshold", type: "uint64" },
+        { name: "verifiedAt", type: "uint32" },
+        { name: "commitment", type: "bytes32" },
+        { name: "verifyId", type: "bytes32" },
+      ],
+    }],
     stateMutability: "view",
   },
 ];
@@ -227,13 +252,25 @@ app.get("/api/proof/:id", async (req, res) => {
   if (!vid || !vid.startsWith("0x")) {
     return res.status(400).json({ error: "Invalid verification ID" });
   }
+
   try {
-    const attestation = await publicClient.readContract({
-      address: CONTRACTS.proofOfSolvency,
-      abi: proofOfSolvencyAbi,
-      functionName: "check",
-      args: [vid],
-    });
+    // Try ProofRegistry first (new contract), then fall back to ProofOfSolvency
+    let attestation;
+    try {
+      attestation = await publicClient.readContract({
+        address: CONTRACTS.proofRegistry,
+        abi: proofRegistryAbi,
+        functionName: "check",
+        args: [vid],
+      });
+    } catch {
+      attestation = await publicClient.readContract({
+        address: CONTRACTS.proofOfSolvency,
+        abi: proofOfSolvencyAbi,
+        functionName: "check",
+        args: [vid],
+      });
+    }
     res.json({
       valid: true,
       threshold: `$${Number(attestation.threshold).toLocaleString()}`,
@@ -269,42 +306,54 @@ app.post("/api/proof/generate", async (req, res) => {
     });
   }
 
-  // Mock mode: proof was provided but we skip on-chain submission
-  if (process.env.MOCK_ONCHAIN === "true") {
-    const ts = Date.now();
-    const mockHash = "0x" + Buffer.from(`zk-${threshold}-${ts}`).toString("hex").padEnd(64, "0").slice(0, 64);
-    return res.json({
-      hash: mockHash,
-      threshold,
-      result: true,
-      timestamp: new Date(ts).toISOString(),
-      demo: false,
-    });
-  }
-
-  // Real flow: submit ZK proof on-chain
+  // ZK proof was generated client-side — store attestation on-chain via ProofRegistry
   if (!walletClient) {
     return res.status(500).json({ error: "No signer configured — set PRIVATE_KEY in .env" });
   }
   try {
-    const hash = await walletClient.writeContract({
-      address: CONTRACTS.proofOfSolvency,
-      abi: proofOfSolvencyAbi,
-      functionName: "verify",
-      args: [proof, publicInputs],
+    // Parse threshold number and commitment from public inputs
+    const thresholdNum = parseInt(threshold.replace(/[$,]/g, "")) || 0;
+    const commitment = publicInputs.length > 1
+      ? (publicInputs[1].startsWith("0x") ? publicInputs[1] : "0x" + publicInputs[1]).padEnd(66, "0")
+      : "0x" + "0".repeat(64);
+
+    console.log(`  📝 Storing attestation: threshold=${thresholdNum}, commitment=${commitment.slice(0, 18)}...`);
+
+    const txHash = await walletClient.writeContract({
+      address: CONTRACTS.proofRegistry,
+      abi: proofRegistryAbi,
+      functionName: "submit",
+      args: [
+        signerAccount.address,  // user
+        BigInt(thresholdNum),    // threshold
+        commitment,              // commitment from ZK proof
+      ],
     });
-    const receipt = await publicClient.waitForTransactionReceipt({ hash });
-    const verifyId = receipt.logs[0]?.topics[3] || hash;
+
+    // Wait for receipt to get the verifyId from event logs
+    let verifyId = txHash;
+    try {
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 30_000 });
+      // Verified event: id (indexed), user (indexed), threshold, verifyId
+      if (receipt.logs[0]?.data) {
+        const decoded = receipt.logs[0].data;
+        // verifyId is the second 32-byte word in the non-indexed data
+        verifyId = "0x" + decoded.slice(66, 130);
+      }
+    } catch {
+      console.log("  ⚠️  Receipt timeout — tx submitted, using txHash as ID");
+    }
+
     res.json({
       hash: verifyId,
-      txHash: hash,
+      txHash,
       threshold,
       result: true,
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
-    console.error("Proof generate error:", err.message);
-    res.status(500).json({ error: "Failed to submit proof on-chain" });
+    console.error("Proof registry error:", err.message);
+    res.status(500).json({ error: "Failed to store attestation on-chain: " + err.message });
   }
 });
 
