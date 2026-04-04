@@ -24,9 +24,6 @@ export default function Verify() {
           transition={{ duration: 0.7, ease }}
           className="mb-16"
         >
-          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] px-3 py-1.5 rounded-full" style={{ background: `${P.jade}20`, color: P.jade }}>
-            Proof of Solvency
-          </span>
           <h1 className="text-5xl font-bold mt-6 mb-4">Verify a portfolio.</h1>
           <p className="text-lg max-w-2xl leading-relaxed" style={{ color: P.gray }}>
             A Radegast user generated a zero-knowledge proof that their portfolio exceeds a threshold. Verify it here — no account needed.

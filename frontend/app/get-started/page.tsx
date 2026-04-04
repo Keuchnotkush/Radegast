@@ -1,7 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import {
+  DynamicContextProvider,
+  useSocialAccounts,
+  useConnectWithOtp,
+  useIsLoggedIn,
+} from "@dynamic-labs/sdk-react-core";
+const ProviderEnum = { Google: "google" as any, Apple: "apple" as any };
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 const P = {
@@ -15,115 +23,174 @@ const P = {
 };
 
 const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const spring = { type: "spring" as const, stiffness: 400, damping: 20 };
 
-export default function GetStarted() {
+function AuthCard() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [name, setName] = useState("");
+
+  const isLoggedIn = useIsLoggedIn();
+  const router = useRouter();
+  const { signInWithSocialAccount, isProcessing: socialLoading } = useSocialAccounts();
+  const { connectWithEmail, verifyOneTimePassword } = useConnectWithOtp();
+
+  useEffect(() => {
+    if (isLoggedIn) router.push("/mockup-15");
+  }, [isLoggedIn, router]);
+
+  const handleEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpSent) {
+      await connectWithEmail(email);
+      setOtpSent(true);
+    } else {
+      await verifyOneTimePassword(otp);
+    }
+  };
+
+  const buttonLabel = otpSent ? "Verify code" : mode === "signin" ? "Sign in" : "Create account";
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: P.bg, fontFamily: "Sora, sans-serif" }}>
-      {/* Back to home */}
-      <Link href="/landing" className="fixed top-6 left-8 z-40">
-        <img src="/logo.svg" alt="Radegast" style={{ height: 22 }} />
-      </Link>
+    <div
+      className="rounded-3xl p-10"
+      style={{ background: P.surface, boxShadow: "0 8px 40px rgba(0,0,0,0.08)" }}
+    >
+      {/* HEADING */}
+      <div className="text-center mb-10">
+        <h1
+          className="text-[30px] font-bold tracking-tight leading-tight"
+          style={{ color: P.dark, fontFamily: "Sora, sans-serif" }}
+        >
+          Sign in.
+          <br />
+          <span style={{ color: P.jade }}>Invest smarter.</span>
+        </h1>
+        <p className="text-[14px] mt-3 leading-relaxed" style={{ color: P.gray }}>
+          US stocks from änywhere, 24/7. No bärriers, no järgon —
+          <br />
+          just your portfolio, growing while the world sleeps.
+        </p>
+      </div>
 
+      {/* TABS */}
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease }}
-        className="w-full max-w-md"
+        whileHover={{ scale: 1.02 }}
+        transition={spring}
+        className="flex mb-8 rounded-full p-1"
+        style={{ background: P.bg }}
       >
-        {/* CARD */}
-        <div className="rounded-2xl p-8" style={{ background: P.surface, boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
-          {/* LOGO */}
-          <div className="flex justify-center mb-8">
-            <img src="/logo.svg" alt="Radegast" style={{ height: 42 }} />
-          </div>
+        <button
+          onClick={() => { setMode("signin"); setOtpSent(false); }}
+          className="flex-1 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300"
+          style={{
+            background: mode === "signin" ? P.dark : "transparent",
+            color: mode === "signin" ? P.white : P.gray,
+          }}
+        >
+          Sign in
+        </button>
+        <button
+          onClick={() => { setMode("signup"); setOtpSent(false); }}
+          className="flex-1 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300"
+          style={{
+            background: mode === "signup" ? P.dark : "transparent",
+            color: mode === "signup" ? P.white : P.gray,
+          }}
+        >
+          Create account
+        </button>
+      </motion.div>
 
-          {/* TABS */}
-          <motion.div
-            whileHover={{ scale: 1.03 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-            className="flex mb-8 rounded-full p-1"
-            style={{ background: P.bg }}
-          >
-            <button
-              onClick={() => setMode("signin")}
-              className="flex-1 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300"
-              style={{
-                background: mode === "signin" ? P.dark : "transparent",
-                color: mode === "signin" ? P.white : P.gray,
-              }}
-            >
-              Sign in
-            </button>
-            <button
-              onClick={() => setMode("signup")}
-              className="flex-1 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300"
-              style={{
-                background: mode === "signup" ? P.dark : "transparent",
-                color: mode === "signup" ? P.white : P.gray,
-              }}
-            >
-              Create account
-            </button>
-          </motion.div>
-
-          {/* FORM */}
-          <motion.div
-            key={mode}
-            initial={{ opacity: 0, x: mode === "signin" ? -15 : 15 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, ease }}
-          >
-            <div className="flex flex-col gap-4">
-              {mode === "signup" && (
-                <div>
-                  <label className="text-[11px] font-medium uppercase tracking-wider block mb-2" style={{ color: P.gray }}>Full name</label>
-                  <input
-                    type="text"
-                    placeholder="John Doe"
-                    className="w-full px-4 py-3 rounded-xl text-[14px] outline-none transition-all duration-200 focus:ring-2"
-                    style={{ background: P.bg, color: P.dark, border: `1px solid ${P.border}` }}
-                  />
-                </div>
-              )}
-              <div>
-                <label className="text-[11px] font-medium uppercase tracking-wider block mb-2" style={{ color: P.gray }}>Email</label>
-                <input
-                  type="email"
-                  placeholder="you@example.com"
-                  className="w-full px-4 py-3 rounded-xl text-[14px] outline-none transition-all duration-200 focus:ring-2"
-                  style={{ background: P.bg, color: P.dark, border: `1px solid ${P.border}` }}
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-medium uppercase tracking-wider block mb-2" style={{ color: P.gray }}>Password</label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3 rounded-xl text-[14px] outline-none transition-all duration-200 focus:ring-2"
-                  style={{ background: P.bg, color: P.dark, border: `1px solid ${P.border}` }}
-                />
-              </div>
-
-              {mode === "signin" && (
-                <div className="flex justify-end">
-                  <span className="text-[12px] font-medium transition-opacity duration-200 hover:opacity-60" style={{ color: P.jade }}>Forgot password?</span>
-                </div>
-              )}
-
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                className="get-started-btn w-full py-3 rounded-xl text-[14px] font-semibold text-white mt-2"
-              >
-                {mode === "signin" ? "Sign in" : "Create account"}
-              </motion.button>
+      {/* FORM */}
+      <motion.div
+        key={mode + (otpSent ? "-otp" : "")}
+        initial={{ opacity: 0, x: mode === "signin" ? -15 : 15 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3, ease }}
+      >
+        <form onSubmit={handleEmail} className="flex flex-col gap-4">
+          {mode === "signup" && !otpSent && (
+            <div>
+              <label className="text-[11px] font-medium uppercase tracking-wider block mb-2" style={{ color: P.gray }}>Full name</label>
+              <input
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-4 py-3.5 rounded-xl text-[14px] outline-none transition-all duration-200 focus:ring-2"
+                style={{ background: P.bg, color: P.dark, border: `1px solid ${P.border}` }}
+              />
             </div>
+          )}
 
-            {/* DIVIDER */}
-            <div className="flex items-center gap-4 my-6">
+          {!otpSent ? (
+            <div>
+              <label className="text-[11px] font-medium uppercase tracking-wider block mb-2" style={{ color: P.gray }}>Email</label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3.5 rounded-xl text-[14px] outline-none transition-all duration-200 focus:ring-2"
+                style={{ background: P.bg, color: P.dark, border: `1px solid ${P.border}` }}
+              />
+            </div>
+          ) : (
+            <div>
+              <label className="text-[11px] font-medium uppercase tracking-wider block mb-2" style={{ color: P.gray }}>Verification code</label>
+              <p className="text-[12px] mb-3" style={{ color: P.gray }}>We sent a code to {email}</p>
+              <input
+                type="text"
+                placeholder="Enter 6-digit code"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                required
+                className="w-full px-4 py-3.5 rounded-xl text-[14px] outline-none transition-all duration-200 focus:ring-2 tracking-[0.3em] text-center"
+                style={{ background: P.bg, color: P.dark, border: `1px solid ${P.border}` }}
+                maxLength={6}
+              />
+            </div>
+          )}
+
+          <motion.button
+            type="submit"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            transition={spring}
+            className="auth-btn relative w-full py-3.5 rounded-xl text-[14px] font-semibold text-white mt-2 overflow-hidden"
+          >
+            <motion.span
+              key={buttonLabel}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease }}
+              className="block"
+            >
+              {buttonLabel}
+            </motion.span>
+          </motion.button>
+
+          {otpSent && (
+            <button
+              type="button"
+              onClick={() => setOtpSent(false)}
+              className="text-[12px] font-medium transition-opacity duration-200 hover:opacity-60"
+              style={{ color: P.jade }}
+            >
+              Use a different email
+            </button>
+          )}
+        </form>
+
+        {/* DIVIDER */}
+        {!otpSent && (
+          <>
+            <div className="flex items-center gap-4 my-7">
               <div className="flex-1 h-px" style={{ background: P.border }} />
               <span className="text-[11px] font-medium" style={{ color: P.gray }}>or continue with</span>
               <div className="flex-1 h-px" style={{ background: P.border }} />
@@ -132,35 +199,69 @@ export default function GetStarted() {
             {/* SOCIAL */}
             <div className="flex gap-3">
               <motion.button
-                whileHover={{ scale: 1.04 }}
+                onClick={() => signInWithSocialAccount(ProviderEnum.Google)}
+                disabled={socialLoading}
+                whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-medium"
-                style={{ background: P.bg, border: `1px solid ${P.border}`, color: P.dark }}
+                transition={spring}
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-[13px] font-medium"
+                style={{ background: P.bg, border: `1px solid ${P.border}`, color: P.dark, opacity: socialLoading ? 0.6 : 1 }}
               >
                 <GoogleIcon />
                 Google
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.04 }}
+                onClick={() => signInWithSocialAccount(ProviderEnum.Apple)}
+                disabled={socialLoading}
+                whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-medium"
-                style={{ background: P.bg, border: `1px solid ${P.border}`, color: P.dark }}
+                transition={spring}
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-[13px] font-medium"
+                style={{ background: P.bg, border: `1px solid ${P.border}`, color: P.dark, opacity: socialLoading ? 0.6 : 1 }}
               >
                 <AppleIcon />
                 Apple
               </motion.button>
             </div>
-          </motion.div>
-        </div>
-
-        {/* FOOTER */}
-        <p className="text-center text-[11px] mt-6" style={{ color: P.gray }}>
-          By continuing, you agree to the Terms of Service and Privacy Policy.
-        </p>
+          </>
+        )}
       </motion.div>
     </div>
+  );
+}
+
+export default function GetStarted() {
+  return (
+    <DynamicContextProvider
+      settings={{
+        environmentId: process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID!,
+        events: {
+          onAuthSuccess: (args) => console.log("[Dynamic] Auth success", args),
+          onLogout: () => console.log("[Dynamic] Logged out"),
+        },
+      }}
+    >
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: P.bg, fontFamily: "Sora, sans-serif" }}
+      >
+        <Link href="/landing" className="fixed top-6 left-8 z-40">
+          <img src="/logo.svg" alt="Radegast" style={{ height: 22 }} />
+        </Link>
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease }}
+          className="w-full max-w-lg"
+        >
+          <AuthCard />
+          <p className="text-center text-[11px] mt-6" style={{ color: P.gray }}>
+            By continuing, you agree to the Terms of Service and Privacy Policy.
+          </p>
+        </motion.div>
+      </div>
+    </DynamicContextProvider>
   );
 }
 
