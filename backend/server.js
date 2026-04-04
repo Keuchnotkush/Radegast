@@ -114,7 +114,11 @@ const consensusSettlementAbi = [
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors({ origin: process.env.FRONTEND_URL || "http://localhost:3000" }));
+app.use(cors({
+  origin: process.env.FRONTEND_URL || true,  // true = reflect any origin (dev/codespaces)
+  methods: ["GET", "POST", "PATCH", "OPTIONS"],
+  credentials: true,
+}));
 app.use(express.json());
 
 // ── Mail transporter ──

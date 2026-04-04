@@ -1,5 +1,6 @@
-import { Noir } from "@noir-lang/noir_js";
-import { UltraHonkBackend } from "@aztec/bb.js";
+// Dynamic imports — these packages ship huge WASM binaries that crash webpack if statically imported
+const loadNoir = () => import("@noir-lang/noir_js").then((m) => m.Noir);
+const loadBackend = () => import("@aztec/bb.js").then((m) => m.UltraHonkBackend);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _solvency: any = null;
@@ -17,6 +18,7 @@ async function loadCommitmentCircuit() {
 }
 
 export async function computeCommitment(balances: string[], secret: string) {
+  const Noir = await loadNoir();
   const circuit = await loadCommitmentCircuit();
   const noir = new Noir(circuit);
   await noir.init();
@@ -34,6 +36,7 @@ export async function generateProof(
   const commitment = await computeCommitment(balances, secret);
 
   // 2. witness
+  const Noir = await loadNoir();
   const circuit = await loadSolvencyCircuit();
   const noir = new Noir(circuit);
   await noir.init();
@@ -46,6 +49,7 @@ export async function generateProof(
   });
 
   // 3. proof — UltraHonkBackend takes bytecode string directly
+  const UltraHonkBackend = await loadBackend();
   const backend = new UltraHonkBackend(circuit.bytecode);
   const proofData = await backend.generateProof(witness);
   await backend.destroy();

@@ -20,8 +20,17 @@ const nextConfig: NextConfig = {
         crypto: false,
       };
     }
-    // wasm-bindgen .wasm files load themselves via fetch() + WebAssembly.instantiate()
-    // Prevent webpack from parsing them as WebAssembly modules (which fails on "wbg" imports)
+
+    // Skip heavy ZK WASM packages during SSR build (only needed client-side at runtime)
+    if (isServer) {
+      config.externals = [
+        ...(Array.isArray(config.externals) ? config.externals : config.externals ? [config.externals] : []),
+        "@aztec/bb.js",
+        "@noir-lang/noir_js",
+      ];
+    }
+
+    // Don't parse WASM files — they load themselves via fetch() + WebAssembly.instantiate()
     config.module.rules.unshift({
       test: /\.wasm$/,
       type: "asset/resource",
