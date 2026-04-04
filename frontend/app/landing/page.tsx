@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import GhostCursor from "./ghost-cursor";
+import Nav from "./nav";
 
 const P = {
   bg: "#D8D2C8",
@@ -43,37 +44,7 @@ export default function Landing() {
     <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark, cursor: "none" }}>
       <GhostCursor />
 
-      {/* NAV */}
-      {/* LOGO */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-        className="fixed top-6 left-8 z-40"
-      >
-        <img src="/logo.svg" alt="Radegast" style={{ height: 22, cursor: "none" }} />
-      </motion.div>
-
-      {/* NAV */}
-      <motion.nav
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3 }}
-        className="fixed top-4 right-8 z-40 flex items-center gap-6 px-6 py-3 rounded-full"
-        style={{ background: "#F0EDE8", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
-      >
-        <a href="#home" className="text-[13px] font-medium transition hover:opacity-70" style={{ color: P.dark, cursor: "none" }}>Home</a>
-        <a href="#how-it-works" className="text-[13px] font-medium transition hover:opacity-70" style={{ color: P.dark, cursor: "none" }}>How it works</a>
-        <a href="#verify" className="text-[13px] font-medium transition hover:opacity-70" style={{ color: P.dark, cursor: "none" }}>Verify</a>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          className="px-5 py-2 rounded-full text-[12px] font-semibold uppercase tracking-wider"
-          style={{ background: P.dark, color: P.white, cursor: "none" }}
-        >
-          Get Started
-        </motion.button>
-      </motion.nav>
+      <Nav />
 
       {/* HERO */}
       <section id="home" ref={heroRef} className="min-h-screen flex flex-col items-center justify-center text-center px-8 pt-20 relative">
