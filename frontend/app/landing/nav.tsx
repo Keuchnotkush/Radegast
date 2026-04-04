@@ -52,8 +52,7 @@ export default function Nav() {
         >
           <Link
             href="/get-started"
-            className="block px-5 py-2 rounded-full text-[12px] font-semibold uppercase tracking-wider transition-all duration-300 hover:bg-[#38A88A] hover:text-white"
-            style={{ background: P.dark, color: P.white }}
+            className="get-started-btn block px-5 py-2 rounded-full text-[12px] font-semibold uppercase tracking-wider text-white"
           >
             Get Started
           </Link>

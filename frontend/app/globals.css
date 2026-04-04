@@ -28,3 +28,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.get-started-btn {
+  background: #2A2A2A;
+  transition: background 0.3s ease;
+}
+
+.get-started-btn:hover {
+  background: #38A88A;
+}
