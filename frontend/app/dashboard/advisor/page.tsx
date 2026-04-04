@@ -98,7 +98,7 @@ export default function AdvisorPage() {
     <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
       <NavAvatar initial={userName.charAt(0).toUpperCase()} />
 
-      <div className="w-full max-w-[1440px] mx-auto px-16 pt-20 pb-16">
+      <div className="w-full max-w-[1440px] mx-auto px-5 md:px-16 pt-20 pb-16">
 
         {/* Header */}
         <motion.div
@@ -107,7 +107,7 @@ export default function AdvisorPage() {
           transition={{ duration: 0.6, ease }}
           className="mb-14"
         >
-          <h1 className="text-5xl font-bold leading-tight">
+          <h1 className="text-3xl md:text-5xl font-bold leading-tight">
             Your AI, <span style={{ color: P.jade }}>your rules</span>.
           </h1>
           <p className="text-lg mt-3" style={{ color: P.gray }}>
@@ -154,7 +154,7 @@ export default function AdvisorPage() {
                 <SectionTitle>Model consensus</SectionTitle>
                 <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: P.jade }} />
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                 {MODELS.map((m, i) => {
                   const color = m.vote === "bullish" ? P.gain : m.vote === "bearish" ? P.loss : P.gray;
                   return (
@@ -299,7 +299,7 @@ export default function AdvisorPage() {
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 transition={spring}
-                className="flex gap-3 mb-6 origin-left"
+                className="flex flex-wrap gap-3 mb-6 origin-left"
               >
                 <TogglePill checked={true} onChange={() => {}} label="Max $500 / trade"
                   icon="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />

@@ -6,6 +6,93 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { usePortfolio, logoUrl } from "./store";
 
+/* ─── Bottom Tab Bar (mobile, Revolut/Trade Republic style) ─── */
+export function BottomTabBar() {
+  const pathname = usePathname();
+
+  const tabs = [
+    {
+      href: "/dashboard",
+      label: "Portfolio",
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+      ),
+      isActive: pathname === "/dashboard",
+    },
+    {
+      href: "/dashboard/invest",
+      label: "Invest",
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+          <polyline points="16 7 22 7 22 13" />
+        </svg>
+      ),
+      isActive: pathname.startsWith("/dashboard/invest"),
+    },
+    {
+      href: "/dashboard/advisor",
+      label: "AI",
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z" />
+          <path d="M6 10v1a6 6 0 0 0 12 0v-1" />
+          <line x1="12" y1="17" x2="12" y2="22" />
+          <line x1="8" y1="22" x2="16" y2="22" />
+        </svg>
+      ),
+      isActive: pathname.startsWith("/dashboard/advisor"),
+    },
+    {
+      href: "/dashboard/solvency",
+      label: "Proof",
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      ),
+      isActive: pathname.startsWith("/dashboard/solvency"),
+    },
+    {
+      href: "/dashboard/settings",
+      label: "Settings",
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1.08z" />
+        </svg>
+      ),
+      isActive: pathname.startsWith("/dashboard/settings"),
+    },
+  ];
+
+  return (
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden items-center justify-around border-t"
+      style={{
+        background: "#F0EDE8",
+        borderColor: "#C4C4C430",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
+    >
+      {tabs.map((tab) => (
+        <Link
+          key={tab.href}
+          href={tab.href}
+          className="flex flex-col items-center gap-0.5 py-2 px-3"
+          style={{ color: tab.isActive ? "#38A88A" : "#6B6B6B" }}
+        >
+          {tab.icon}
+          <span className="text-[10px] font-semibold">{tab.label}</span>
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
 /* ─── Palette ─── */
 export const P = {
   bg: "#D8D2C8",
@@ -42,7 +129,7 @@ export function NavAvatar({ initial }: { initial: string }) {
 
   return (
     <motion.div
-      className="fixed top-4 right-8 z-40 flex items-center rounded-full cursor-pointer"
+      className="fixed top-4 right-8 z-40 hidden md:flex items-center rounded-full cursor-pointer"
       style={{ background: P.surface, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -175,8 +262,16 @@ export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () 
   const [amount, setAmount] = useState(stock.prefillAmount ? stock.prefillAmount.toString() : "");
   const [period, setPeriod] = useState<Period>("1M");
   const [step, setStep] = useState<"input" | "confirm" | "processing" | "done">("input");
+  const panelRef = useRef<HTMLDivElement>(null);
   const isUp = stock.change >= 0;
   const presets = [10, 50, 100, 500];
+
+  // Auto-scroll to bottom when step changes (so confirm/processing/done are visible)
+  useEffect(() => {
+    if (step !== "input" && panelRef.current) {
+      panelRef.current.scrollTo({ top: panelRef.current.scrollHeight, behavior: "smooth" });
+    }
+  }, [step]);
 
   const ticker = stock.symbol.replace("x", "");
   const { data: prices, loading } = usePriceHistory(ticker, period);
@@ -227,10 +322,11 @@ export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () 
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        ref={panelRef}
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl max-h-[90vh] overflow-y-auto"
         style={{ background: P.surface }}
       >
-        <div className="w-full max-w-[1440px] mx-auto px-16 pt-6 pb-10">
+        <div className="w-full max-w-[1440px] mx-auto px-5 md:px-16 pt-6 pb-10">
 
           {/* Drag indicator */}
           <div className="flex justify-center mb-5">

@@ -6,7 +6,7 @@ import { NavAvatar, SectionTitle, TradeModal, P, ease, spring } from "./shared";
 import type { TradeStock } from "./shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { usePortfolio, MARKET, STOCK_COLORS, logoUrl, useSettings } from "./store";
+import { usePortfolio, MARKET, STOCK_COLORS, logoUrl, useSettings, useLiveMarket } from "./store";
 
 /* ─── Stock logo with fallback ─── */
 function StockLogo({ ticker, name, color, size = 48 }: { ticker: string; name: string; color: string; size?: number }) {
@@ -64,6 +64,7 @@ export default function DashboardPage() {
   const initial = userName.charAt(0).toUpperCase();
   const { holdings, cash, totalValue, totalWithCash, addFunds } = usePortfolio();
   const { aiSuggestions, autoSession } = useSettings();
+  const liveMarket = useLiveMarket();
   const isAutonomous = autoSession.active;
   const notifs = isAutonomous ? AUTONOMOUS_NOTIFS : ADVISOR_NOTIFS;
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
@@ -71,7 +72,7 @@ export default function DashboardPage() {
 
   // Build portfolio stocks from holdings + market data
   const portfolioStocks = holdings.map((h) => {
-    const market = MARKET.find((m) => m.ticker === h.ticker);
+    const market = liveMarket.find((m) => m.ticker === h.ticker);
     if (!market) return null;
     const value = market.price * h.shares;
     return { ...market, shares: h.shares, value, color: STOCK_COLORS[h.ticker] || P.jade };
@@ -82,7 +83,7 @@ export default function DashboardPage() {
   const totalAllocations = portfolioStocks.map((s) => ({ ...s, allocation: total > 0 ? (s.value / total) * 100 : 0 }));
   const cashAllocation = total > 0 ? (cash / total) * 100 : 0;
 
-  const selectedStock = selectedTicker ? MARKET.find((m) => m.ticker === selectedTicker) : null;
+  const selectedStock = selectedTicker ? liveMarket.find((m) => m.ticker === selectedTicker) : null;
   const selectedHolding = selectedTicker ? holdings.find((h) => h.ticker === selectedTicker) : null;
 
   const tradeStock: TradeStock | null = selectedStock
@@ -101,7 +102,7 @@ export default function DashboardPage() {
     <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
       <NavAvatar initial={initial} />
 
-      <div className="w-full max-w-[1440px] mx-auto px-16 pt-20 pb-16">
+      <div className="w-full max-w-[1440px] mx-auto px-5 md:px-16 pt-20 pb-16">
 
         {/* WELCOME */}
         <motion.div
@@ -110,7 +111,7 @@ export default function DashboardPage() {
           transition={{ duration: 0.6, ease }}
           className="mb-14"
         >
-          <h1 className="text-5xl font-bold leading-tight">
+          <h1 className="text-3xl md:text-5xl font-bold leading-tight">
             Good to see you, <span style={{ color: P.jade }}>{userName}</span>.
           </h1>
           <p className="text-lg mt-3" style={{ color: P.gray }}>
@@ -125,15 +126,15 @@ export default function DashboardPage() {
           transition={{ delay: 0.1, duration: 0.6, ease }}
           className="mb-16"
         >
-          <div className="flex items-center gap-16">
+          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
             {/* Donut */}
             <div className="flex-shrink-0">
               <DonutChart stocks={totalAllocations} cashPct={cashAllocation} total={total} />
             </div>
 
             {/* Metrics + legend */}
-            <div className="flex-1 flex flex-col gap-8">
-              <div className="grid grid-cols-4 gap-8">
+            <div className="flex-1 flex flex-col gap-6 md:gap-8 w-full">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                 <MetricCard label="24h Return" value="+$312.18" sub="+1.27%" color={P.gain} />
                 <MetricCard label="Invested" value={`$${invested.toLocaleString("en-US", { maximumFractionDigits: 0 })}`} sub={`${portfolioStocks.length} stocks`} color={P.dark} />
                 <MetricCard label="Available" value={`$${cash.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} sub="Ready to invest" color={P.jade} />
@@ -301,7 +302,7 @@ function DonutChart({ stocks, cashPct, total }: { stocks: { ticker: string; allo
   let cum = 0;
 
   return (
-    <div className="relative w-80 h-80">
+    <div className="relative w-52 h-52 md:w-80 md:h-80">
       <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
         <circle cx="100" cy="100" r={r} fill="none" stroke={`${P.border}30`} strokeWidth="14" />
         {stocks.map((s) => {
@@ -544,7 +545,7 @@ function StockRow({ stock, index, onSelect }: { stock: { ticker: string; name: s
         </div>
       </div>
       <div className="flex items-center gap-8">
-        <MiniChart color={stock.color} trend={isUp ? "up" : "down"} />
+        <div className="hidden md:block"><MiniChart color={stock.color} trend={isUp ? "up" : "down"} /></div>
         <div className="text-right w-28">
           <div className="text-[16px] font-semibold">${stock.value.toLocaleString("en-US", { minimumFractionDigits: 2 })}</div>
           <div className="text-[13px] font-medium" style={{ color: isUp ? P.gain : P.loss }}>

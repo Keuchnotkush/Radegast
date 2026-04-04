@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Nav from "./nav";
 
 const P = {
@@ -72,12 +71,12 @@ const USE_CASES = [
 
 export default function Landing() {
   return (
-    <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
+    <div className="min-h-screen pb-20 md:pb-0" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
 
       <Nav />
 
       {/* HERO */}
-      <section className="h-screen flex flex-col items-center justify-center text-center px-8">
+      <section className="h-screen flex flex-col items-center justify-center text-center px-5 md:px-8">
         <motion.div className="flex flex-col items-center">
 
           {/* LOGO */}
@@ -133,8 +132,8 @@ export default function Landing() {
       </section>
 
       {/* USE CASES */}
-      <section className="py-32 px-8">
-        <div className="max-w-[1200px] mx-auto flex flex-col gap-40">
+      <section className="py-16 md:py-32 px-5 md:px-8">
+        <div className="max-w-[1200px] mx-auto flex flex-col gap-20 md:gap-40">
           {USE_CASES.map((uc, ucIdx) => (
             <motion.div
               key={uc.num}
@@ -146,7 +145,7 @@ export default function Landing() {
               {/* Header with animated accent line */}
               <div className="flex gap-8 items-start mb-10">
                 <motion.span
-                  className="text-8xl font-bold leading-none select-none"
+                  className="hidden md:block text-8xl font-bold leading-none select-none"
                   style={{ color: `${uc.color}15` }}
                   initial={{ opacity: 0, scale: 0.6 }}
                   whileInView={{ opacity: 1, scale: 1 }}
@@ -170,7 +169,7 @@ export default function Landing() {
               </div>
 
               {/* Stats bar — staggered reveal */}
-              <div className="flex gap-10 mb-10 ml-[104px]">
+              <div className="flex flex-wrap gap-6 md:gap-10 mb-10 ml-0 md:ml-[104px]">
                 {uc.stats.map((s, si) => (
                   <motion.div
                     key={s.label}
@@ -187,7 +186,7 @@ export default function Landing() {
               </div>
 
               {/* Highlight cards — staggered + hover effects */}
-              <div className="grid grid-cols-3 gap-4 ml-[104px]">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 ml-0 md:ml-[104px]">
                 {uc.highlights.map((h, hi) => (
                   <motion.div
                     key={h.label}
@@ -231,18 +230,15 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* VERIFY A PROOF */}
-      <VerifySection />
-
       {/* CLOSING STATEMENT */}
       <motion.section
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8, ease }}
-        className="py-24 px-8 text-center"
+        className="py-16 md:py-24 px-5 md:px-8 text-center"
       >
-        <p className="text-2xl font-bold max-w-[1200px] mx-auto leading-relaxed">
+        <p className="text-xl md:text-2xl font-bold max-w-[1200px] mx-auto leading-relaxed">
           This is not ä crypto project pretending to be finänce.
           <br />
           <span style={{ color: P.jade }}>This is finänce, rebuilt from first principles.</span>
@@ -254,193 +250,5 @@ export default function Landing() {
         <span className="text-[13px]" style={{ color: P.gray }}>ETHGlobal Cannes 2026</span>
       </footer>
     </div>
-  );
-}
-
-/* ─── Verify Section ─── */
-function VerifySection() {
-  const [hash, setHash] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-
-  function handleVerify() {
-    if (!hash.trim()) return;
-    setStatus("loading");
-
-    // Simulate on-chain lookup (replace with real ProofOfSolvency.check() call)
-    setTimeout(() => {
-      if (hash.trim().startsWith("0x") && hash.trim().length >= 10) {
-        setStatus("success");
-      } else {
-        setStatus("error");
-      }
-    }, 2000);
-  }
-
-  function reset() {
-    setHash("");
-    setStatus("idle");
-  }
-
-  return (
-    <motion.section
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.8, ease }}
-      className="py-32 px-8"
-    >
-      <div className="max-w-[1200px] mx-auto">
-        <div className="flex gap-8 items-start mb-10">
-          <motion.span
-            className="text-8xl font-bold leading-none select-none"
-            style={{ color: `${P.roseAncien}15` }}
-            initial={{ opacity: 0, scale: 0.6 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, ease, delay: 0.1 }}
-          >
-            ??
-          </motion.span>
-          <div>
-            <motion.div
-              className="w-12 h-[3px] rounded-full mb-4"
-              style={{ background: P.roseAncien }}
-              initial={{ width: 0 }}
-              whileInView={{ width: 48 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, ease, delay: 0.2 }}
-            />
-            <h3 className="text-3xl font-bold mb-3">Verify ä proof</h3>
-            <p className="text-[15px] leading-relaxed max-w-2xl" style={{ color: P.gray }}>
-              Someone shared a verification ID with you? Paste it below to confirm their portfolio exceeds the stated threshold — no account needed.
-            </p>
-          </div>
-        </div>
-
-        {/* Input */}
-        <div className="ml-[104px]">
-          <AnimatePresence mode="wait">
-            {status === "idle" || status === "loading" ? (
-              <motion.div
-                key="input"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                <div className="flex items-center gap-3 py-4" style={{ borderTop: `1px solid ${P.gray}25`, borderBottom: `1px solid ${P.gray}25` }}>
-                  <input
-                    type="text"
-                    value={hash}
-                    onChange={(e) => setHash(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleVerify()}
-                    placeholder="0x6CA0...or scan QR code"
-                    className="flex-1 bg-transparent text-base font-medium outline-none"
-                    style={{ color: P.dark }}
-                  />
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleVerify}
-                    className="px-6 py-2.5 rounded-full text-[13px] font-semibold cursor-pointer flex items-center gap-2"
-                    style={{ background: P.roseAncien, color: "#FFFFFF", opacity: hash.trim() ? 1 : 0.5 }}
-                  >
-                    {status === "loading" ? (
-                      <div className="w-4 h-4 rounded-full animate-spin" style={{ border: "2px solid #ffffff40", borderTopColor: "#fff" }} />
-                    ) : (
-                      "Verify"
-                    )}
-                  </motion.button>
-                </div>
-              </motion.div>
-            ) : status === "success" ? (
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="py-6"
-              >
-                <div className="flex items-start gap-4 mb-6">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ background: `${P.gain}15` }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={P.gain} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold mb-1" style={{ color: P.gain }}>Portfolio verified</h4>
-                    <p className="text-[15px] font-semibold mb-1">Portfolio exceeds <span style={{ color: P.gain }}>$50,000</span></p>
-                    <p className="text-[13px]" style={{ color: P.gray }}>
-                      Verified on 0G Chain · {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · Proof is mathematically valid
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-8 py-4 mb-4" style={{ borderTop: `1px solid ${P.gray}20` }}>
-                  <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: P.gray }}>Verification ID</div>
-                    <div className="text-[13px] font-mono font-medium">{hash.slice(0, 20)}...</div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: P.gray }}>Threshold</div>
-                    <div className="text-[13px] font-semibold">$50,000</div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: P.gray }}>Status</div>
-                    <div className="text-[13px] font-semibold" style={{ color: P.gain }}>Valid</div>
-                  </div>
-                </div>
-
-                <div className="flex gap-6 text-[12px]" style={{ color: P.gray }}>
-                  <span>No holdings revealed</span>
-                  <span>·</span>
-                  <span>No wallet address exposed</span>
-                  <span>·</span>
-                  <span>Zero knowledge</span>
-                </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={reset}
-                  className="mt-6 text-[13px] font-semibold cursor-pointer"
-                  style={{ color: P.roseAncien }}
-                >
-                  Verify another proof
-                </motion.button>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="error"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="py-6"
-              >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ background: "#C6282812" }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C62828" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold mb-1" style={{ color: "#C62828" }}>Proof not found</h4>
-                    <p className="text-[13px]" style={{ color: P.gray }}>This verification ID doesn&apos;t match any proof on 0G Chain. Check the ID and try again.</p>
-                  </div>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={reset}
-                  className="text-[13px] font-semibold cursor-pointer"
-                  style={{ color: P.roseAncien }}
-                >
-                  Try again
-                </motion.button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-    </motion.section>
   );
 }

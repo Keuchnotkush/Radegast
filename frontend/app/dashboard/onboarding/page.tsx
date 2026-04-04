@@ -112,7 +112,7 @@ export default function OnboardingPage() {
               initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
               animate={{ clipPath: "inset(0 0% 0 0)", opacity: 1 }}
               transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-              className="text-[120px] font-bold leading-[0.9] tracking-tighter whitespace-nowrap"
+              className="text-[48px] md:text-[80px] lg:text-[120px] font-bold leading-[0.9] tracking-tighter whitespace-nowrap"
             >
               Welcome, <span style={{ color: P.jade }}>{firstName || "investor"}</span>.
             </motion.h1>
@@ -170,7 +170,7 @@ export default function OnboardingPage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.6, ease }}
-                className="text-6xl font-bold mb-6 leading-tight whitespace-nowrap"
+                className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
               >
                 3 AI models <span style={{ color: P.jade }}>watch your money.</span>
               </motion.h2>
@@ -185,7 +185,7 @@ export default function OnboardingPage() {
                 They analyze, vote, and act. Majority wins. You choose how much control to keep.
               </motion.p>
 
-              <div className="grid grid-cols-2 gap-6 mb-16">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-16">
                 {[
                   { label: "Advisory", desc: "AI suggests. You decide. Full transparency on every recommendation.", color: P.jade, tag: "You approve" },
                   { label: "Autonomous", desc: "AI trades for you. Set a budget, a time window, and let it work.", color: P.safran, tag: "AI executes" },
@@ -237,7 +237,7 @@ export default function OnboardingPage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.6, ease }}
-                className="text-6xl font-bold mb-6 leading-tight"
+                className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
               >
                 What kind of investor <span style={{ color: P.jade }}>are you?</span>
               </motion.h2>
@@ -252,7 +252,7 @@ export default function OnboardingPage() {
                 This helps our AI tailor recommendations to your style.
               </motion.p>
 
-              <div className="grid grid-cols-2 gap-5 mb-14">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-14">
                 {PROFILES.map((p, i) => {
                   const selected = profile === p.key;
                   return (
@@ -335,7 +335,7 @@ export default function OnboardingPage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.6, ease }}
-                className="text-6xl font-bold mb-6 leading-tight"
+                className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
               >
                 Add your first <span style={{ color: P.jade }}>funds</span>
               </motion.h2>
@@ -378,7 +378,7 @@ export default function OnboardingPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.4, duration: 0.4, ease }}
-                      className="flex gap-4 mb-12"
+                      className="flex gap-3 md:gap-4 mb-12"
                     >
                       {fundPresets.map((p) => {
                         const selected = fundAmount === p.toString();
@@ -409,7 +409,7 @@ export default function OnboardingPage() {
                       className="mb-12"
                     >
                       <div className="text-[11px] font-semibold uppercase tracking-wider mb-4" style={{ fontFamily: "Lexend", color: P.gray }}>Payment method</div>
-                      <div className="flex gap-4">
+                      <div className="flex gap-3 md:gap-4">
                         <motion.button
                           whileHover={{ scale: 1.08 }}
                           whileTap={{ scale: 0.95 }}
@@ -537,7 +537,7 @@ export default function OnboardingPage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.6, ease }}
-                className="text-6xl font-bold mb-6 leading-tight"
+                className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
               >
                 Pick your first <span style={{ color: P.jade }}>stocks</span>
               </motion.h2>
@@ -555,7 +555,7 @@ export default function OnboardingPage() {
               </motion.p>
 
               {/* Grid 2x4 — cards with hover scale */}
-              <div className="grid grid-cols-2 gap-4 mb-14">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-14">
                 {POPULAR_STOCKS.map((ticker, i) => {
                   const stock = MARKET.find((s) => s.ticker === ticker);
                   if (!stock) return null;
@@ -670,7 +670,7 @@ export default function OnboardingPage() {
               initial={{ clipPath: "inset(0 100% 0 0)" }}
               animate={{ clipPath: "inset(0 0% 0 0)" }}
               transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-              className="text-6xl font-bold leading-tight tracking-tight"
+              className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight"
             >
               You&apos;re all set,{" "}
               <span style={{ color: P.jade }}>{firstName || "investor"}</span>.

@@ -62,7 +62,7 @@ export default function SettingsPage() {
     <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
       <NavAvatar initial={initial} />
 
-      <div className="max-w-2xl mx-auto px-8 pt-20 pb-16">
+      <div className="max-w-2xl mx-auto px-5 md:px-8 pt-20 pb-16">
 
         {/* ── Back ── */}
         <motion.div
@@ -94,7 +94,7 @@ export default function SettingsPage() {
             {initial}
           </motion.div>
           <div>
-            <h1 className="text-4xl font-bold">Settings</h1>
+            <h1 className="text-3xl md:text-4xl font-bold">Settings</h1>
             <p className="text-[14px] mt-1" style={{ color: P.gray }}>Manage your account and preferences.</p>
           </div>
         </motion.div>
@@ -109,7 +109,7 @@ export default function SettingsPage() {
         >
           <SectionTitle>Account</SectionTitle>
           <div className="flex flex-col gap-5 mt-5">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="First name" value={form.firstName} onChange={(v) => update("firstName", v)} />
               <Field label="Last name" value={form.lastName} onChange={(v) => update("lastName", v)} placeholder="Your last name" />
             </div>
@@ -133,7 +133,7 @@ export default function SettingsPage() {
           <motion.div
             whileHover={{ scale: 1.03 }}
             transition={spring}
-            className="flex rounded-full p-1"
+            className="flex rounded-full p-1 overflow-x-auto"
             style={{ background: P.bg }}
           >
             {PROFILES.map((p) => {
@@ -198,7 +198,7 @@ export default function SettingsPage() {
 
           {sessionActive ? (
             <div className="flex flex-col gap-5">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 md:gap-3">
                 <MiniStat label="Duration" value={AUTO_DURATIONS.find((d) => d.key === autoSession.duration)?.label || ""} />
                 <MiniStat label="Daily limit" value={`$${autoSession.dailyLimit}`} />
                 <MiniStat label="Spent today" value={`$${autoSession.spentToday}`} />
@@ -252,7 +252,7 @@ export default function SettingsPage() {
                 <motion.div
                   whileHover={{ scale: 1.03 }}
                   transition={spring}
-                  className="flex rounded-full p-1"
+                  className="flex rounded-full p-1 overflow-x-auto"
                   style={{ background: P.bg }}
                 >
                   {AUTO_DURATIONS.map((d) => {
