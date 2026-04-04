@@ -144,10 +144,13 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   // Fetch on-chain holdings when wallet is available
   useEffect(() => {
     const addr = primaryWallet?.address;
-    if (!addr || fetchedRef.current) return;
+    if (fetchedRef.current) return;
+
+    // Use wallet address, or fall back to deployer for demo
+    const target = addr || "0x5FB77900D139f2Eee6F312F3BF98fc8ad700C174";
     fetchedRef.current = true;
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/holdings/${addr}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/holdings/${target}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.holdings && data.holdings.length > 0) {
