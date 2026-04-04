@@ -103,6 +103,14 @@ async def run_consensus(request: ConsensusRequest) -> ConsensusResult:
     except ImportError:
         logger.warning("agent.py not yet available — returning consensus without suggestions")
 
+    # Step 7: Execute trades in Trade mode
+    if request.mode == Mode.TRADE and consensus.moves:
+        try:
+            from consensus.execute_trades import execute_rebalance
+            consensus.trade_results = await execute_rebalance(request.user, consensus.moves)
+        except Exception as e:
+            logger.error(f"Trade execution failed: {e}")
+
     return consensus
 
 
