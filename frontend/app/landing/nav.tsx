@@ -45,13 +45,17 @@ export default function Nav() {
         <NavLink href="/landing">Home</NavLink>
         <NavLink href="/how-it-works">How it works</NavLink>
         <NavLink href="/verify">Verify</NavLink>
-        <motion.div whileHover={{ scale: 1.08 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
+        <motion.div
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+        >
           <Link
             href="/get-started"
-            className="block px-5 py-2 rounded-full text-[12px] font-semibold uppercase tracking-wider"
+            className="block px-5 py-2 rounded-full text-[12px] font-semibold uppercase tracking-wider transition-colors duration-300 hover:bg-[#38A88A]"
             style={{ background: P.dark, color: P.white }}
           >
-            Get Started
+            Sign in
           </Link>
         </motion.div>
       </motion.nav>
