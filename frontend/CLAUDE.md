@@ -54,19 +54,40 @@ Zero crypto knowledge. Investing in stocks. Must feel like a banking/fintech app
 - Ghost cursor jade sur la landing page
 - Motion design: Framer Motion, fade-up au scroll, hover scale, parallax hero
 
-## Dynamic SDK — What we integrate
+## Implementation Status
 
-### Core (must-have)
-- **Google social login** — 1-click onboarding
-- **Embedded wallet** — auto-created on signup, user never sees it
-- **Onramp** — fiat -> USDC via Coinbase (Apple Pay, no KYC up to $500)
-- **Gasless transactions** — ZeroDev/Pimlico, user never pays gas
-- **Events** — onAuthSuccess, onWalletAdded, onEmbeddedWalletCreated, trade confirmations
-- **MFA** — trade approval in advisory mode
-- **Captcha** — anti-bot on auth
-- **Session JWT** — persistent auth
+### IMPLEMENTED (functional)
+- **Auth (Dynamic SDK)** — Google + Apple + Email OTP via `useSocialAccounts` + `useConnectWithOtp` (`get-started/page.tsx`)
+- **DynamicContextProvider** — configured in `providers.tsx` with env ID
+- **Session check** — `useIsLoggedIn` redirects to `/dashboard` on auth
+- **Events** — `onAuthSuccess` + `onLogout` listeners active
+- **Landing page** — MetaMask hero, floating trémas, how-it-works, nav
+- **Auth page** — tabs, deblur effect, social login buttons
+- **How it works page** — 7-step pipeline explanation
+- **Verify page** — ZK proof verification UI
+- **Dashboard portfolio** — donut chart (with cash segment), metrics, allocation bar, stock list
+- **Dashboard invest** — stock discovery grid, search, sector filters, stock cards
+- **Dashboard advisor** — AI recommendations, auto trades log, mode toggles, confidence scores
+- **Dashboard settings** — account info, investor profile, autonomous trading config
+- **Dashboard solvency** — ZK proof generator, threshold presets, proof history
+- **TradeModal** — buy/sell with chart, amount input, order summary, insufficient funds warning
+- **Add Funds modal** — card/Apple Pay selection, amount presets, processing animation
+- **Portfolio store** — holdings + cash balance, buy deducts cash, sell adds cash, addFunds()
+- **Settings store** — AI suggestions toggle, autonomous trading session management
+- **Stock price chart API** — `/api/chart` route fetches real price history
 
-### Stretch goals
+### MOCK (UI done, needs real Dynamic/blockchain wiring to replace setTimeout)
+These use `setTimeout` simulations. To go live, replace with actual SDK calls:
+- **Add Funds onramp** — replace `setTimeout` in `AddFundsModal` with `walletConnector.openOnRamp()` (Dynamic Coinbase)
+- **Trade execution** — replace `setTimeout` in `TradeModal.handleConfirm` with embedded wallet signature + backend call to 0G DEX
+- **Embedded wallet** — wallet auto-creates on signup (Dynamic handles it) but we don't read balance from it yet. Replace `cash` state with `primaryWallet.getBalance()` for real USDC balance
+- **Gasless transactions** — needs ZeroDev/Pimlico smart account config in Dynamic dashboard + `@dynamic-labs/ethereum` setup
+- **MFA for trades** — not integrated, needs Dynamic MFA API
+- **Captcha on auth** — not integrated, needs Dynamic Captcha config
+- **Session JWT persistence** — not integrated, auth resets on refresh
+- **Portfolio data** — holdings are hardcoded initial state, need to read from on-chain xStock balances
+
+### Stretch goals (not started)
 - WalletConnect (power users with external wallet)
 - Bridge (LI.FI cross-chain)
 - Swap (Circle USDC Gateway)

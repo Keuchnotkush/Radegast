@@ -1,0 +1,571 @@
+"use client";
+
+import { useState, useCallback, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { usePortfolio, logoUrl } from "./store";
+
+/* ─── Palette ─── */
+export const P = {
+  bg: "#D8D2C8",
+  surface: "#F0EDE8",
+  jade: "#38A88A",
+  jadeAccent: "#45BA9A",
+  indigo: "#4B0082",
+  terracotta: "#CC5A3A",
+  safran: "#C8A415",
+  roseAncien: "#B5506A",
+  dark: "#2A2A2A",
+  gray: "#6B6B6B",
+  border: "#C4C4C4",
+  gain: "#2E8B57",
+  loss: "#C62828",
+  white: "#FFFFFF",
+};
+
+export const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
+export const spring = { type: "spring" as const, stiffness: 400, damping: 20 };
+
+/* ─── Nav Avatar (shared across all dashboard pages) ─── */
+export function NavAvatar({ initial }: { initial: string }) {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  const links = [
+    { href: "/dashboard", label: "Portfolio" },
+    { href: "/dashboard/invest", label: "Invest" },
+    { href: "/dashboard/advisor", label: "Advisor" },
+    { href: "/dashboard/solvency", label: "Solvency" },
+    { href: "/dashboard/settings", label: "Settings" },
+  ];
+
+  return (
+    <motion.div
+      className="fixed top-4 right-4 sm:right-8 z-40 flex items-center rounded-full cursor-pointer"
+      style={{ background: P.surface, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={spring}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <motion.div
+        animate={{
+          maxWidth: open ? 400 : 0,
+          paddingLeft: open ? 24 : 0,
+          paddingRight: open ? 8 : 0,
+          opacity: open ? 1 : 0,
+        }}
+        transition={{ duration: 0.4, ease }}
+        className="flex items-center gap-6 overflow-hidden"
+      >
+        {links.map((l) => {
+          const active = pathname === l.href;
+          return (
+            <motion.div key={l.href} whileHover={{ scale: 1.12 }} transition={spring} className="whitespace-nowrap">
+              <Link href={l.href} className="text-[13px] font-medium" style={{ color: active ? P.dark : P.gray }}>
+                {l.label}
+              </Link>
+            </motion.div>
+          );
+        })}
+      </motion.div>
+      <Link href="/dashboard/settings" className="p-1.5 shrink-0">
+        <motion.div
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.95 }}
+          transition={spring}
+          className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold"
+          style={{ background: P.terracotta, color: P.white }}
+        >
+          {initial}
+        </motion.div>
+      </Link>
+    </motion.div>
+  );
+}
+
+/* ─── Section Title ─── */
+export function SectionTitle({ children }: { children: React.ReactNode }) {
+  return <h3 className="text-[11px] font-semibold uppercase tracking-wider" style={{ fontFamily: "Lexend", color: P.gray }}>{children}</h3>;
+}
+
+/* ─── Buy/Sell Modal (Phantom-style slide-up) ─── */
+export interface TradeStock {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  color: string;
+  held?: number;
+  value?: number;
+}
+
+const PERIODS = ["1D", "1W", "1M", "3M", "1Y"] as const;
+type Period = (typeof PERIODS)[number];
+
+
+function usePriceHistory(ticker: string, period: Period) {
+  const [data, setData] = useState<number[]>([]);
+  const [loading, setLoading] = useState(false);
+  const cacheRef = useRef<Record<string, number[]>>({});
+
+  useEffect(() => {
+    const key = `${ticker}-${period}`;
+    if (cacheRef.current[key]) {
+      setData(cacheRef.current[key]);
+      return;
+    }
+
+    setLoading(true);
+    const symbol = ticker.replace("x", "");
+
+    fetch(`/api/chart?symbol=${encodeURIComponent(symbol)}&period=${period}`)
+      .then((r) => r.json())
+      .then((json) => {
+        const cleaned: number[] = json?.prices ?? [];
+        if (cleaned.length > 0) {
+          cacheRef.current[key] = cleaned;
+          setData(cleaned);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [ticker, period]);
+
+  return { data, loading };
+}
+
+function pricesToSvgPoints(prices: number[], width: number, height: number): string {
+  if (prices.length < 2) return "";
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const range = max - min || 1;
+  const pad = 4;
+
+  return prices
+    .map((p, i) => {
+      const x = (i / (prices.length - 1)) * width;
+      const y = pad + ((max - p) / range) * (height - pad * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+}
+
+function ModalStockLogo({ ticker, name, color }: { ticker: string; name: string; color: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-[18px] font-bold" style={{ background: color, color: P.white }}>
+        {ticker.replace("x", "").slice(0, 2)}
+      </div>
+    );
+  }
+  const dark = ticker === "AAPL" || ticker === "xAAPL";
+  return (
+    <img src={logoUrl(ticker)} alt={name} className="w-14 h-14 rounded-2xl object-contain" style={{ background: dark ? "#FFFFFF" : undefined, padding: dark ? 8 : undefined }} onError={() => setFailed(true)} />
+  );
+}
+
+export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () => void }) {
+  const [tab, setTab] = useState<"buy" | "sell">("buy");
+  const [amount, setAmount] = useState("");
+  const [period, setPeriod] = useState<Period>("1M");
+  const [step, setStep] = useState<"input" | "confirm" | "processing" | "done">("input");
+  const isUp = stock.change >= 0;
+  const presets = [10, 50, 100, 500];
+
+  const ticker = stock.symbol.replace("x", "");
+  const { data: prices, loading } = usePriceHistory(ticker, period);
+  const portfolio = usePortfolio();
+
+  const usdAmount = parseFloat(amount) || 0;
+  const shares = usdAmount > 0 ? usdAmount / stock.price : 0;
+  const insufficientFunds = tab === "buy" && usdAmount > portfolio.cash;
+
+  const handleReview = useCallback(() => {
+    if (usdAmount <= 0) return;
+    setStep("confirm");
+  }, [usdAmount]);
+
+  const handleConfirm = useCallback(() => {
+    setStep("processing");
+    // Simulate wallet signature + transaction (user sees "Processing purchase...")
+    setTimeout(() => {
+      if (tab === "buy") portfolio.buy(ticker, usdAmount);
+      else portfolio.sell(ticker, usdAmount);
+      setStep("done");
+      setTimeout(() => onClose(), 1500);
+    }, 1800);
+  }, [onClose, usdAmount, tab, ticker, portfolio]);
+
+  const chartW = 600;
+  const chartH = 120;
+  const pts = pricesToSvgPoints(prices, chartW, chartH);
+  const chartUp = prices.length >= 2 ? prices[prices.length - 1] >= prices[0] : isUp;
+  const chartColor = chartUp ? P.gain : P.loss;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25 }}
+        onClick={onClose}
+        className="fixed inset-0 z-50"
+        style={{ background: "rgba(42,42,42,0.4)", backdropFilter: "blur(4px)" }}
+      />
+
+      {/* Panel — Phantom-style slide-up, vertical stacking */}
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl max-h-[90vh] overflow-y-auto"
+        style={{ background: P.surface }}
+      >
+        <div className="w-full px-8 lg:px-16 xl:px-24 pt-6 pb-10">
+
+          {/* Drag indicator */}
+          <div className="flex justify-center mb-5">
+            <div className="w-10 h-1 rounded-full" style={{ background: P.border }} />
+          </div>
+
+          {/* ── 1. HEADER ── */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <ModalStockLogo ticker={stock.symbol} name={stock.name} color={stock.color} />
+              <div>
+                <h2 className="text-2xl font-bold">{stock.name}</h2>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-sm" style={{ color: P.gray }}>{stock.symbol}</span>
+                  <span className="text-sm font-semibold" style={{ color: isUp ? P.gain : P.loss }}>
+                    {isUp ? "+" : ""}{stock.change.toFixed(2)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+            <button onClick={onClose} className="p-2 rounded-full cursor-pointer" style={{ background: `${P.border}30` }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={P.gray} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          {/* ── 2. PRICE + HOLDINGS ── */}
+          <div className="flex items-end justify-between mb-6 pb-6" style={{ borderBottom: `1px solid ${P.border}30` }}>
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ fontFamily: "Lexend", color: P.gray }}>Current price</div>
+              <div className="text-3xl font-bold">${stock.price.toFixed(2)}</div>
+            </div>
+            {stock.held != null && (
+              <div className="text-right">
+                <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ fontFamily: "Lexend", color: P.gray }}>Your holdings</div>
+                <div className="text-xl font-bold">{stock.held.toFixed(2)} shares</div>
+                {stock.value != null && (
+                  <div className="text-sm" style={{ color: P.gray }}>${stock.value.toLocaleString("en-US", { minimumFractionDigits: 2 })}</div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── 3. CHART (big, with real data + period selector) ── */}
+          <div className="mb-6">
+            <div className="flex items-center gap-1 mb-3">
+              {PERIODS.map((p) => (
+                <motion.button
+                  key={p}
+                  onClick={() => setPeriod(p)}
+                  animate={{
+                    background: period === p ? `${chartColor}18` : "transparent",
+                    color: period === p ? chartColor : P.gray,
+                  }}
+                  transition={{ duration: 0.25 }}
+                  className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold cursor-pointer"
+                >
+                  {p}
+                </motion.button>
+              ))}
+              {prices.length >= 2 && (
+                <div className="ml-auto flex items-center gap-2">
+                  <span className="text-[12px] font-medium" style={{ color: P.gray }}>
+                    ${prices[0].toFixed(2)} → ${prices[prices.length - 1].toFixed(2)}
+                  </span>
+                  <span className="text-[12px] font-semibold" style={{ color: chartColor }}>
+                    {chartUp ? "+" : ""}{(((prices[prices.length - 1] - prices[0]) / prices[0]) * 100).toFixed(2)}%
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <motion.div
+              key={`${ticker}-${period}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="relative"
+            >
+              {loading && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: `${P.border}40`, borderTopColor: stock.color }} />
+                </div>
+              )}
+              <svg width="100%" height="160" viewBox={`0 0 ${chartW} ${chartH}`} preserveAspectRatio="none" fill="none">
+                <defs>
+                  <linearGradient id={`modal-grad-${stock.symbol}-${period}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={chartColor} stopOpacity="0.2" />
+                    <stop offset="100%" stopColor={chartColor} stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                {pts && (
+                  <>
+                    <polygon points={`0,${chartH} ${pts} ${chartW},${chartH}`} fill={`url(#modal-grad-${stock.symbol}-${period})`} />
+                    <polyline points={pts} stroke={chartColor} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  </>
+                )}
+              </svg>
+            </motion.div>
+          </div>
+
+          {/* ── 4. BUY / SELL TABS ── */}
+          <div className="flex rounded-full p-1 mb-6" style={{ background: `${P.border}25` }}>
+            {(["buy", "sell"] as const).map((t) => (
+              <motion.button
+                key={t}
+                onClick={() => setTab(t)}
+                animate={{
+                  background: tab === t ? (t === "buy" ? P.jade : P.loss) : "transparent",
+                  color: tab === t ? P.white : P.gray,
+                }}
+                transition={{ duration: 0.35, ease }}
+                className="flex-1 py-3 rounded-full text-[14px] font-semibold capitalize cursor-pointer"
+              >
+                {t}
+              </motion.button>
+            ))}
+          </div>
+
+          {/* ── 5. AMOUNT INPUT ── */}
+          <div className="mb-4">
+            <label className="text-[11px] font-semibold uppercase tracking-wider block mb-2" style={{ fontFamily: "Lexend", color: P.gray }}>
+              Amount (USD)
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold" style={{ color: P.gray }}>$</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                placeholder="0.00"
+                className="w-full py-4 pl-9 pr-4 rounded-xl text-2xl font-bold outline-none"
+                style={{ background: `${P.border}15`, color: P.dark, border: `1.5px solid ${P.border}40` }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = tab === "buy" ? P.jade : P.loss)}
+                onBlur={(e) => (e.currentTarget.style.borderColor = `${P.border}40`)}
+              />
+            </div>
+          </div>
+
+          {/* ── 6. QUICK AMOUNTS ── */}
+          <div className="flex gap-3 mb-6">
+            {presets.map((p) => {
+              const selected = amount === p.toString();
+              const accent = tab === "buy" ? P.jade : P.loss;
+              return (
+                <motion.button
+                  key={p}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={spring}
+                  onClick={() => setAmount(p.toString())}
+                  className="flex-1 py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer"
+                  style={{
+                    background: selected ? accent : `${P.border}20`,
+                    color: selected ? P.white : P.dark,
+                  }}
+                >
+                  ${p}
+                </motion.button>
+              );
+            })}
+          </div>
+
+          {/* ── 7. SHARES ESTIMATE ── */}
+          {usdAmount > 0 && step === "input" && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="text-center mb-6"
+            >
+              <span className="text-sm" style={{ color: P.gray }}>
+                {"\u2248"} {shares.toFixed(4)} shares of {stock.name}
+              </span>
+            </motion.div>
+          )}
+
+          {/* ── 8. REVIEW / CONFIRM / PROCESSING / DONE ── */}
+          <AnimatePresence mode="wait">
+            {step === "input" && (
+              <motion.div key="review-area" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                {insufficientFunds && usdAmount > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="flex items-center gap-2 mb-3 py-2.5 px-4 rounded-xl"
+                    style={{ background: `${P.loss}08`, border: `1px solid ${P.loss}20` }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={P.loss} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <span className="text-[13px]" style={{ color: P.loss }}>
+                      Not enough funds — add ${(usdAmount - portfolio.cash).toFixed(2)} to complete
+                    </span>
+                  </motion.div>
+                )}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={spring}
+                  onClick={handleReview}
+                  className="w-full py-4 rounded-xl text-[15px] font-bold cursor-pointer"
+                  style={{
+                    background: tab === "buy" ? P.jade : P.loss,
+                    color: P.white,
+                    opacity: usdAmount > 0 && !insufficientFunds ? 1 : 0.5,
+                    pointerEvents: insufficientFunds ? "none" : "auto",
+                  }}
+                >
+                  Review order
+                </motion.button>
+              </motion.div>
+            )}
+
+            {step === "confirm" && (
+              <motion.div
+                key="confirm"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="rounded-xl p-5 mb-4" style={{ background: P.bg }}>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ fontFamily: "Lexend", color: P.gray }}>
+                    Order summary
+                  </div>
+                  <div className="flex justify-between py-2" style={{ borderBottom: `1px solid ${P.border}25` }}>
+                    <span className="text-[13px]" style={{ color: P.gray }}>Action</span>
+                    <span className="text-[13px] font-semibold" style={{ color: tab === "buy" ? P.gain : P.loss }}>
+                      {tab === "buy" ? "Buy" : "Sell"} {stock.name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2" style={{ borderBottom: `1px solid ${P.border}25` }}>
+                    <span className="text-[13px]" style={{ color: P.gray }}>Amount</span>
+                    <span className="text-[13px] font-semibold">${usdAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between py-2" style={{ borderBottom: `1px solid ${P.border}25` }}>
+                    <span className="text-[13px]" style={{ color: P.gray }}>Shares</span>
+                    <span className="text-[13px] font-semibold">{"\u2248"} {shares.toFixed(4)}</span>
+                  </div>
+                  <div className="flex justify-between py-2" style={{ borderBottom: `1px solid ${P.border}25` }}>
+                    <span className="text-[13px]" style={{ color: P.gray }}>Price per share</span>
+                    <span className="text-[13px] font-semibold">${stock.price.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-[13px]" style={{ color: P.gray }}>Fee</span>
+                    <span className="text-[13px] font-semibold" style={{ color: P.jade }}>Free</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setStep("input")}
+                    className="flex-1 py-4 rounded-xl text-[14px] font-semibold cursor-pointer"
+                    style={{ background: `${P.border}25`, color: P.gray }}
+                  >
+                    Back
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={spring}
+                    onClick={handleConfirm}
+                    className="flex-[2] py-4 rounded-xl text-[15px] font-bold cursor-pointer"
+                    style={{ background: tab === "buy" ? P.jade : P.loss, color: P.white }}
+                  >
+                    Confirm {tab === "buy" ? "purchase" : "sale"}
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+
+            {step === "processing" && (
+              <motion.div
+                key="processing"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center py-8"
+              >
+                <div className="w-10 h-10 rounded-full animate-spin mb-4" style={{ border: `3px solid ${P.border}30`, borderTopColor: tab === "buy" ? P.jade : P.loss }} />
+                <p className="text-[15px] font-semibold">Processing {tab === "buy" ? "purchase" : "sale"}...</p>
+                <p className="text-[12px] mt-1" style={{ color: P.gray }}>This usually takes a few seconds</p>
+              </motion.div>
+            )}
+
+            {step === "done" && (
+              <motion.div
+                key="done"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center py-8"
+              >
+                <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ background: `${P.jade}15` }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+                <p className="text-[18px] font-bold">
+                  {tab === "buy" ? "Purchase" : "Sale"} complete
+                </p>
+                <p className="text-[13px] mt-1" style={{ color: P.gray }}>
+                  {tab === "buy" ? "Bought" : "Sold"} {"\u2248"}{shares.toFixed(4)} shares of {stock.name}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
+/* ─── Toggle Pill (reusable notification-style toggle) ─── */
+export function TogglePill({ checked, onChange, label, icon }: { checked: boolean; onChange: (v: boolean) => void; label: string; icon?: string }) {
+  return (
+    <motion.button
+      whileHover={{ scale: 1.06 }}
+      whileTap={{ scale: 0.95 }}
+      transition={spring}
+      onClick={() => onChange(!checked)}
+      className="flex items-center gap-2.5 py-2.5 px-5 rounded-full cursor-pointer"
+      style={{
+        background: checked ? P.dark : "transparent",
+        color: checked ? P.white : P.gray,
+        border: `1.5px solid ${checked ? P.dark : P.border}60`,
+      }}
+    >
+      {icon && (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d={icon} />
+        </svg>
+      )}
+      <span className="text-[13px] font-semibold">{label}</span>
+    </motion.button>
+  );
+}

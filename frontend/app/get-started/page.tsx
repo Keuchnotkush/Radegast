@@ -39,12 +39,33 @@ function AuthCard() {
   const { connectWithEmail, verifyOneTimePassword } = useConnectWithOtp();
 
   useEffect(() => {
-    if (isLoggedIn) router.push("/dashboard");
-  }, [isLoggedIn, router]);
+    if (isLoggedIn) {
+      if (mode === "signup" && name.trim()) {
+        // New user — save name + redirect to onboarding
+        const firstName = name.trim().split(" ")[0];
+        const lastName = name.trim().split(" ").slice(1).join(" ");
+        localStorage.setItem("radegast_firstName", firstName);
+        localStorage.setItem("radegast_isNew", "true");
+        // Register in backend (fire & forget)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/user/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, firstName, lastName }),
+        }).catch(() => {});
+        router.push("/dashboard/onboarding");
+      } else {
+        router.push("/dashboard");
+      }
+    }
+  }, [isLoggedIn, router, mode, name, email]);
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otpSent) {
+      // Save name to localStorage before Dynamic SDK call (in case redirect happens fast)
+      if (mode === "signup" && name.trim()) {
+        localStorage.setItem("radegast_firstName", name.trim().split(" ")[0]);
+      }
       await connectWithEmail(email);
       setOtpSent(true);
     } else {

@@ -3,10 +3,11 @@ export
 OG_RPC ?= https://evmrpc-testnet.0g.ai
 
 dev: .installed
-	@echo "  ⚡ radegast — anvil:8545 api:8000 app:3000"
+	@echo "  ⚡ radegast — anvil:8545 api:8000 backend:4000 app:3000"
 	@trap 'kill 0' INT; \
 		anvil --chain-id 31337 --silent & \
 		cd ai && .venv/bin/uvicorn v3.fastapi.server:app --host 0.0.0.0 --port 8000 --reload & \
+		cd backend && node --watch server.js & \
 		(test -f frontend/package.json && cd frontend && pnpm dev || sleep infinity) & \
 		wait
 
@@ -14,6 +15,8 @@ dev: .installed
 	@chmod +x install.sh && ./install.sh && touch .installed
 front:
 	@cd frontend && pnpm dev
+backend:
+	@cd backend && npm install && node --watch server.js
 install:
 	@rm -f .installed && $(MAKE) .installed
 
@@ -70,4 +73,4 @@ sync:
 	git rebase origin/$$branch && \
 	echo "  ✓ synced with origin/$$branch"
 
-.PHONY: dev install build test deploy-og deploy-local deploy ai-train up down clean check pr push sync front
+.PHONY: dev install build test deploy-og deploy-local deploy ai-train up down clean check pr push sync front backend
