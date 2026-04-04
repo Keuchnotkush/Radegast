@@ -6,9 +6,80 @@ import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <DynamicContextProvider
+      theme="auto"
       settings={{
         environmentId: process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID!,
         walletConnectors: [EthereumWalletConnectors],
+        cssOverrides: `
+          /* ─── Radegast theme for Dynamic modals ─── */
+          .dynamic-widget-modal, .dynamic-widget-card {
+            font-family: 'Sora', sans-serif !important;
+            border-radius: 20px !important;
+          }
+          /* Background & surfaces */
+          :root {
+            --dynamic-font-family: 'Sora', sans-serif;
+            --dynamic-base-1: #F0EDE8;
+            --dynamic-base-2: #D8D2C8;
+            --dynamic-base-3: #C4C4C430;
+            --dynamic-base-4: #C4C4C460;
+            --dynamic-text-primary: #2A2A2A;
+            --dynamic-text-secondary: #6B6B6B;
+            --dynamic-text-tertiary: #6B6B6B80;
+            --dynamic-brand-primary-color: #38A88A;
+            --dynamic-brand-hover-color: #2D8E74;
+            --dynamic-badge-primary-background: #38A88A18;
+            --dynamic-badge-primary-color: #38A88A;
+            --dynamic-border: #C4C4C430;
+            --dynamic-hover: #D8D2C840;
+            --dynamic-connect-button-background: #38A88A;
+            --dynamic-connect-button-color: #FFFFFF;
+            --dynamic-connect-button-border-radius: 12px;
+            --dynamic-modal-border-radius: 20px;
+            --dynamic-widget-border-radius: 20px;
+            --dynamic-modal-padding: 24px;
+          }
+          /* Primary button (Continue, etc.) */
+          .button--primary, [data-testid="dynamic-button-primary"] {
+            background: #2A2A2A !important;
+            color: #FFFFFF !important;
+            border-radius: 12px !important;
+            font-family: 'Sora', sans-serif !important;
+            font-weight: 600 !important;
+          }
+          .button--primary:hover, [data-testid="dynamic-button-primary"]:hover {
+            background: #38A88A !important;
+          }
+          /* Input fields */
+          .dynamic-widget-modal input, .dynamic-widget-card input {
+            font-family: 'Sora', sans-serif !important;
+            border-radius: 12px !important;
+            border: 1.5px solid #C4C4C440 !important;
+            background: #D8D2C8 !important;
+          }
+          .dynamic-widget-modal input:focus, .dynamic-widget-card input:focus {
+            border-color: #38A88A !important;
+          }
+          /* Sandbox badge — hide or restyle */
+          [data-testid="sandbox-badge"], .sandbox-badge {
+            background: #C8A415 !important;
+            border-radius: 8px !important;
+            font-family: 'Sora', sans-serif !important;
+          }
+          /* Modal overlay */
+          .dynamic-modal-overlay {
+            background: rgba(42, 42, 42, 0.4) !important;
+            backdrop-filter: blur(4px) !important;
+          }
+          /* Section labels */
+          .dynamic-widget-modal label, .dynamic-widget-card label {
+            font-family: 'Lexend', sans-serif !important;
+            text-transform: uppercase !important;
+            font-size: 11px !important;
+            letter-spacing: 0.05em !important;
+            color: #6B6B6B !important;
+          }
+        `,
         events: {
           onAuthSuccess: (args) => {
             console.log("[Dynamic] Auth success", args);
