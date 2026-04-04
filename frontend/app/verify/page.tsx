@@ -120,8 +120,8 @@ export default function Verify() {
                 transition={{ duration: 0.3, ease }}
               >
                 <div
-                  className="flex items-center gap-3 rounded-2xl px-6 py-4"
-                  style={{ background: `${P.white}18`, backdropFilter: "blur(10px)", border: `1px solid ${P.white}25` }}
+                  className="flex items-center gap-3 rounded-2xl px-6 py-4 transition-colors duration-700"
+                  style={{ background: status === "loading" ? `${P.dark}10` : `${P.white}18`, backdropFilter: "blur(10px)", border: `1px solid ${status === "loading" ? `${P.dark}20` : `${P.white}25`}` }}
                 >
                   <input
                     type="text"
@@ -129,8 +129,8 @@ export default function Verify() {
                     onChange={(e) => setHash(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleVerify()}
                     placeholder="0x6CA0f3b2..."
-                    className="flex-1 bg-transparent text-base font-medium outline-none placeholder-white/40"
-                    style={{ color: P.white }}
+                    className="flex-1 bg-transparent text-base font-medium outline-none transition-colors duration-700"
+                    style={{ color: status === "loading" ? P.dark : P.white }}
                   />
                   <motion.button
                     whileHover={{ scale: 1.05 }}
