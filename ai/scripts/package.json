@@ -4,6 +4,7 @@
   "type": "module",
   "dependencies": {
     "@0gfoundation/0g-ts-sdk": "^1.2.1",
+    "@0glabs/0g-serving-broker": "^0.7.4",
     "ethers": "^6.13.0"
   }
 }
