@@ -81,6 +81,18 @@ const xStockAbi = [
   { type: "function", name: "burn", inputs: [{ name: "f", type: "address" }, { name: "a", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
 ];
 
+// ── MockUSDC (6 decimals) ──
+// Address TBD — Manny deploys with: forge script script/DeployUSDC.s.sol --rpc-url $OG_RPC --broadcast
+const USDC_ADDRESS = process.env.USDC_ADDRESS || "0x0000000000000000000000000000000000000000";
+const USDC_DECIMALS = 6;
+const FAUCET_AMOUNT = 10_000; // $10,000 demo credits on signup
+
+const usdcAbi = [
+  { type: "function", name: "balanceOf", inputs: [{ name: "owner", type: "address" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "mint", inputs: [{ name: "to", type: "address" }, { name: "amount", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "burn", inputs: [{ name: "from", type: "address" }, { name: "amount", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
+];
+
 /* Frontend ticker → xStock symbol */
 const TICKER_TO_XSTOCK = {
   TSLA: "TSLAx", AAPL: "AAPLx", NVDA: "NVDAx", GOOGL: "GOOGx",
@@ -445,7 +457,48 @@ app.get("/api/prices", async (_req, res) => {
   }
 });
 
-// ── Trade: buy (mint) or sell (burn) xStocks ──
+// ── Faucet: mint demo USDC to wallet (called on signup / add funds) ──
+app.post("/api/faucet", async (req, res) => {
+  const { walletAddress, amount } = req.body;
+  if (!walletAddress) return res.status(400).json({ error: "walletAddress required" });
+  if (!walletClient) return res.status(500).json({ error: "No signer — set PRIVATE_KEY" });
+  if (USDC_ADDRESS === "0x0000000000000000000000000000000000000000") {
+    return res.status(503).json({ error: "MockUSDC not deployed — set USDC_ADDRESS in .env" });
+  }
+
+  const usdAmount = amount || FAUCET_AMOUNT;
+  const weiAmount = BigInt(usdAmount) * BigInt(10 ** USDC_DECIMALS);
+
+  try {
+    const txHash = await walletClient.writeContract({
+      address: USDC_ADDRESS, abi: usdcAbi, functionName: "mint",
+      args: [walletAddress, weiAmount],
+    });
+    res.json({ success: true, txHash, amount: usdAmount, symbol: "USDC" });
+  } catch (err) {
+    console.error("Faucet error:", err.message);
+    res.status(500).json({ error: "Faucet failed: " + err.message });
+  }
+});
+
+// ── USDC balance ──
+app.get("/api/usdc/:address", async (req, res) => {
+  if (USDC_ADDRESS === "0x0000000000000000000000000000000000000000") {
+    return res.json({ balance: 0, formatted: "0.00" });
+  }
+  try {
+    const raw = await publicClient.readContract({
+      address: USDC_ADDRESS, abi: usdcAbi, functionName: "balanceOf",
+      args: [req.params.address],
+    });
+    const formatted = (Number(raw) / 10 ** USDC_DECIMALS).toFixed(2);
+    res.json({ balance: Number(raw), formatted, symbol: "USDC" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Trade: buy (burn USDC → mint xStock) or sell (burn xStock → mint USDC) ──
 app.post("/api/trade", async (req, res) => {
   const { action, ticker, usdAmount, walletAddress } = req.body;
   if (!action || !ticker || !usdAmount || !walletAddress) {
@@ -461,6 +514,8 @@ app.post("/api/trade", async (req, res) => {
   const contractAddr = CONTRACTS.xStocks[xSymbol];
   if (!contractAddr) return res.status(400).json({ error: `No contract for ${xSymbol}` });
 
+  const hasUsdc = USDC_ADDRESS !== "0x0000000000000000000000000000000000000000";
+
   try {
     // Read on-chain price to calculate shares
     const price = await publicClient.readContract({
@@ -468,28 +523,48 @@ app.post("/api/trade", async (req, res) => {
     });
     const priceUsd = Number(price) / 1e6;
     const shares = usdAmount / priceUsd;
-    // Convert shares to 18-decimal wei
-    const weiAmount = BigInt(Math.floor(shares * 1e18));
+    const weiShares = BigInt(Math.floor(shares * 1e18));
+    const weiUsdc = BigInt(Math.floor(usdAmount * 10 ** USDC_DECIMALS));
 
-    let txHash;
+    const txHashes = [];
+
     if (action === "buy") {
-      txHash = await walletClient.writeContract({
+      // 1. Burn USDC from user (payment)
+      if (hasUsdc) {
+        const usdcTx = await walletClient.writeContract({
+          address: USDC_ADDRESS, abi: usdcAbi, functionName: "burn",
+          args: [walletAddress, weiUsdc],
+        });
+        txHashes.push({ step: "burn_usdc", txHash: usdcTx });
+      }
+      // 2. Mint xStock to user
+      const stockTx = await walletClient.writeContract({
         address: contractAddr, abi: xStockAbi, functionName: "mint",
-        args: [walletAddress, weiAmount],
+        args: [walletAddress, weiShares],
       });
+      txHashes.push({ step: "mint_xstock", txHash: stockTx });
     } else if (action === "sell") {
-      txHash = await walletClient.writeContract({
+      // 1. Burn xStock from user
+      const stockTx = await walletClient.writeContract({
         address: contractAddr, abi: xStockAbi, functionName: "burn",
-        args: [walletAddress, weiAmount],
+        args: [walletAddress, weiShares],
       });
+      txHashes.push({ step: "burn_xstock", txHash: stockTx });
+      // 2. Mint USDC to user (proceeds)
+      if (hasUsdc) {
+        const usdcTx = await walletClient.writeContract({
+          address: USDC_ADDRESS, abi: usdcAbi, functionName: "mint",
+          args: [walletAddress, weiUsdc],
+        });
+        txHashes.push({ step: "mint_usdc", txHash: usdcTx });
+      }
     } else {
       return res.status(400).json({ error: "action must be 'buy' or 'sell'" });
     }
 
-    // Don't wait for receipt — 0G testnet is slow but txs go through
     res.json({
       success: true,
-      txHash,
+      txHashes,
       action,
       ticker,
       xSymbol,
