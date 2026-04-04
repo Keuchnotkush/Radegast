@@ -60,7 +60,7 @@ export default function Landing() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
         className="fixed top-4 right-8 z-40 flex items-center gap-6 px-6 py-3 rounded-full"
-        style={{ background: P.white, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
+        style={{ background: "#F0EDE8", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
       >
         <a href="#home" className="text-[13px] font-medium transition hover:opacity-70" style={{ color: P.dark, cursor: "none" }}>Home</a>
         <a href="#how-it-works" className="text-[13px] font-medium transition hover:opacity-70" style={{ color: P.dark, cursor: "none" }}>How it works</a>
