@@ -1,65 +1,70 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavAvatar, SectionTitle, TogglePill, P, ease, spring } from "../shared";
-import { useSettings, useUser } from "../store";
+import { useSettings, useUser, usePortfolio, MARKET } from "../store";
+import { useAI } from "@/lib/hooks/useAI";
+import type { ConsensusResult } from "@/lib/hooks/useAI";
+
+/* ─── Ticker → xStock symbol mapping ─── */
+const TICKER_TO_XSTOCK: Record<string, string> = {
+  TSLA: "TSLAx", AAPL: "AAPLx", NVDA: "NVDAx", GOOGL: "GOOGx",
+  AMZN: "AMZNx", META: "METAx", SPY: "SPYx", QQQ: "NDXx",
+  MSTR: "MSTRx", MSFT: "MSFTx", JPM: "JPMx", V: "Vx",
+  XOM: "XOMx", LLY: "LLYx", "MC.PA": "LVMHx",
+};
 
 /* ─── AI Models (structure only — votes come from backend) ─── */
-const MODELS: { name: string; color: string; desc: string; details: string[]; stats: { val: string; label: string }[] }[] = [
-  {
-    name: "XGBoost",
-    color: "#2E8B57",
-    desc: "Technical — RSI, MACD, volume, price patterns",
-    details: [
-      "37 statistical features computed per asset — momentum, RSI, Bollinger bands, cross-asset correlation matrices",
-      "ONNX runtime for deterministic, reproducible inference across any environment",
-      "Trained on 15 years of daily price data across 500+ equities",
-    ],
-    stats: [
-      { val: "37", label: "features per asset" },
-      { val: "15y", label: "training history" },
-      { val: "<50ms", label: "inference time" },
-    ],
-  },
-  {
-    name: "Sentiment",
-    color: "#4B0082",
-    desc: "NLP — news, social, earnings call analysis",
-    details: [
-      "Processes real-time news feeds, social media signals, and earnings call transcripts",
-      "Multi-source aggregation reduces single-platform bias and noise",
-      "Detects sentiment shifts before they reflect in price action",
-    ],
-    stats: [
-      { val: "50K+", label: "articles/day" },
-      { val: "2", label: "independent LLMs" },
-      { val: "~4h", label: "lead on price" },
-    ],
-  },
-  {
-    name: "Macro",
-    color: "#CC5A3A",
-    desc: "Economics — Fed rates, CPI, sector rotation",
-    details: [
-      "Tracks Fed interest rate decisions, CPI releases, unemployment, GDP revisions",
-      "Models sector rotation cycles — defensive vs cyclical positioning",
-      "Correlates macro regime changes with historical equity performance",
-    ],
-    stats: [
-      { val: "12", label: "macro indicators" },
-      { val: "4", label: "regime types" },
-      { val: "60y", label: "cycle history" },
-    ],
-  },
+const MODELS: { name: string; desc: string; key: string }[] = [
+  { name: "XGBoost", desc: "Technical — RSI, MACD, volume, price patterns", key: "xgboost" },
+  { name: "Sentiment", desc: "NLP — news, social, earnings call analysis", key: "llm_a" },
+  { name: "Macro", desc: "Economics — Fed rates, CPI, sector rotation", key: "llm_b" },
 ];
+
+/* ─── Label color helper ─── */
+function labelColor(label: string) {
+  if (label === "LOW") return P.gain;
+  if (label === "HIGH") return P.loss;
+  return "#C8A415";
+}
 
 export default function AdvisorPage() {
   const { initial } = useUser();
   const { aiSuggestions, setAiSuggestions, autoSession } = useSettings();
-  const [openModel, setOpenModel] = useState<number | null>(null);
+  const { holdings, totalValue } = usePortfolio();
+  const { runConsensus, loading, error } = useAI();
+  const [result, setResult] = useState<ConsensusResult | null>(null);
   const advisorOn = aiSuggestions;
   const tradingOn = autoSession.active;
+
+  /* Convert holdings to xStock positions (percentages) */
+  const buildPositions = useCallback((): Record<string, number> => {
+    const total = totalValue();
+    if (total === 0) return {};
+    const positions: Record<string, number> = {};
+    for (const h of holdings) {
+      const stock = MARKET.find((s) => s.ticker === h.ticker);
+      if (!stock) continue;
+      const xSymbol = TICKER_TO_XSTOCK[h.ticker];
+      if (!xSymbol) continue;
+      positions[xSymbol] = (stock.price * h.shares / total) * 100;
+    }
+    return positions;
+  }, [holdings, totalValue]);
+
+  const handleAnalyze = useCallback(async () => {
+    const positions = buildPositions();
+    if (Object.keys(positions).length === 0) return;
+    const mode = tradingOn ? "trade" : "conseil";
+    const consensus = await runConsensus({
+      user: "frontend_user",
+      positions,
+      strategy: "balanced",
+      mode,
+    });
+    if (consensus) setResult(consensus);
+  }, [buildPositions, tradingOn, runConsensus]);
 
   return (
     <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
@@ -109,6 +114,85 @@ export default function AdvisorPage() {
           </AnimatePresence>
         </motion.section>
 
+        {/* ═══ ANALYZE BUTTON ═══ */}
+        {(advisorOn || tradingOn) && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease }}
+            className="mb-10"
+          >
+            <button
+              onClick={handleAnalyze}
+              disabled={loading}
+              className="px-6 py-3 rounded-xl text-[14px] font-semibold transition-all"
+              style={{
+                background: loading ? P.border : P.jade,
+                color: "#fff",
+                cursor: loading ? "wait" : "pointer",
+              }}
+            >
+              {loading ? "Analyzing portfolio…" : "Analyze my portfolio"}
+            </button>
+            {error && (
+              <p className="text-[13px] mt-3" style={{ color: P.loss }}>
+                AI service unavailable: {error}
+              </p>
+            )}
+          </motion.section>
+        )}
+
+        {/* ═══ CONSENSUS SUMMARY ═══ */}
+        {result && (advisorOn || tradingOn) && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease }}
+            className="mb-16"
+          >
+            <SectionTitle>Consensus result</SectionTitle>
+            <div className="flex flex-wrap gap-6 mt-4">
+              <div className="flex flex-col">
+                <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: P.gray }}>Risk score</span>
+                <span className="text-3xl font-bold mt-1" style={{ color: labelColor(result.consensus_label) }}>
+                  {result.consensus_score.toFixed(1)}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: P.gray }}>Risk level</span>
+                <span
+                  className="text-[14px] font-bold mt-2 px-3 py-1 rounded-full"
+                  style={{ background: `${labelColor(result.consensus_label)}18`, color: labelColor(result.consensus_label) }}
+                >
+                  {result.consensus_label}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: P.gray }}>Confidence</span>
+                <span className="text-3xl font-bold mt-1">{(result.confidence * 100).toFixed(0)}%</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: P.gray }}>Models agreed</span>
+                <span className="text-3xl font-bold mt-1">{result.providers_agreed}</span>
+              </div>
+            </div>
+            {(result.da_hash || result.tx_hash) && (
+              <div className="flex flex-wrap gap-4 mt-4">
+                {result.da_hash && (
+                  <span className="text-[11px] font-mono" style={{ color: P.gray }}>
+                    DA: {result.da_hash.slice(0, 10)}…{result.da_hash.slice(-6)}
+                  </span>
+                )}
+                {result.tx_hash && (
+                  <span className="text-[11px] font-mono" style={{ color: P.gray }}>
+                    TX: {result.tx_hash.slice(0, 10)}…{result.tx_hash.slice(-6)}
+                  </span>
+                )}
+              </div>
+            )}
+          </motion.section>
+        )}
+
         {/* ═══ MODEL CONSENSUS ═══ */}
         {(advisorOn || tradingOn) && (
           <motion.section
@@ -120,128 +204,44 @@ export default function AdvisorPage() {
               <div className="flex items-center gap-3 mb-6">
                 <SectionTitle>Model consensus</SectionTitle>
               </div>
-              {/* Model name buttons row */}
-              <div className="flex flex-row gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                 {MODELS.map((m, i) => {
-                  const isOpen = openModel === i;
+                  const hasResult = !!result;
                   return (
                     <motion.div
                       key={m.name}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, margin: "-40px" }}
-                      transition={{ duration: 0.5, ease, delay: i * 0.08 }}
-                      className="flex-1"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ scale: 1.03, y: -2 }}
+                      transition={{ delay: 0.2 + i * 0.08, duration: 0.4, ease }}
+                      className="flex items-start gap-4 p-5 rounded-2xl cursor-default"
+                      style={{ background: P.surface, border: `1px solid ${P.border}30` }}
                     >
-                      <motion.button
-                        onClick={() => setOpenModel(isOpen ? null : i)}
-                        className="flex flex-col items-center cursor-pointer w-full group"
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
-                        transition={spring}
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-[13px] font-bold"
+                        style={{
+                          background: hasResult ? `${labelColor(result.consensus_label)}15` : `${P.border}15`,
+                          color: hasResult ? labelColor(result.consensus_label) : P.gray,
+                        }}
                       >
-                        <motion.span
-                          className="text-4xl md:text-6xl font-bold leading-none select-none"
-                          animate={{ color: isOpen ? m.color : `${m.color}30` }}
-                          transition={{ duration: 0.4, ease }}
-                        >
-                          {m.name}
-                        </motion.span>
-                        <motion.div
-                          animate={{ opacity: isOpen ? 0 : 1, y: isOpen ? -5 : 0 }}
-                          transition={{ duration: 0.3, ease }}
-                          className="mt-1"
-                        >
-                          <p className="text-sm text-center" style={{ color: P.gray }}>{m.desc}</p>
-                        </motion.div>
-                      </motion.button>
+                        {hasResult ? result.consensus_score.toFixed(0) : "—"}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[14px] font-semibold">{m.name}</span>
+                          <span
+                            className="text-[11px] font-semibold uppercase"
+                            style={{ color: hasResult ? labelColor(result.consensus_label) : P.gray }}
+                          >
+                            {hasResult ? result.consensus_label : "waiting"}
+                          </span>
+                        </div>
+                        <p className="text-[12px] mt-1 leading-relaxed" style={{ color: P.gray }}>{m.desc}</p>
+                      </div>
                     </motion.div>
                   );
                 })}
               </div>
-
-              {/* Expanded block — full width below the row */}
-              <AnimatePresence initial={false}>
-                {openModel !== null && (() => {
-                  const m = MODELS[openModel];
-                  return (
-                    <motion.div
-                      key={m.name}
-                      initial={{ height: 0, opacity: 0, borderRadius: 40 }}
-                      animate={{ height: "auto", opacity: 1, borderRadius: 20 }}
-                      exit={{ height: 0, opacity: 0, borderRadius: 40 }}
-                      transition={{ duration: 0.55, ease }}
-                      className="overflow-hidden mt-5 w-full"
-                      style={{ background: m.color }}
-                    >
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.4, ease, delay: 0.15 }}
-                        className="p-6 md:p-10 md:py-8 text-center"
-                      >
-                        {/* Header + Stats centered */}
-                        <div className="flex flex-col items-center gap-6 mb-8">
-                          <div>
-                            <h3 className="text-2xl md:text-3xl font-bold mb-1" style={{ color: "#FFFFFF" }}>{m.name}</h3>
-                            <p className="text-[14px] leading-relaxed" style={{ color: "rgba(255,255,255,0.75)" }}>
-                              {m.desc}
-                            </p>
-                          </div>
-                          {/* Stats — inline row */}
-                          <div className="flex justify-center gap-8 md:gap-12">
-                            {m.stats.map((s, si) => (
-                              <motion.div
-                                key={s.label}
-                                initial={{ opacity: 0, y: 15 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.4, ease, delay: 0.25 + si * 0.08 }}
-                              >
-                                <div className="w-8 h-[3px] rounded-full mb-2" style={{ background: "rgba(255,255,255,0.4)" }} />
-                                <div className="text-2xl font-bold" style={{ color: "#FFFFFF" }}>{s.val}</div>
-                                <div className="text-[12px] mt-0.5" style={{ color: "rgba(255,255,255,0.6)" }}>{s.label}</div>
-                              </motion.div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Detail cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                          {m.details.map((d, di) => (
-                            <motion.div
-                              key={di}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.4, ease, delay: 0.35 + di * 0.08 }}
-                              whileHover={{ scale: 1.03, y: -3 }}
-                              className="py-5 px-5 rounded-xl text-left"
-                              style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)" }}
-                            >
-                              <div className="w-6 h-[2px] rounded-full mb-3" style={{ background: "rgba(255,255,255,0.5)" }} />
-                              <p className="text-[13px] leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>{d}</p>
-                            </motion.div>
-                          ))}
-                        </div>
-
-                        {/* Status badge */}
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.6 }}
-                          className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full"
-                          style={{ background: "rgba(255,255,255,0.15)" }}
-                        >
-                          <div className="w-2 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.5)" }} />
-                          <span className="text-[11px] font-semibold uppercase" style={{ color: "rgba(255,255,255,0.7)" }}>
-                            Waiting for backend
-                          </span>
-                        </motion.div>
-                      </motion.div>
-                    </motion.div>
-                  );
-                })()}
-              </AnimatePresence>
             </motion.section>
         )}
 
@@ -254,17 +254,40 @@ export default function AdvisorPage() {
             className="mb-16"
           >
               <SectionTitle>Recommendations</SectionTitle>
-              <div className="flex flex-col items-center text-center py-12 mt-4">
-                <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ background: `${P.jade}15` }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
+              {result && result.suggestions.length > 0 ? (
+                <div className="flex flex-col gap-3 mt-4">
+                  {result.suggestions.map((s, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.06, duration: 0.3, ease }}
+                      className="flex items-start gap-3 p-4 rounded-xl"
+                      style={{ background: P.surface, border: `1px solid ${P.border}30` }}
+                    >
+                      <div
+                        className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold mt-0.5"
+                        style={{ background: `${P.jade}15`, color: P.jade }}
+                      >
+                        {i + 1}
+                      </div>
+                      <p className="text-[13px] leading-relaxed" style={{ color: P.dark }}>{s}</p>
+                    </motion.div>
+                  ))}
                 </div>
-                <p className="text-[15px] font-semibold" style={{ color: P.dark }}>No recommendations yet</p>
-                <p className="text-[13px] mt-2 max-w-sm" style={{ color: P.gray }}>
-                  When the AI backend is connected, buy/hold/sell recommendations from the 3 models will appear here.
-                </p>
-              </div>
+              ) : (
+                <div className="flex flex-col items-center text-center py-12 mt-4">
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ background: `${P.jade}15` }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  </div>
+                  <p className="text-[15px] font-semibold" style={{ color: P.dark }}>No recommendations yet</p>
+                  <p className="text-[13px] mt-2 max-w-sm" style={{ color: P.gray }}>
+                    Click &quot;Analyze my portfolio&quot; to get buy/hold/sell recommendations from the 3 AI models.
+                  </p>
+                </div>
+              )}
             </motion.section>
         )}
 
@@ -287,17 +310,51 @@ export default function AdvisorPage() {
                 </motion.div>
               </div>
 
-              <div className="flex flex-col items-center text-center py-10">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ background: `${P.jade}15` }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+              {result && result.moves.length > 0 ? (
+                <div className="flex flex-col gap-2 mt-4">
+                  {result.moves.map((m, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.06, duration: 0.3, ease }}
+                      className="flex items-center justify-between p-4 rounded-xl"
+                      style={{ background: P.surface, border: `1px solid ${P.border}30` }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="text-[11px] font-bold uppercase px-2 py-0.5 rounded"
+                          style={{
+                            background: m.action === "buy" ? `${P.gain}18` : `${P.loss}18`,
+                            color: m.action === "buy" ? P.gain : P.loss,
+                          }}
+                        >
+                          {m.action}
+                        </span>
+                        <span className="text-[14px] font-semibold">{m.token}</span>
+                      </div>
+                      <span className="text-[14px] font-mono" style={{ color: P.gray }}>{m.pct.toFixed(1)}%</span>
+                    </motion.div>
+                  ))}
+                  {result.trade_results && result.trade_results.length > 0 && (
+                    <p className="text-[11px] mt-2" style={{ color: P.gray }}>
+                      {result.trade_results.filter(t => t.success).length}/{result.trade_results.length} trades executed on-chain
+                    </p>
+                  )}
                 </div>
-                <p className="text-[14px] font-medium" style={{ color: P.dark }}>No autonomous trades yet</p>
-                <p className="text-[12px] mt-1" style={{ color: P.gray }}>
-                  Trades will appear here once the AI backend is connected.
-                </p>
-              </div>
+              ) : (
+                <div className="flex flex-col items-center text-center py-10">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ background: `${P.jade}15` }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <p className="text-[14px] font-medium" style={{ color: P.dark }}>No autonomous trades yet</p>
+                  <p className="text-[12px] mt-1" style={{ color: P.gray }}>
+                    Click &quot;Analyze my portfolio&quot; in trade mode to trigger autonomous rebalancing.
+                  </p>
+                </div>
+              )}
             </motion.section>
         )}
 

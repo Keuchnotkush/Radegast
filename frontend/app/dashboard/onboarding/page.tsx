@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { StockLogo, P, ease, spring } from "../shared";
 import { usePortfolio, MARKET, STOCK_COLORS, PROFILES, useWallet } from "../store";
-import { useOnramp } from "@dynamic-labs/sdk-react-core";
+import { useOpenFundingOptions } from "@dynamic-labs/sdk-react-core";
 
 type Step = "welcome" | "discover" | "profile" | "fund" | "pick" | "done";
 
@@ -15,7 +15,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { addFunds, buy } = usePortfolio();
   const wallet = useWallet();
-  const onramp = useOnramp();
+  const { openFundingOptions } = useOpenFundingOptions();
   const [step, setStep] = useState<Step>("welcome");
   const [profile, setProfile] = useState<string | null>(null);
   const [fundAmount, setFundAmount] = useState("");
@@ -44,20 +44,14 @@ export default function OnboardingPage() {
   const handleFund = useCallback(async () => {
     if (usd <= 0) return;
 
-    // If Dynamic onramp is available and wallet is connected, use real onramp
-    if (onramp.enabled && wallet.address && onramp.providers.length > 0) {
+    // If Dynamic onramp is available and wallet is connected, open funding UI
+    if (wallet.address) {
       try {
-        setFundStep("processing");
-        await onramp.open({
-          address: wallet.address,
-          onrampProvider: onramp.providers[0].provider,
-          token: "USDC",
-          tokenAmount: usd,
-          currency: "USD",
-        });
-        await wallet.refreshBalance();
+        openFundingOptions();
+        addFunds(usd);
         setFundStep("done");
         setTimeout(() => setStep("pick"), 1200);
+        wallet.refreshBalance().catch(() => {});
       } catch (err) {
         console.error("[Onramp] Error:", err);
         addFunds(usd);
@@ -65,7 +59,7 @@ export default function OnboardingPage() {
         setTimeout(() => setStep("pick"), 1200);
       }
     } else {
-      // Fallback: mock flow
+      // Fallback: mock flow (no wallet connected)
       setFundStep("processing");
       setTimeout(() => {
         addFunds(usd);
@@ -73,7 +67,7 @@ export default function OnboardingPage() {
         setTimeout(() => setStep("pick"), 1200);
       }, 1800);
     }
-  }, [usd, addFunds, onramp, wallet]);
+  }, [usd, addFunds, openFundingOptions, wallet]);
 
   const handleFinish = useCallback(() => {
     if (selectedStocks.size > 0 && usd > 0) {

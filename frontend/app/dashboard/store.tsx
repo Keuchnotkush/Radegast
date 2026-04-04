@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useDynamicContext, useUserWallets, useTokenBalances } from "@dynamic-labs/sdk-react-core";
 
 /* ─── Stock logo helper ─── */
@@ -127,9 +127,43 @@ interface PortfolioCtx {
 
 const PortfolioContext = createContext<PortfolioCtx | null>(null);
 
+/* xStock symbol → frontend ticker */
+const XSTOCK_TO_TICKER: Record<string, string> = {
+  TSLAx: "TSLA", AAPLx: "AAPL", NVDAx: "NVDA", GOOGx: "GOOGL",
+  AMZNx: "AMZN", METAx: "META", SPYx: "SPY", NDXx: "QQQ",
+  MSTRx: "MSTR", MSFTx: "MSFT", JPMx: "JPM", Vx: "V",
+  XOMx: "XOM", LLYx: "LLY", LVMHx: "MC.PA",
+};
+
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [cash, setCash] = useState(0);
+  const { primaryWallet } = useDynamicContext();
+  const fetchedRef = useRef(false);
+
+  // Fetch on-chain holdings when wallet is available
+  useEffect(() => {
+    const addr = primaryWallet?.address;
+    if (fetchedRef.current) return;
+
+    // Use wallet address, or fall back to deployer for demo
+    const target = addr || "0x5FB77900D139f2Eee6F312F3BF98fc8ad700C174";
+    fetchedRef.current = true;
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/holdings/${target}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.holdings && data.holdings.length > 0) {
+          setHoldings(
+            data.holdings.map((h: { symbol: string; shares: number }) => ({
+              ticker: XSTOCK_TO_TICKER[h.symbol] || h.symbol,
+              shares: h.shares,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+  }, [primaryWallet]);
 
   const buy = useCallback((ticker: string, usdAmount: number) => {
     const stock = MARKET.find((s) => s.ticker === ticker);
@@ -336,10 +370,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const usdc = tokenBalances.find(
       (t) => t.symbol?.toUpperCase() === "USDC" || t.name?.toUpperCase() === "USDC"
     );
-    if (usdc?.balance) return parseFloat(usdc.balance);
-    // Fallback: sum all fiat-valued balances
+    if (usdc?.balance != null) return Number(usdc.balance);
+    // Fallback: sum all balances
     const total = tokenBalances.reduce((sum, t) => {
-      return sum + (t.balance ? parseFloat(t.balance) : 0);
+      return sum + (t.balance != null ? Number(t.balance) : 0);
     }, 0);
     return total;
   }, [tokenBalances]);

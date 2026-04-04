@@ -8,3 +8,4 @@ ai/__pycache__/
 node_modules/
 .next/
 .DS_Store
+zk/**/target/
