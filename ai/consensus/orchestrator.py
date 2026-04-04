@@ -4,6 +4,7 @@ import aiohttp
 import json
 import os
 import logging
+from pathlib import Path
 from typing import List, Optional
 
 from shared.constants import MIN_PROVIDERS_REQUIRED, PROVIDER_TIMEOUT_S
@@ -18,7 +19,19 @@ from consensus.submit_onchain import submit_onchain
 
 logger = logging.getLogger(__name__)
 
-# Provider URLs from env
+# Prompt templates for LLM providers (bull / bear)
+PROMPTS_DIR = Path(__file__).parent.parent / "shared" / "prompts"
+BULL_PROMPT = (PROMPTS_DIR / "llm_analysis_prompt.txt").read_text()
+BEAR_PROMPT = (PROMPTS_DIR / "llm_bear_prompt.txt").read_text()
+
+LLM_PROMPTS = {
+    "llm_a": BULL_PROMPT,   # Provider 2: fundamental bull analyst
+    "llm_b": BEAR_PROMPT,   # Provider 3: contrarian bear auditor
+}
+
+# Provider config — llm_a and llm_b share the same 0G Compute provider address
+OG_PROVIDER_ADDR = os.getenv("OG_COMPUTE_PROVIDER_ADDR", "")
+
 PROVIDERS = [
     {
         "name": "xgboost",
@@ -111,7 +124,32 @@ async def _call_providers(portfolio: PortfolioInput) -> List[Optional[RiskOutput
 
 
 async def _call_single_provider(provider: dict, portfolio: PortfolioInput) -> Optional[RiskOutput]:
-    """Call a single provider. Try primary URL, then fallback."""
+    """Call a single provider. Try 0G Compute broker first for LLMs, then HTTP fallback."""
+
+    # Try 0G Compute broker first for LLM providers
+    if provider["name"] in ("llm_a", "llm_b") and os.getenv("PRIVATE_KEY") and OG_PROVIDER_ADDR:
+        try:
+            from consensus.og_compute import call_provider
+
+            # Build prompt from bull/bear template
+            template = LLM_PROMPTS[provider["name"]]
+            filled = template.replace("{features_json}", json.dumps(portfolio.features)) \
+                             .replace("{positions_json}", json.dumps(portfolio.positions))
+
+            prompt = json.dumps([{"role": "user", "content": filled}])
+            content = await call_provider(OG_PROVIDER_ADDR, prompt)
+            if content:
+                parsed = json.loads(content)
+                return RiskOutput(
+                    risk_score=float(parsed["risk_score"]),
+                    risk_label=RiskLabel(parsed["risk_label"]),
+                    top_factors=parsed.get("top_factors", []),
+                    source=parsed.get("source", f"0g_{provider['name']}"),
+                )
+        except Exception as e:
+            logger.warning(f"[0G Compute] {provider['name']} failed, falling back to HTTP: {e}")
+
+    # Fallback: direct HTTP call
     urls = [provider["url"], provider.get("fallback_url", "")]
     urls = [u for u in urls if u]  # remove empty
 
