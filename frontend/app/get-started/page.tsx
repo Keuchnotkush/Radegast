@@ -7,7 +7,7 @@ import {
   useIsLoggedIn,
   useSignInWithPasskey,
 } from "@dynamic-labs/sdk-react-core";
-const ProviderEnum = { Google: "google" as any, Discord: "discord" as any };
+import { ProviderEnum } from "@dynamic-labs/sdk-api-core";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
@@ -85,6 +85,7 @@ function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
   const { connectWithEmail, verifyOneTimePassword } = useConnectWithOtp();
   const signInWithPasskey = useSignInWithPasskey();
   const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [passkeyError, setPasskeyError] = useState("");
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -268,25 +269,36 @@ function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
               <motion.button
                 onClick={async () => {
                   setPasskeyLoading(true);
+                  setPasskeyError("");
                   try { await signInWithPasskey(); }
-                  catch { /* user cancelled or not registered */ }
+                  catch (err) {
+                    const msg = err instanceof Error ? err.message : String(err);
+                    if (msg.includes("cancel") || msg.includes("abort")) {
+                      /* user cancelled — no error to show */
+                    } else {
+                      setPasskeyError("No passkey found. Sign in first, then register a passkey in Settings.");
+                    }
+                  }
                   finally { setPasskeyLoading(false); }
                 }}
                 disabled={passkeyLoading}
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.97 }}
                 transition={spring}
-                className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl text-[16px] font-semibold cursor-pointer mb-4"
+                className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl text-[16px] font-semibold cursor-pointer mb-3"
                 style={{ background: P.dark, color: P.white, opacity: passkeyLoading ? 0.6 : 1 }}
               >
                 <FingerprintIcon />
                 {passkeyLoading ? "Waiting for device..." : "Sign in with fingerprint"}
               </motion.button>
+              {passkeyError && (
+                <p className="text-[12px] text-center mb-3" style={{ color: P.loss }}>{passkeyError}</p>
+              )}
 
               {/* Google + Discord */}
               <div className="flex gap-4">
                 <motion.button
-                  onClick={() => signInWithSocialAccount(ProviderEnum.Google)}
+                  onClick={() => signInWithSocialAccount(ProviderEnum.Google, { forcePopup: true })}
                   disabled={socialLoading}
                   whileHover={{ scale: 1.04, y: -2 }}
                   whileTap={{ scale: 0.97 }}
@@ -298,7 +310,7 @@ function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
                   Google
                 </motion.button>
                 <motion.button
-                  onClick={() => signInWithSocialAccount(ProviderEnum.Discord)}
+                  onClick={() => signInWithSocialAccount(ProviderEnum.Discord, { forcePopup: true })}
                   disabled={socialLoading}
                   whileHover={{ scale: 1.04, y: -2 }}
                   whileTap={{ scale: 0.97 }}
