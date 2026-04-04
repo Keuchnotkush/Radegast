@@ -40,7 +40,7 @@ export default function InvestPage() {
     <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
       <NavAvatar initial={userName.charAt(0).toUpperCase()} />
 
-      <div className="w-full px-8 lg:px-16 xl:px-24 pt-20 pb-16">
+      <div className="w-full max-w-[1440px] mx-auto px-16 pt-20 pb-16">
 
         {/* Header */}
         <motion.div
@@ -49,10 +49,10 @@ export default function InvestPage() {
           transition={{ duration: 0.6, ease }}
           className="mb-12"
         >
-          <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+          <h1 className="text-5xl font-bold leading-tight">
             Invest in <span style={{ color: P.jade }}>what matters</span>.
           </h1>
-          <p className="text-lg lg:text-xl mt-3" style={{ color: P.gray }}>
+          <p className="text-lg mt-3" style={{ color: P.gray }}>
             Buy tokenized US stocks — fractional from $1, 24/7.
           </p>
         </motion.div>
@@ -62,9 +62,9 @@ export default function InvestPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.5, ease }}
-          className="flex flex-col lg:flex-row items-start lg:items-center gap-4 mb-10"
+          className="flex flex-row items-center gap-4 mb-10"
         >
-          <div className="flex-1 relative w-full lg:max-w-md">
+          <div className="flex-1 relative max-w-md">
             <svg className="absolute left-4 top-1/2 -translate-y-1/2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={P.gray} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
@@ -108,7 +108,7 @@ export default function InvestPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+          className="grid grid-cols-4 gap-4"
         >
           {filtered.map((s, i) => (
             <StockCard key={s.ticker} stock={s} index={i} owned={!!getHolding(s.ticker)} onSelect={() => setSelectedTicker(s.ticker)} />
@@ -140,7 +140,7 @@ function StockCard({ stock, index, owned, onSelect }: { stock: (typeof MARKET)[n
       transition={{ delay: 0.05 * index, duration: 0.4, ease }}
       whileHover={{ scale: 1.02, y: -4 }}
       onClick={onSelect}
-      className="flex flex-col p-5 lg:p-6 rounded-2xl text-left cursor-pointer relative"
+      className="flex flex-col p-6 rounded-2xl text-left cursor-pointer relative"
       style={{ background: P.surface, border: `1px solid ${P.border}30` }}
     >
       {/* Owned badge */}

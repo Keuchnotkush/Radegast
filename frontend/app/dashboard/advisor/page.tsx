@@ -80,32 +80,25 @@ export default function AdvisorPage() {
   const tradingOn = autoSession.active;
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [tradeStock, setTradeStock] = useState<TradeStock | null>(null);
-  const [confirmTrade, setConfirmTrade] = useState<typeof RECOMMENDATIONS[number] | null>(null);
-
   function openTrade(rec: typeof RECOMMENDATIONS[number]) {
-    setConfirmTrade(rec);
-  }
-
-  function executeTrade() {
-    if (!confirmTrade) return;
-    const stock = MARKET.find((s) => s.ticker === confirmTrade.ticker);
+    const stock = MARKET.find((s) => s.ticker === rec.ticker);
     if (!stock) return;
-    // TODO: Dynamic SDK embedded wallet signature
     setTradeStock({
       symbol: stock.ticker,
       name: stock.name,
       price: stock.price,
       change: stock.change,
       color: STOCK_COLORS[stock.ticker] || P.jade,
+      prefillAmount: rec.amount,
+      prefillTab: rec.type === "sell" ? "sell" : "buy",
     });
-    setConfirmTrade(null);
   }
 
   return (
     <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
       <NavAvatar initial={userName.charAt(0).toUpperCase()} />
 
-      <div className="w-full px-8 lg:px-16 xl:px-24 pt-20 pb-16">
+      <div className="w-full max-w-[1440px] mx-auto px-16 pt-20 pb-16">
 
         {/* Header */}
         <motion.div
@@ -114,10 +107,10 @@ export default function AdvisorPage() {
           transition={{ duration: 0.6, ease }}
           className="mb-14"
         >
-          <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+          <h1 className="text-5xl font-bold leading-tight">
             Your AI, <span style={{ color: P.jade }}>your rules</span>.
           </h1>
-          <p className="text-lg lg:text-xl mt-3" style={{ color: P.gray }}>
+          <p className="text-lg mt-3" style={{ color: P.gray }}>
             3 models vote on every decision. You choose how much control to give.
           </p>
         </motion.div>
@@ -161,7 +154,7 @@ export default function AdvisorPage() {
                 <SectionTitle>Model consensus</SectionTitle>
                 <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: P.jade }} />
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {MODELS.map((m, i) => {
                   const color = m.vote === "bullish" ? P.gain : m.vote === "bearish" ? P.loss : P.gray;
                   return (
@@ -376,108 +369,7 @@ export default function AdvisorPage() {
         </motion.section>
       </div>
 
-      {/* ═══ WALLET CONFIRMATION MODAL ═══ */}
-      <AnimatePresence>
-        {confirmTrade && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: "rgba(0,0,0,0.4)" }}
-            onClick={() => setConfirmTrade(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className="w-full max-w-md rounded-2xl p-6"
-              style={{ background: P.surface }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Wallet icon */}
-              <div className="flex flex-col items-center text-center mb-6">
-                <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
-                  style={{ background: `${P.jade}15` }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 12V7H5a2 2 0 010-4h14v4" />
-                    <path d="M3 5v14a2 2 0 002 2h16v-5" />
-                    <path d="M18 12a2 2 0 100 4 2 2 0 000-4z" />
-                  </svg>
-                </div>
-                <h3 className="text-[18px] font-bold mb-1">Confirm transaction</h3>
-                <p className="text-[13px]" style={{ color: P.gray }}>
-                  Review and sign with your embedded wallet.
-                </p>
-              </div>
-
-              {/* Trade details */}
-              <div className="flex flex-col gap-3 mb-6 p-4 rounded-xl" style={{ background: `${P.dark}06` }}>
-                <div className="flex justify-between">
-                  <span className="text-[12px]" style={{ color: P.gray }}>Action</span>
-                  <span className="text-[13px] font-semibold uppercase"
-                    style={{ color: confirmTrade.type === "buy" ? P.gain : P.loss }}>
-                    {confirmTrade.type}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[12px]" style={{ color: P.gray }}>Stock</span>
-                  <span className="text-[13px] font-semibold">
-                    {MARKET.find((s) => s.ticker === confirmTrade.ticker)?.name} ({confirmTrade.ticker})
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[12px]" style={{ color: P.gray }}>Amount</span>
-                  <span className="text-[13px] font-semibold">${confirmTrade.amount}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[12px]" style={{ color: P.gray }}>Confidence</span>
-                  <span className="text-[13px] font-semibold">{confirmTrade.confidence}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[12px]" style={{ color: P.gray }}>Gas</span>
-                  <span className="text-[13px] font-semibold" style={{ color: P.jade }}>Sponsored (free)</span>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setConfirmTrade(null)}
-                  className="flex-1 py-3 rounded-xl text-[13px] font-semibold cursor-pointer"
-                  style={{ background: `${P.dark}08`, color: P.dark }}
-                >
-                  Cancel
-                </button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={spring}
-                  onClick={executeTrade}
-                  className="flex-1 py-3 rounded-xl text-[13px] font-semibold cursor-pointer"
-                  style={{
-                    background: confirmTrade.type === "buy" ? P.jade : P.loss,
-                    color: P.white,
-                  }}
-                >
-                  Sign &amp; {confirmTrade.type === "buy" ? "Buy" : "Sell"}
-                </motion.button>
-              </div>
-
-              {/* Wallet note */}
-              <div className="flex items-center justify-center gap-1.5 mt-4">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={P.gray} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" />
-                </svg>
-                <span className="text-[11px]" style={{ color: P.gray }}>Signed by your embedded wallet — no gas fees</span>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Trade modal (after confirmation) */}
+      {/* Trade modal */}
       <AnimatePresence>
         {tradeStock && <TradeModal stock={tradeStock} onClose={() => setTradeStock(null)} />}
       </AnimatePresence>

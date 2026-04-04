@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavAvatar, SectionTitle, TradeModal, P, ease, spring } from "./shared";
 import type { TradeStock } from "./shared";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { usePortfolio, MARKET, STOCK_COLORS, logoUrl, useSettings } from "./store";
 
 /* ─── Stock logo with fallback ─── */
@@ -49,6 +50,16 @@ const AUTONOMOUS_NOTIFS: AiNotif[] = [
 ];
 
 export default function DashboardPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const onboarded = localStorage.getItem("radegast_onboarded");
+    const isNew = localStorage.getItem("radegast_isNew");
+    if (isNew && !onboarded) {
+      router.replace("/dashboard/onboarding");
+    }
+  }, [router]);
+
   const userName = "Kassim";
   const initial = userName.charAt(0).toUpperCase();
   const { holdings, cash, totalValue, totalWithCash, addFunds } = usePortfolio();
@@ -90,7 +101,7 @@ export default function DashboardPage() {
     <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
       <NavAvatar initial={initial} />
 
-      <div className="w-full px-8 lg:px-16 xl:px-24 pt-20 pb-16">
+      <div className="w-full max-w-[1440px] mx-auto px-16 pt-20 pb-16">
 
         {/* WELCOME */}
         <motion.div
@@ -99,10 +110,10 @@ export default function DashboardPage() {
           transition={{ duration: 0.6, ease }}
           className="mb-14"
         >
-          <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+          <h1 className="text-5xl font-bold leading-tight">
             Good to see you, <span style={{ color: P.jade }}>{userName}</span>.
           </h1>
-          <p className="text-lg lg:text-xl mt-3" style={{ color: P.gray }}>
+          <p className="text-lg mt-3" style={{ color: P.gray }}>
             Your money never sleeps — here&apos;s how it&apos;s doing today.
           </p>
         </motion.div>
@@ -114,7 +125,7 @@ export default function DashboardPage() {
           transition={{ delay: 0.1, duration: 0.6, ease }}
           className="mb-16"
         >
-          <div className="flex items-center gap-16 xl:gap-24">
+          <div className="flex items-center gap-16">
             {/* Donut */}
             <div className="flex-shrink-0">
               <DonutChart stocks={totalAllocations} cashPct={cashAllocation} total={total} />
@@ -290,7 +301,7 @@ function DonutChart({ stocks, cashPct, total }: { stocks: { ticker: string; allo
   let cum = 0;
 
   return (
-    <div className="relative w-72 h-72 lg:w-80 lg:h-80 xl:w-96 xl:h-96">
+    <div className="relative w-80 h-80">
       <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
         <circle cx="100" cy="100" r={r} fill="none" stroke={`${P.border}30`} strokeWidth="14" />
         {stocks.map((s) => {
@@ -327,7 +338,7 @@ function DonutChart({ stocks, cashPct, total }: { stocks: { ticker: string; allo
         })()}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-4xl lg:text-5xl font-bold" style={{ color: P.dark }}>
+        <span className="text-4xl font-bold" style={{ color: P.dark }}>
           ${total.toLocaleString("en-US", { maximumFractionDigits: 0 })}
         </span>
         <span className="text-[13px] font-medium mt-1.5" style={{ color: P.gray }}>Total balance</span>
@@ -340,6 +351,7 @@ function DonutChart({ stocks, cashPct, total }: { stocks: { ticker: string; allo
 function AddFundsModal({ onClose, onAdd }: { onClose: () => void; onAdd: (amount: number) => void }) {
   const [amount, setAmount] = useState("");
   const [step, setStep] = useState<"input" | "processing" | "done">("input");
+  const [payMethod, setPayMethod] = useState<"card" | "apple">("card");
   const presets = [50, 100, 250, 500];
   const usd = parseFloat(amount) || 0;
 
@@ -373,7 +385,7 @@ function AddFundsModal({ onClose, onAdd }: { onClose: () => void; onAdd: (amount
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl"
         style={{ background: P.surface }}
       >
-        <div className="w-full px-8 lg:px-16 xl:px-24 pt-6 pb-10">
+        <div className="w-full max-w-[1440px] mx-auto px-16 pt-6 pb-10">
           <div className="flex justify-center mb-5">
             <div className="w-10 h-1 rounded-full" style={{ background: P.border }} />
           </div>
@@ -436,19 +448,34 @@ function AddFundsModal({ onClose, onAdd }: { onClose: () => void; onAdd: (amount
                 <div className="flex flex-col gap-2 mb-6">
                   <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ fontFamily: "Lexend", color: P.gray }}>Payment method</div>
                   <div className="flex gap-3">
-                    <div className="flex-1 flex items-center gap-3 py-3 px-4 rounded-xl" style={{ border: `1.5px solid ${P.jade}`, background: `${P.jade}08` }}>
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      transition={spring}
+                      onClick={() => setPayMethod("card")}
+                      className="flex-1 flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer"
+                      style={{ border: `1.5px solid ${payMethod === "card" ? P.jade : `${P.border}40`}`, background: payMethod === "card" ? `${P.jade}08` : "transparent" }}
+                    >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={P.dark} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" />
                       </svg>
                       <span className="text-[13px] font-semibold">Card</span>
-                      <div className="ml-auto w-4 h-4 rounded-full" style={{ background: P.jade }} />
-                    </div>
-                    <div className="flex-1 flex items-center gap-3 py-3 px-4 rounded-xl" style={{ border: `1.5px solid ${P.border}40` }}>
+                      {payMethod === "card" && <div className="ml-auto w-4 h-4 rounded-full" style={{ background: P.jade }} />}
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      transition={spring}
+                      onClick={() => setPayMethod("apple")}
+                      className="flex-1 flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer"
+                      style={{ border: `1.5px solid ${payMethod === "apple" ? P.jade : `${P.border}40`}`, background: payMethod === "apple" ? `${P.jade}08` : "transparent" }}
+                    >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={P.dark} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" />
                       </svg>
                       <span className="text-[13px] font-semibold">Apple Pay</span>
-                    </div>
+                      {payMethod === "apple" && <div className="ml-auto w-4 h-4 rounded-full" style={{ background: P.jade }} />}
+                    </motion.button>
                   </div>
                 </div>
 
@@ -504,7 +531,7 @@ function StockRow({ stock, index, onSelect }: { stock: { ticker: string; name: s
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.38 + index * 0.05, duration: 0.35, ease }}
       whileHover={{ x: 6 }}
-      className="flex items-center justify-between py-5 lg:py-6 w-full text-left cursor-pointer"
+      className="flex items-center justify-between py-5 w-full text-left cursor-pointer"
       style={{ borderBottom: `1px solid ${P.border}25` }}
     >
       <div className="flex items-center gap-5">
@@ -556,7 +583,7 @@ function MetricCard({ label, value, sub, color }: { label: string; value: string
     <div className="py-4">
       <div className="w-8 h-[3px] rounded-full mb-3" style={{ background: color }} />
       <div className="text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ fontFamily: "Lexend", color: P.gray }}>{label}</div>
-      <div className="text-2xl lg:text-3xl font-bold" style={{ color }}>{value}</div>
+      <div className="text-2xl font-bold" style={{ color }}>{value}</div>
       <div className="text-[13px] font-medium mt-1" style={{ color: P.gray }}>{sub}</div>
     </div>
   );

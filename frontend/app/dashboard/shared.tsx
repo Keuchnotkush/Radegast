@@ -42,7 +42,7 @@ export function NavAvatar({ initial }: { initial: string }) {
 
   return (
     <motion.div
-      className="fixed top-4 right-4 sm:right-8 z-40 flex items-center rounded-full cursor-pointer"
+      className="fixed top-4 right-8 z-40 flex items-center rounded-full cursor-pointer"
       style={{ background: P.surface, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -100,6 +100,8 @@ export interface TradeStock {
   color: string;
   held?: number;
   value?: number;
+  prefillAmount?: number;
+  prefillTab?: "buy" | "sell";
 }
 
 const PERIODS = ["1D", "1W", "1M", "3M", "1Y"] as const;
@@ -169,8 +171,8 @@ function ModalStockLogo({ ticker, name, color }: { ticker: string; name: string;
 }
 
 export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () => void }) {
-  const [tab, setTab] = useState<"buy" | "sell">("buy");
-  const [amount, setAmount] = useState("");
+  const [tab, setTab] = useState<"buy" | "sell">(stock.prefillTab || "buy");
+  const [amount, setAmount] = useState(stock.prefillAmount ? stock.prefillAmount.toString() : "");
   const [period, setPeriod] = useState<Period>("1M");
   const [step, setStep] = useState<"input" | "confirm" | "processing" | "done">("input");
   const isUp = stock.change >= 0;
@@ -228,7 +230,7 @@ export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () 
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl max-h-[90vh] overflow-y-auto"
         style={{ background: P.surface }}
       >
-        <div className="w-full px-8 lg:px-16 xl:px-24 pt-6 pb-10">
+        <div className="w-full max-w-[1440px] mx-auto px-16 pt-6 pb-10">
 
           {/* Drag indicator */}
           <div className="flex justify-center mb-5">
@@ -340,8 +342,11 @@ export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () 
                 animate={{
                   background: tab === t ? (t === "buy" ? P.jade : P.loss) : "transparent",
                   color: tab === t ? P.white : P.gray,
+                  scale: tab === t ? 1.05 : 1,
                 }}
-                transition={{ duration: 0.35, ease }}
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.95 }}
+                transition={spring}
                 className="flex-1 py-3 rounded-full text-[14px] font-semibold capitalize cursor-pointer"
               >
                 {t}

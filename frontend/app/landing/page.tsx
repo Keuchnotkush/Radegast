@@ -81,7 +81,7 @@ export default function Landing() {
         <motion.div className="flex flex-col items-center">
 
           {/* LOGO */}
-          <div className="w-[95vw] mb-14 flex justify-center relative overflow-visible">
+          <div className="w-full max-w-[1400px] mb-14 flex justify-center relative overflow-visible">
             <motion.img
               src="/logo-no-dots.svg"
               alt="Radegast"
@@ -134,7 +134,7 @@ export default function Landing() {
 
       {/* USE CASES */}
       <section className="py-32 px-8">
-        <div className="max-w-5xl mx-auto flex flex-col gap-40">
+        <div className="max-w-[1200px] mx-auto flex flex-col gap-40">
           {USE_CASES.map((uc, ucIdx) => (
             <motion.div
               key={uc.num}
@@ -242,7 +242,7 @@ export default function Landing() {
         transition={{ duration: 0.8, ease }}
         className="py-24 px-8 text-center"
       >
-        <p className="text-2xl font-bold max-w-3xl mx-auto leading-relaxed">
+        <p className="text-2xl font-bold max-w-[1200px] mx-auto leading-relaxed">
           This is not ä crypto project pretending to be finänce.
           <br />
           <span style={{ color: P.jade }}>This is finänce, rebuilt from first principles.</span>
@@ -289,7 +289,7 @@ function VerifySection() {
       transition={{ duration: 0.8, ease }}
       className="py-32 px-8"
     >
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-[1200px] mx-auto">
         <div className="flex gap-8 items-start mb-10">
           <motion.span
             className="text-8xl font-bold leading-none select-none"

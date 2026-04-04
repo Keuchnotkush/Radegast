@@ -60,7 +60,7 @@ export default function SolvencyPage() {
     <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
       <NavAvatar initial={userName.charAt(0).toUpperCase()} />
 
-      <div className="w-full px-8 lg:px-16 xl:px-24 pt-20 pb-16">
+      <div className="w-full max-w-[1440px] mx-auto px-16 pt-20 pb-16">
 
         {/* Header */}
         <motion.div
@@ -69,10 +69,10 @@ export default function SolvencyPage() {
           transition={spring}
           className="mb-14"
         >
-          <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+          <h1 className="text-5xl font-bold leading-tight">
             Prove it, <span style={{ color: P.jade }}>reveal nothing</span>.
           </h1>
-          <p className="text-lg lg:text-xl mt-3" style={{ color: P.gray }}>
+          <p className="text-lg mt-3" style={{ color: P.gray }}>
             Generate a zero-knowledge proof that your portfolio exceeds a threshold — without exposing your holdings.
           </p>
         </motion.div>
@@ -150,7 +150,7 @@ export default function SolvencyPage() {
           </AnimatePresence>
 
           {/* Steps */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          <div className="grid grid-cols-4 gap-4 mb-10">
             {[
               { step: "1", text: "Your portfolio data stays in your browser — nothing leaves your device." },
               { step: "2", text: "A Noir circuit checks if total value > threshold using UltraPlonk." },
@@ -326,7 +326,7 @@ export default function SolvencyPage() {
               <p className="text-[12px] mt-1" style={{ color: P.gray }}>Generate your first proof to see it here.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 mt-6">
+            <div className="grid grid-cols-3 gap-4 mt-6">
               {history.map((p, i) => (
                 <motion.div
                   key={`${p.hash}-${i}`}
