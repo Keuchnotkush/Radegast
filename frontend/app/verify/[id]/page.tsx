@@ -24,8 +24,12 @@ export default function VerifyById() {
   useEffect(() => {
     let cancelled = false;
     async function verify() {
+      const minDelay = new Promise((r) => setTimeout(r, 2000));
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/proof/${encodeURIComponent(id)}`);
+        const [res] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/proof/${encodeURIComponent(id)}`),
+          minDelay,
+        ]);
         if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
@@ -35,6 +39,7 @@ export default function VerifyById() {
           setStatus("error");
         }
       } catch {
+        await minDelay;
         if (!cancelled) setStatus("error");
       }
     }

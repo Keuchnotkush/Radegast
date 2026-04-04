@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   useSocialAccounts,
   useConnectWithOtp,
@@ -8,7 +8,7 @@ import {
 } from "@dynamic-labs/sdk-react-core";
 const ProviderEnum = { Google: "google" as any, Apple: "apple" as any };
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 
 const P = {
@@ -24,13 +24,71 @@ const P = {
 const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const spring = { type: "spring" as const, stiffness: 400, damping: 20 };
 
-function AuthCard() {
+/* ─── OTP 6-digit boxes ─── */
+function OtpBoxes({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+  const digits = value.padEnd(6, "").slice(0, 6).split("");
+
+  function handleInput(i: number, char: string) {
+    if (!/^\d$/.test(char) && char !== "") return;
+    const next = [...digits];
+    next[i] = char;
+    onChange(next.join("").replace(/\s/g, ""));
+    if (char && i < 5) refs.current[i + 1]?.focus();
+  }
+
+  function handleKey(i: number, e: React.KeyboardEvent) {
+    if (e.key === "Backspace" && !digits[i] && i > 0) {
+      refs.current[i - 1]?.focus();
+    }
+  }
+
+  function handlePaste(e: React.ClipboardEvent) {
+    const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (text) {
+      e.preventDefault();
+      onChange(text);
+      refs.current[Math.min(text.length, 5)]?.focus();
+    }
+  }
+
+  return (
+    <div className="flex gap-3 justify-center">
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <motion.input
+          key={i}
+          ref={(el) => { refs.current[i] = el; }}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={digits[i]?.trim() || ""}
+          onChange={(e) => handleInput(i, e.target.value)}
+          onKeyDown={(e) => handleKey(i, e)}
+          onPaste={i === 0 ? handlePaste : undefined}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease, delay: i * 0.05 }}
+          className="w-13 h-16 text-center text-2xl font-bold rounded-xl outline-none"
+          style={{
+            background: digits[i]?.trim() ? `${P.jade}10` : `${P.dark}06`,
+            color: P.dark,
+            border: `2px solid ${digits[i]?.trim() ? P.jade : "transparent"}`,
+            caretColor: P.jade,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [name, setName] = useState("");
   const [btnHover, setBtnHover] = useState(0);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const isLoggedIn = useIsLoggedIn();
   const router = useRouter();
@@ -39,29 +97,27 @@ function AuthCard() {
 
   useEffect(() => {
     if (isLoggedIn) {
+      onLoggedIn();
       if (mode === "signup" && name.trim()) {
-        // New user — save name + redirect to onboarding
         const firstName = name.trim().split(" ")[0];
         const lastName = name.trim().split(" ").slice(1).join(" ");
         localStorage.setItem("radegast_firstName", firstName);
         localStorage.setItem("radegast_isNew", "true");
-        // Register in backend (fire & forget)
         fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/user/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, firstName, lastName }),
         }).catch(() => {});
-        router.push("/dashboard/onboarding");
+        setTimeout(() => router.push("/dashboard/onboarding"), 1200);
       } else {
-        router.push("/dashboard");
+        setTimeout(() => router.push("/dashboard"), 1200);
       }
     }
-  }, [isLoggedIn, router, mode, name, email]);
+  }, [isLoggedIn, router, mode, name, email, onLoggedIn]);
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otpSent) {
-      // Save name to localStorage before Dynamic SDK call (in case redirect happens fast)
       if (mode === "signup" && name.trim()) {
         localStorage.setItem("radegast_firstName", name.trim().split(" ")[0]);
       }
@@ -72,230 +128,296 @@ function AuthCard() {
     }
   };
 
-  const buttonLabel = otpSent ? "Verify code" : mode === "signin" ? "Sign in" : "Create account";
+  const buttonLabel = otpSent ? "Verify" : mode === "signin" ? "Sign in" : "Create account";
 
   return (
-    <div
-      className="rounded-3xl p-10"
-      style={{ background: P.surface, boxShadow: "0 8px 40px rgba(0,0,0,0.08)" }}
-    >
-      {/* HEADING */}
-      <div className="text-center mb-10">
-        <h1
-          className="text-[30px] font-bold tracking-tight leading-tight"
-          style={{ color: P.dark, fontFamily: "Sora, sans-serif" }}
-        >
-          The märkets never sleep.
-          <br />
-          <span style={{ color: P.jade }}>Neither should your money.</span>
-        </h1>
-        <p className="text-[14px] mt-3 leading-relaxed" style={{ color: P.gray }}>
-          US stocks from änywhere, 24/7. No bärriers, no järgon —
-          <br />
-          just your portfolio, growing while the world sleeps.
-        </p>
-      </div>
+    <div className="w-full max-w-lg">
 
-      {/* TABS */}
+      {/* TABS — pill switcher */}
       <motion.div
-        whileHover={{ scale: 1.02 }}
-        transition={spring}
-        className="flex mb-8 rounded-full p-1"
-        style={{ background: P.bg }}
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.5, ease }}
+        className="flex mb-12 rounded-full p-1.5"
+        style={{ background: `${P.dark}08` }}
       >
-        <button
-          onClick={() => { setMode("signin"); setOtpSent(false); }}
-          className="flex-1 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300 overflow-hidden"
-          style={{
-            background: mode === "signin" ? P.dark : "transparent",
-            color: mode === "signin" ? P.white : P.gray,
-          }}
-        >
-          <motion.span
-            key={`signin-${mode}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease }}
-            className="block"
+        {(["signin", "signup"] as const).map((m) => (
+          <motion.button
+            key={m}
+            onClick={() => { setMode(m); setOtpSent(false); }}
+            animate={{
+              background: mode === m ? P.dark : "transparent",
+              color: mode === m ? P.white : P.gray,
+            }}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.3, ease }}
+            className="flex-1 py-4 rounded-full text-[16px] font-semibold cursor-pointer"
           >
-            Sign in
-          </motion.span>
-        </button>
-        <button
-          onClick={() => { setMode("signup"); setOtpSent(false); }}
-          className="flex-1 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300 overflow-hidden"
-          style={{
-            background: mode === "signup" ? P.dark : "transparent",
-            color: mode === "signup" ? P.white : P.gray,
-          }}
-        >
-          <motion.span
-            key={`signup-${mode}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease }}
-            className="block"
-          >
-            Create account
-          </motion.span>
-        </button>
+            {m === "signin" ? "Sign in" : "Create account"}
+          </motion.button>
+        ))}
       </motion.div>
 
       {/* FORM */}
-      <motion.div
-        key={mode + (otpSent ? "-otp" : "")}
-        initial={{ opacity: 0, x: mode === "signin" ? -15 : 15 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3, ease }}
-      >
-        <form onSubmit={handleEmail} className="flex flex-col gap-4">
-          {mode === "signup" && !otpSent && (
-            <div>
-              <label className="text-[11px] font-medium uppercase tracking-wider block mb-2" style={{ color: P.gray }}>Full name</label>
-              <input
-                type="text"
-                placeholder="John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3.5 rounded-xl text-[14px] outline-none transition-all duration-200 focus:ring-2"
-                style={{ background: P.bg, color: P.dark, border: `1px solid ${P.border}` }}
-              />
-            </div>
-          )}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={mode + (otpSent ? "-otp" : "")}
+          initial={{ opacity: 0, x: mode === "signin" ? -20 : 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: mode === "signin" ? 20 : -20 }}
+          transition={{ duration: 0.35, ease }}
+        >
+          <form onSubmit={handleEmail} className="flex flex-col gap-8">
 
-          {!otpSent ? (
-            <div>
-              <label className="text-[11px] font-medium uppercase tracking-wider block mb-2" style={{ color: P.gray }}>Email</label>
-              <input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3.5 rounded-xl text-[14px] outline-none transition-all duration-200 focus:ring-2"
-                style={{ background: P.bg, color: P.dark, border: `1px solid ${P.border}` }}
-              />
-            </div>
-          ) : (
-            <div>
-              <label className="text-[11px] font-medium uppercase tracking-wider block mb-2" style={{ color: P.gray }}>Verification code</label>
-              <p className="text-[12px] mb-3" style={{ color: P.gray }}>We sent a code to {email}</p>
-              <input
-                type="text"
-                placeholder="Enter 6-digit code"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                required
-                className="w-full px-4 py-3.5 rounded-xl text-[14px] outline-none transition-all duration-200 focus:ring-2 tracking-[0.3em] text-center"
-                style={{ background: P.bg, color: P.dark, border: `1px solid ${P.border}` }}
-                maxLength={6}
-              />
-            </div>
-          )}
+            {/* Name (signup only) */}
+            {mode === "signup" && !otpSent && (
+              <div>
+                <label className="text-[13px] font-semibold uppercase tracking-wider block mb-3" style={{ fontFamily: "Lexend", color: focusedField === "name" ? P.jade : P.gray }}>
+                  Full name
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="John Doe"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onFocus={() => setFocusedField("name")}
+                    onBlur={() => setFocusedField(null)}
+                    className="w-full py-5 px-0 text-[18px] font-medium outline-none bg-transparent"
+                    style={{ color: P.dark, borderBottom: `2px solid ${focusedField === "name" ? P.jade : `${P.border}60`}` }}
+                  />
+                  <motion.div
+                    className="absolute bottom-0 left-0 h-[2px]"
+                    style={{ background: P.jade }}
+                    animate={{ width: focusedField === "name" ? "100%" : "0%" }}
+                    transition={{ duration: 0.4, ease }}
+                  />
+                </div>
+              </div>
+            )}
 
-          <motion.button
-            type="submit"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            onHoverStart={() => setBtnHover((h) => h + 1)}
-            transition={spring}
-            className="relative w-full py-3.5 rounded-xl text-[14px] font-semibold text-white mt-2 overflow-hidden"
-            style={{ background: P.dark }}
-          >
-            <motion.span
-              key={`${buttonLabel}-${btnHover}`}
-              initial={{ opacity: 0, filter: "blur(8px)", scale: 0.9 }}
-              animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
-              transition={{ duration: 0.4, ease }}
-              className="block"
+            {/* Email or OTP */}
+            {!otpSent ? (
+              <div>
+                <label className="text-[13px] font-semibold uppercase tracking-wider block mb-3" style={{ fontFamily: "Lexend", color: focusedField === "email" ? P.jade : P.gray }}>
+                  Email
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => setFocusedField("email")}
+                    onBlur={() => setFocusedField(null)}
+                    required
+                    className="w-full py-5 px-0 text-[18px] font-medium outline-none bg-transparent"
+                    style={{ color: P.dark, borderBottom: `2px solid ${focusedField === "email" ? P.jade : `${P.border}60`}` }}
+                  />
+                  <motion.div
+                    className="absolute bottom-0 left-0 h-[2px]"
+                    style={{ background: P.jade }}
+                    animate={{ width: focusedField === "email" ? "100%" : "0%" }}
+                    transition={{ duration: 0.4, ease }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="text-center">
+                <p className="text-[13px] mb-6" style={{ color: P.gray }}>
+                  Code sent to <strong style={{ color: P.dark }}>{email}</strong>
+                </p>
+                <OtpBoxes value={otp} onChange={setOtp} />
+              </div>
+            )}
+
+            {/* Submit */}
+            <motion.button
+              type="submit"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              onHoverStart={() => setBtnHover((h) => h + 1)}
+              transition={spring}
+              className="get-started-btn w-full py-5 rounded-full text-[17px] font-bold text-white mt-4 cursor-pointer overflow-hidden"
             >
-              {buttonLabel}
-            </motion.span>
-          </motion.button>
+              <motion.span
+                key={`${buttonLabel}-${btnHover}`}
+                initial={{ opacity: 0, filter: "blur(8px)", scale: 0.9 }}
+                animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                transition={{ duration: 0.4, ease }}
+                className="block"
+              >
+                {buttonLabel}
+              </motion.span>
+            </motion.button>
 
-          {otpSent && (
-            <button
-              type="button"
-              onClick={() => setOtpSent(false)}
-              className="text-[12px] font-medium transition-opacity duration-200 hover:opacity-60"
-              style={{ color: P.jade }}
-            >
-              Use a different email
-            </button>
+            {otpSent && (
+              <button
+                type="button"
+                onClick={() => setOtpSent(false)}
+                className="text-[13px] font-medium cursor-pointer mx-auto"
+                style={{ color: P.jade }}
+              >
+                Use a different email
+              </button>
+            )}
+          </form>
+
+          {/* SOCIAL LOGIN */}
+          {!otpSent && (
+            <>
+              <div className="flex items-center gap-4 my-8">
+                <div className="flex-1 h-px" style={{ background: `${P.border}80` }} />
+                <span className="text-[11px] font-medium" style={{ color: P.gray }}>or</span>
+                <div className="flex-1 h-px" style={{ background: `${P.border}80` }} />
+              </div>
+
+              <div className="flex gap-4">
+                <motion.button
+                  onClick={() => signInWithSocialAccount(ProviderEnum.Google)}
+                  disabled={socialLoading}
+                  whileHover={{ scale: 1.04, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={spring}
+                  className="flex-1 flex items-center justify-center gap-3 py-5 rounded-2xl text-[16px] font-semibold cursor-pointer"
+                  style={{ background: P.white, color: P.dark, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", opacity: socialLoading ? 0.6 : 1 }}
+                >
+                  <GoogleIcon />
+                  Google
+                </motion.button>
+                <motion.button
+                  onClick={() => signInWithSocialAccount(ProviderEnum.Apple)}
+                  disabled={socialLoading}
+                  whileHover={{ scale: 1.04, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={spring}
+                  className="flex-1 flex items-center justify-center gap-3 py-5 rounded-2xl text-[16px] font-semibold cursor-pointer"
+                  style={{ background: P.dark, color: P.white, opacity: socialLoading ? 0.6 : 1 }}
+                >
+                  <AppleIcon />
+                  Apple
+                </motion.button>
+              </div>
+            </>
           )}
-        </form>
-
-        {/* DIVIDER */}
-        {!otpSent && (
-          <>
-            <div className="flex items-center gap-4 my-7">
-              <div className="flex-1 h-px" style={{ background: P.border }} />
-              <span className="text-[11px] font-medium" style={{ color: P.gray }}>or continue with</span>
-              <div className="flex-1 h-px" style={{ background: P.border }} />
-            </div>
-
-            {/* SOCIAL */}
-            <div className="flex gap-3">
-              <motion.button
-                onClick={() => signInWithSocialAccount(ProviderEnum.Google)}
-                disabled={socialLoading}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                transition={spring}
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-[13px] font-medium"
-                style={{ background: P.bg, border: `1px solid ${P.border}`, color: P.dark, opacity: socialLoading ? 0.6 : 1 }}
-              >
-                <GoogleIcon />
-                Google
-              </motion.button>
-              <motion.button
-                onClick={() => signInWithSocialAccount(ProviderEnum.Apple)}
-                disabled={socialLoading}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                transition={spring}
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-[13px] font-medium"
-                style={{ background: P.bg, border: `1px solid ${P.border}`, color: P.dark, opacity: socialLoading ? 0.6 : 1 }}
-              >
-                <AppleIcon />
-                Apple
-              </motion.button>
-            </div>
-          </>
-        )}
-      </motion.div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
 
 export default function GetStarted() {
+  const [transitioning, setTransitioning] = useState(false);
+
   return (
     <div
-      className="min-h-screen flex items-center justify-center"
+      className="min-h-screen flex flex-col md:flex-row relative overflow-hidden"
       style={{ background: P.bg, fontFamily: "Sora, sans-serif" }}
     >
-      <Link href="/landing" className="fixed top-6 left-8 z-40">
-        <img src="/logo.svg" alt="Radegast" style={{ height: 22 }} />
+      {/* Jade circle overlay — expands on login */}
+      <motion.div
+        className="fixed inset-0 z-50 pointer-events-none"
+        style={{ background: P.jade }}
+        initial={{ clipPath: "circle(0% at 50% 50%)" }}
+        animate={{ clipPath: transitioning ? "circle(150% at 50% 50%)" : "circle(0% at 50% 50%)" }}
+        transition={{ duration: 1.2, ease }}
+      />
+      {/* Back arrow */}
+      <Link href="/landing" className="fixed top-6 left-6 z-40">
+        <motion.div
+          whileHover={{ scale: 1.1, x: -3 }}
+          whileTap={{ scale: 0.95 }}
+          transition={spring}
+          className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
+          style={{ background: `${P.dark}08` }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={P.dark} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+          </svg>
+        </motion.div>
       </Link>
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease }}
-        className="w-full max-w-lg"
-      >
-        <AuthCard />
-        <p className="text-center text-[11px] mt-6" style={{ color: P.gray }}>
-          By continuing, you agree to the Terms of Service and Privacy Policy.
-        </p>
-      </motion.div>
+      {/* LEFT — Giant typographic statement */}
+      <div className="hidden md:flex flex-[1.6] items-center justify-center p-16 relative overflow-hidden">
+        <div className="max-w-4xl">
+          <motion.h1
+            initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
+            animate={{ clipPath: "inset(0 0% 0 0)", opacity: 1 }}
+            transition={{ duration: 1.6, ease, delay: 0.1 }}
+            className="text-[72px] lg:text-[110px] font-bold leading-[0.90] tracking-tighter"
+            style={{ color: P.dark }}
+          >
+            The <span style={{ color: P.jade }}>m<span style={{ color: P.jade }}>ä</span>rkets</span> never sleep.
+          </motion.h1>
+          <div className="h-4 lg:h-6" />
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2, duration: 0.7, ease }}
+            className="text-[72px] lg:text-[110px] font-bold leading-[0.90] tracking-tighter"
+            style={{ color: P.dark }}
+          >
+            Neither should your <span style={{ color: P.jade }}>money</span>.
+          </motion.p>
+
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: 80 }}
+            transition={{ delay: 1.8, duration: 0.6, ease }}
+            className="h-[3px] rounded-full mt-10"
+            style={{ background: P.jade }}
+          />
+
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 2, duration: 0.6, ease }}
+            className="text-[15px] leading-relaxed mt-6 max-w-sm"
+            style={{ color: P.gray }}
+          >
+            US stocks from änywhere, 24/7. No bärriers, no järgon — just your portfolio, growing while the world sleeps.
+          </motion.p>
+        </div>
+      </div>
+
+      {/* RIGHT — Auth form */}
+      <div className="flex-1 flex items-center justify-center p-8 md:p-16">
+        <div className="w-full max-w-md">
+          {/* Mobile heading (hidden on desktop) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease }}
+            className="md:hidden text-center mb-12 mt-8"
+          >
+            <h1 className="text-3xl font-bold leading-tight" style={{ color: P.dark }}>
+              The m<span style={{ color: P.jade }}>ä</span>rkets never sleep.
+              <br />
+              <span style={{ color: P.jade }}>Neither should your money.</span>
+            </h1>
+          </motion.div>
+
+          <AuthForm onLoggedIn={() => setTransitioning(true)} />
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1, duration: 0.5 }}
+            className="text-center text-[11px] mt-8"
+            style={{ color: P.gray }}
+          >
+            By continuing, you agree to the Terms of Service and Privacy Policy.
+          </motion.p>
+        </div>
+      </div>
     </div>
   );
 }
 
 function GoogleIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24">
+    <svg width="18" height="18" viewBox="0 0 24 24">
       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
       <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
@@ -306,7 +428,7 @@ function GoogleIcon() {
 
 function AppleIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="#2A2A2A">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
       <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
     </svg>
   );

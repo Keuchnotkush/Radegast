@@ -158,7 +158,7 @@ export function NavAvatar({ initial }: { initial: string }) {
           );
         })}
       </motion.div>
-      <Link href="/dashboard/settings" className="p-[8px] shrink-0">
+      <Link href="/dashboard/settings" className="p-[12px] shrink-0">
         <motion.div
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
