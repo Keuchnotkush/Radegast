@@ -6,9 +6,23 @@
 
 🔗 [Live Demo](https://radegast.app) · 📹 [Video](https://youtube.com) · 🐙 [GitHub](https://github.com/0x11semprez/radegast)
 
+
 /*´:°•.°+.\*•´.\*:˚.°\*.˚•´.°:°•.°•.\*•´.\*:˚.°\*.˚•´.°:°•.°+.\*•´.\*:*/
 
 ## The problem
+
+╔═══════════════════════════════════════════════════════════════════╗
+║ ║
+║ Invest in US stocks from anywhere. 24/7. Fractional. ║
+║ AI watches your portfolio. You choose: advice or autopilot. ║
+║ Prove your wealth to a bank. Zero-knowledge. No trust needed. ║
+║ ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+/*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*/
+/*                        THE PROBLEM                               */
+/*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*/
+
 
 A 28-year-old in Lisbon wants to invest in Tesla, Apple, NVIDIA. Today she needs a US brokerage account (she can't get one easily from Portugal), can only trade during Wall Street hours, pays advisor fees, and when she wants a mortgage, her crypto holdings are invisible to the bank.
 

@@ -1,0 +1,25 @@
+{
+  "providers": [
+    {
+      "name": "xgboost",
+      "url": "${XGBOOST_URL}",
+      "fallback_url": null,
+      "timeout_ms": 8000,
+      "type": "onnx"
+    },
+    {
+      "name": "llm_a",
+      "url": "${LLM_A_URL}",
+      "fallback_url": "${LLM_A_FALLBACK_URL}",
+      "timeout_ms": 8000,
+      "type": "llm"
+    },
+    {
+      "name": "llm_b",
+      "url": "${LLM_B_URL}",
+      "fallback_url": "${LLM_B_FALLBACK_URL}",
+      "timeout_ms": 8000,
+      "type": "llm"
+    }
+  ]
+}
