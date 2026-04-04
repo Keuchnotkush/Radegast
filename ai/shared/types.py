@@ -49,6 +49,7 @@ class ConsensusResult:
     providers_agreed: str          # "2/3" or "3/3"
     suggestions: List[str] = field(default_factory=list)       # Conseil mode
     moves: List[RebalanceMove] = field(default_factory=list)   # Trade mode
+    trade_results: List[dict] = field(default_factory=list)    # Trade execution receipts
     tx_hash: Optional[str] = None  # Trade mode only
     da_hash: Optional[str] = None  # 0G Storage rootHash
 

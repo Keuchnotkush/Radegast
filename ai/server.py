@@ -101,6 +101,16 @@ async def autonomous_agent():
     logger.info(f"Autonomous agent started (interval: {AGENT_INTERVAL}s)")
     while True:
         await asyncio.sleep(AGENT_INTERVAL)
+
+        # Update xStock prices on-chain before scanning
+        try:
+            from consensus.update_prices import update_prices_onchain
+            price_results = await update_prices_onchain()
+            if price_results:
+                logger.info(f"[AGENT] Updated {len(price_results)} xStock prices")
+        except Exception as e:
+            logger.error(f"[AGENT] Price update failed: {e}")
+
         try:
             if not get_trade_mode_users or not run_consensus:
                 continue
@@ -124,10 +134,9 @@ async def autonomous_agent():
                             f"{result.consensus_label} (score: {result.consensus_score}) "
                             f"→ {len(result.moves)} rebalance moves"
                         )
-                        # In production: execute burn/mint via web3
-                        # For hackathon: log the moves
-                        for move in result.moves:
-                            logger.info(f"  → {move.action} {move.pct}% {move.token}")
+                        for tr in result.trade_results:
+                            status = "OK" if tr["success"] else "FAIL"
+                            logger.info(f"  {status} {tr['action']} {tr['pct']}% {tr['token']} → {tr.get('tx_hash', 'N/A')}")
                     else:
                         logger.info(f"[AGENT] User {profile.user_id}: LOW risk, no action")
 
@@ -181,6 +190,14 @@ async def health():
         status="ok",
         model_loaded=onnx_session is not None,
     )
+
+
+@app.get("/api/prices")
+async def get_prices():
+    """Get live xStock prices from yfinance."""
+    from consensus.update_prices import fetch_live_prices
+    prices = await fetch_live_prices()
+    return {"prices": prices, "source": "yfinance", "count": len(prices)}
 
 
 @app.post("/api/consensus")
