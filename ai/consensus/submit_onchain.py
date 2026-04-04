@@ -102,7 +102,7 @@ async def submit_onchain(user: str, result: ConsensusResult) -> Optional[str]:
         tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
         w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
 
-        tx_hex = tx_hash.hex()
+        tx_hex = "0x" + tx_hash.hex()
         logger.info(f"[ON-CHAIN] ConsensusSettlement.submit() tx = {tx_hex[:18]}...")
         return tx_hex
 
