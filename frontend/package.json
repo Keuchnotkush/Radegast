@@ -10,12 +10,15 @@
   },
   "dependencies": {
     "@dynamic-labs/sdk-react-core": "^4.75.0",
+    "@noir-lang/backend_barretenberg": "^0.36.0",
+    "@noir-lang/noir_js": "1.0.0-beta.19",
     "framer-motion": "^12.38.0",
     "jspdf": "^4.2.1",
     "next": "16.2.2",
     "qrcode": "^1.5.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "viem": "^2.47.10"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

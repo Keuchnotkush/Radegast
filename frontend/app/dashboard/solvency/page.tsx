@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavAvatar, SectionTitle, TogglePill, P, ease, spring } from "../shared";
 import { useUser } from "../store";
+import { generateProof } from "@/lib/noir/prover";
 
 const THRESHOLDS = ["$10,000", "$25,000", "$50,000", "$100,000"];
 
@@ -31,15 +32,35 @@ export default function SolvencyPage() {
   const activeThreshold = custom || threshold;
   const hasThreshold = activeThreshold.length > 0;
 
+  const [error, setError] = useState<string | null>(null);
+
   async function generate() {
     setState("generating");
+    setError(null);
     try {
+      // Parse threshold — strip $ and commas
+      const thresholdNum = activeThreshold.replace(/[$,]/g, "");
+
+      // TODO: read real balances from on-chain xStock holdings
+      const balances = ["15", "8", "20", "0", "0", "0", "50", "0", "0"];
+      const prices = ["250", "198", "200", "0", "0", "0", "530", "0", "0"];
+      const secret = "12345678";
+
+      // 1. Generate ZK proof client-side (private inputs never leave browser)
+      const { proof, publicInputs } = await generateProof(balances, prices, secret, thresholdNum);
+
+      // 2. Send proof to backend for on-chain verification
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/proof/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ threshold: activeThreshold }),
+        body: JSON.stringify({
+          threshold: activeThreshold,
+          proof: "0x" + Array.from(proof).map((b: number) => b.toString(16).padStart(2, "0")).join(""),
+          publicInputs: publicInputs.map((pi: string) => pi),
+        }),
       });
       const data = await res.json();
+
       const p: Proof = {
         hash: data.hash || data.verifyId || "0x—",
         threshold: activeThreshold,
@@ -51,7 +72,9 @@ export default function SolvencyPage() {
       setProof(p);
       setHistory((h) => [p, ...h]);
       setState("done");
-    } catch {
+    } catch (e) {
+      console.error("Proof generation failed:", e);
+      setError(e instanceof Error ? e.message : "Proof generation failed");
       setState("idle");
     }
   }
@@ -305,6 +328,13 @@ export default function SolvencyPage() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Error */}
+          {error && (
+            <div className="flex items-center gap-2 mt-4 p-3 rounded-xl" style={{ background: `${P.loss}10`, border: `1px solid ${P.loss}30` }}>
+              <span className="text-[13px]" style={{ color: P.loss }}>{error}</span>
+            </div>
+          )}
 
           {/* Privacy */}
           <div className="flex items-center gap-2 mt-5">
