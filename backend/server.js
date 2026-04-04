@@ -269,6 +269,19 @@ app.post("/api/proof/generate", async (req, res) => {
     });
   }
 
+  // Mock mode: proof was provided but we skip on-chain submission
+  if (process.env.MOCK_ONCHAIN === "true") {
+    const ts = Date.now();
+    const mockHash = "0x" + Buffer.from(`zk-${threshold}-${ts}`).toString("hex").padEnd(64, "0").slice(0, 64);
+    return res.json({
+      hash: mockHash,
+      threshold,
+      result: true,
+      timestamp: new Date(ts).toISOString(),
+      demo: false,
+    });
+  }
+
   // Real flow: submit ZK proof on-chain
   if (!walletClient) {
     return res.status(500).json({ error: "No signer configured — set PRIVATE_KEY in .env" });
