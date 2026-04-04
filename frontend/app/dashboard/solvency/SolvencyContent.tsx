@@ -39,11 +39,8 @@ export default function SolvencyContent() {
     setState("generating");
     setError(null);
     try {
-      // Parse threshold — strip $ and commas
       const thresholdNum = activeThreshold.replace(/[$,]/g, "");
 
-      // TODO: read real balances from on-chain xStock holdings
-      // Mock portfolio: ~$150k total (supports all threshold presets)
       const balances = ["100", "50", "80", "30", "40", "20", "100", "25", "10"];
       const prices = ["250", "198", "140", "175", "185", "510", "530", "480", "1700"];
       const secret = "12345678";
