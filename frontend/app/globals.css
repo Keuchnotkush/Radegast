@@ -19,8 +19,30 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.get-started-btn {
+  background: #2A2A2A;
+  transition: background 0.3s ease;
+}
+
+.get-started-btn:hover {
+  background: #38A88A;
+}
+
+.auth-btn {
+  background: #2A2A2A;
+  transition: opacity 0.2s ease;
+}
+
+.auth-btn:hover {
+  opacity: 0.85;
 }
