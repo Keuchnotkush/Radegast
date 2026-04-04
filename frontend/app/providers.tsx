@@ -1,7 +1,23 @@
 "use client";
 
-import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
+import { DynamicContextProvider, mergeNetworks } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
+
+const ogTestnet = {
+  blockExplorerUrls: ["https://chainscan-newton.0g.ai"],
+  chainId: 16602,
+  chainName: "0G Newton Testnet",
+  iconUrls: ["https://0g.ai/favicon.ico"],
+  name: "0G Testnet",
+  nativeCurrency: {
+    decimals: 18,
+    name: "A0GI",
+    symbol: "A0GI",
+  },
+  networkId: 16602,
+  rpcUrls: ["https://evmrpc-testnet.0g.ai"],
+  vanityName: "0G Testnet",
+};
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -10,6 +26,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       settings={{
         environmentId: process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID!,
         walletConnectors: [EthereumWalletConnectors],
+        overrides: {
+          evmNetworks: (networks) => mergeNetworks([ogTestnet], networks),
+        },
         cssOverrides: `
           /* ─── Radegast theme for Dynamic modals ─── */
           .dynamic-widget-modal, .dynamic-widget-card {
