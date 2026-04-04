@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Nav from "../landing/nav";
 
 const P = {
@@ -83,6 +84,93 @@ const XSTOCKS = [
   { ticker: "MSTRx", name: "MicroStrategy", color: P.safran },
 ];
 
+const spring = { type: "spring" as const, stiffness: 400, damping: 20 };
+
+function PipelineSection() {
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+
+  return (
+    <section className="mb-32">
+      <div className="flex flex-col gap-4">
+        {PIPELINE.map((step, i) => {
+          const isOpen = openIdx === i;
+          return (
+            <motion.div
+              key={step.num}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.5, ease, delay: i * 0.05 }}
+            >
+              {/* Number — centered, clickable */}
+              <motion.button
+                onClick={() => setOpenIdx(isOpen ? null : i)}
+                className="flex flex-col items-center cursor-pointer w-full"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                transition={spring}
+              >
+                <motion.span
+                  className="text-6xl md:text-[100px] font-bold leading-none select-none"
+                  animate={{ color: isOpen ? step.color : `${step.color}30` }}
+                  transition={{ duration: 0.4, ease }}
+                >
+                  {step.num}
+                </motion.span>
+                <motion.div
+                  animate={{ opacity: isOpen ? 0 : 1, y: isOpen ? -5 : 0 }}
+                  transition={{ duration: 0.3, ease }}
+                  className="mt-1"
+                >
+                  <h3 className="text-lg md:text-xl font-bold text-center" style={{ color: P.dark }}>{step.title}</h3>
+                </motion.div>
+              </motion.button>
+
+              {/* Colored block — deploys from number */}
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0, borderRadius: 40 }}
+                    animate={{ height: "auto", opacity: 1, borderRadius: 20 }}
+                    exit={{ height: 0, opacity: 0, borderRadius: 40 }}
+                    transition={{ duration: 0.55, ease }}
+                    className="overflow-hidden mt-3"
+                    style={{ background: step.color }}
+                  >
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.4, ease, delay: 0.15 }}
+                      className="p-6 md:p-10 text-center"
+                    >
+                      <h3 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: "#FFFFFF" }}>{step.title}</h3>
+                      <p className="text-[15px] leading-relaxed max-w-2xl mx-auto mb-6" style={{ color: "rgba(255,255,255,0.75)" }}>
+                        {step.desc}
+                      </p>
+                      {step.detail && (
+                        <motion.p
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, ease, delay: 0.25 }}
+                          className="text-[14px] leading-relaxed max-w-2xl mx-auto py-4 px-5 rounded-xl"
+                          style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
+                        >
+                          {step.detail}
+                        </motion.p>
+                      )}
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export default function HowItWorks() {
   return (
     <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
@@ -135,46 +223,7 @@ export default function HowItWorks() {
         </motion.section>
 
         {/* ═══ PIPELINE ═══ */}
-        <section className="mb-32">
-          <div className="flex flex-col gap-0">
-            {PIPELINE.map((step, i) => (
-              <motion.div
-                key={step.num}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ duration: 0.7, ease }}
-                className="flex gap-8"
-              >
-                {/* Timeline */}
-                <div className="flex flex-col items-center">
-                  <div
-                    className="w-11 h-11 rounded-full flex items-center justify-center text-[13px] font-bold shrink-0"
-                    style={{ background: `${step.color}15`, color: step.color }}
-                  >
-                    {step.num}
-                  </div>
-                  {i < PIPELINE.length - 1 && (
-                    <div className="w-px flex-1 min-h-8" style={{ background: `${P.gray}25` }} />
-                  )}
-                </div>
-                {/* Content */}
-                <div className="pb-14">
-                  <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
-                  <p className="text-[14px] leading-relaxed mb-3" style={{ color: P.gray }}>{step.desc}</p>
-                  {step.detail && (
-                    <p
-                      className="text-[13px] leading-relaxed py-3 px-4 rounded-lg"
-                      style={{ background: `${step.color}08`, color: step.color, border: `1px solid ${step.color}15` }}
-                    >
-                      {step.detail}
-                    </p>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
+        <PipelineSection />
 
         {/* ═══ WHAT ARE xSTOCKS ═══ */}
         <section className="mb-32">

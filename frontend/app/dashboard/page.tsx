@@ -253,20 +253,21 @@ function DonutChart({ stocks, cashPct, total }: { stocks: { ticker: string; allo
     <div className="relative w-52 h-52 md:w-80 md:h-80">
       <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
         <circle cx="100" cy="100" r={r} fill="none" stroke={`${P.border}30`} strokeWidth="14" />
-        {stocks.map((s) => {
+        {stocks.map((s, i) => {
           const off = (cum / 100) * c;
           const len = (s.allocation / 100) * c;
           cum += s.allocation;
           return (
-            <circle
+            <motion.circle
               key={s.ticker}
               cx="100" cy="100" r={r}
               fill="none"
               stroke={s.color}
               strokeWidth="14"
-              strokeDasharray={`${len - 2} ${c - len + 2}`}
-              strokeDashoffset={-off}
               strokeLinecap="round"
+              initial={{ strokeDasharray: `0 ${c}`, strokeDashoffset: -off }}
+              animate={{ strokeDasharray: `${len - 2} ${c - len + 2}`, strokeDashoffset: -off }}
+              transition={{ duration: 0.8, delay: 0.15 * i, ease: [0.22, 1, 0.36, 1] }}
             />
           );
         })}
@@ -274,24 +275,30 @@ function DonutChart({ stocks, cashPct, total }: { stocks: { ticker: string; allo
           const off = (cum / 100) * c;
           const len = (cashPct / 100) * c;
           return (
-            <circle
+            <motion.circle
               cx="100" cy="100" r={r}
               fill="none"
               stroke={`${P.border}80`}
               strokeWidth="14"
-              strokeDasharray={`${len - 2} ${c - len + 2}`}
-              strokeDashoffset={-off}
               strokeLinecap="round"
+              initial={{ strokeDasharray: `0 ${c}`, strokeDashoffset: -off }}
+              animate={{ strokeDasharray: `${len - 2} ${c - len + 2}`, strokeDashoffset: -off }}
+              transition={{ duration: 0.8, delay: 0.15 * stocks.length, ease: [0.22, 1, 0.36, 1] }}
             />
           );
         })()}
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
+      <motion.div
+        className="absolute inset-0 flex flex-col items-center justify-center"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      >
         <span className="text-4xl font-bold" style={{ color: P.dark }}>
           ${total.toLocaleString("en-US", { maximumFractionDigits: 0 })}
         </span>
         <span className="text-[13px] font-medium mt-1.5" style={{ color: P.gray }}>Total balance</span>
-      </div>
+      </motion.div>
     </div>
   );
 }

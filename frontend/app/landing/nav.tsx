@@ -41,7 +41,7 @@ export default function Nav() {
       >
         <motion.div
           animate={{
-            maxWidth: open ? 400 : 0,
+            maxWidth: open ? 520 : 0,
             paddingLeft: open ? 24 : 0,
             paddingRight: open ? 8 : 0,
             opacity: open ? 1 : 0,
@@ -60,12 +60,12 @@ export default function Nav() {
             );
           })}
         </motion.div>
-        <Link href="/get-started" className="p-1.5 shrink-0">
+        <Link href="/get-started" className="p-[12px] shrink-0">
           <motion.div
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
             transition={spring}
-            className="get-started-btn px-5 py-2.5 rounded-full text-[12px] font-semibold uppercase tracking-wider text-white"
+            className="get-started-btn px-[12px] py-2.5 rounded-full text-[12px] font-semibold uppercase tracking-wider text-white whitespace-nowrap"
           >
             Get Started
           </motion.div>
@@ -88,7 +88,7 @@ export default function Nav() {
           return (
             <Link key={t.href} href={t.href} className="flex flex-col items-center gap-1 px-3 py-1">
               {t.icon(color)}
-              <span className="text-[10px] font-semibold" style={{ color }}>{t.label}</span>
+              <span className="text-[12px] font-semibold" style={{ color }}>{t.label}</span>
             </Link>
           );
         })}

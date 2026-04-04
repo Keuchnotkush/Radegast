@@ -127,11 +127,19 @@ interface PortfolioCtx {
 
 const PortfolioContext = createContext<PortfolioCtx | null>(null);
 
-const INITIAL_HOLDINGS: Holding[] = [];
+// TODO: clear mock data and read from on-chain balances
+const INITIAL_HOLDINGS: Holding[] = [
+  { ticker: "TSLA", shares: 12.5 },
+  { ticker: "AAPL", shares: 8.3 },
+  { ticker: "NVDA", shares: 15.2 },
+  { ticker: "GOOGL", shares: 4.7 },
+  { ticker: "AMZN", shares: 6.1 },
+  { ticker: "META", shares: 3.4 },
+];
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [holdings, setHoldings] = useState<Holding[]>(INITIAL_HOLDINGS);
-  const [cash, setCash] = useState(0);
+  const [cash, setCash] = useState(2450.75);
 
   const buy = useCallback((ticker: string, usdAmount: number) => {
     const stock = MARKET.find((s) => s.ticker === ticker);
