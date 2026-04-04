@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { StockLogo, P, ease, spring } from "../shared";
 import { usePortfolio, MARKET, STOCK_COLORS, PROFILES, useWallet } from "../store";
-import { useOpenFundingOptions } from "@dynamic-labs/sdk-react-core";
+import { useOpenFundingOptions, useRegisterPasskey } from "@dynamic-labs/sdk-react-core";
 
-type Step = "welcome" | "discover" | "profile" | "fund" | "pick" | "done";
+type Step = "welcome" | "discover" | "profile" | "fund" | "pick" | "passkey" | "done";
 
 const POPULAR_STOCKS = ["TSLA", "AAPL", "NVDA", "GOOGL", "AMZN", "META", "MSFT", "SPY"];
 
@@ -16,7 +16,9 @@ export default function OnboardingPage() {
   const { addFunds, buy } = usePortfolio();
   const wallet = useWallet();
   const { openFundingOptions } = useOpenFundingOptions();
+  const registerPasskey = useRegisterPasskey();
   const [step, setStep] = useState<Step>("welcome");
+  const [passkeyState, setPasskeyState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [profile, setProfile] = useState<string | null>(null);
   const [fundAmount, setFundAmount] = useState("");
   const [selectedStocks, setSelectedStocks] = useState<Set<string>>(new Set());
@@ -74,13 +76,17 @@ export default function OnboardingPage() {
       const perStock = usd / selectedStocks.size;
       selectedStocks.forEach((ticker) => buy(ticker, perStock));
     }
-    setStep("done");
+    setStep("passkey");
+  }, [selectedStocks, usd, buy]);
+
+  const finishOnboarding = useCallback(() => {
     localStorage.removeItem("radegast_isNew");
     localStorage.setItem("radegast_onboarded", "true");
+    setStep("done");
     setTimeout(() => router.push("/dashboard"), 2500);
-  }, [selectedStocks, usd, buy, router]);
+  }, [router]);
 
-  const stepIndex = ["welcome", "discover", "profile", "fund", "pick", "done"].indexOf(step);
+  const stepIndex = ["welcome", "discover", "profile", "fund", "pick", "passkey", "done"].indexOf(step);
 
   return (
     <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
@@ -91,7 +97,7 @@ export default function OnboardingPage() {
           <motion.div
             className="h-full"
             style={{ background: P.jade }}
-            animate={{ width: `${(stepIndex / 5) * 100}%` }}
+            animate={{ width: `${(stepIndex / 6) * 100}%` }}
             transition={{ duration: 0.6, ease }}
           />
         </div>
@@ -645,13 +651,152 @@ export default function OnboardingPage() {
               </motion.button>
 
               <button
-                onClick={() => { setStep("done"); localStorage.removeItem("radegast_isNew");
-    localStorage.setItem("radegast_onboarded", "true"); setTimeout(() => router.push("/dashboard"), 2500); }}
+                onClick={() => setStep("passkey")}
                 className="block mx-auto mt-6 text-[14px] font-medium cursor-pointer"
                 style={{ color: P.gray }}
               >
                 Skip for now
               </button>
+            </div>
+          </motion.section>
+        )}
+
+        {/* ═══ PASSKEY ═══ */}
+        {step === "passkey" && (
+          <motion.section
+            key="passkey"
+            initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, scale: 1.05, filter: "blur(6px)" }}
+            transition={{ duration: 0.7, ease }}
+            className="h-screen flex flex-col items-center justify-center text-center px-8"
+          >
+            <div className="w-full max-w-xl">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 20 }}
+                className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-10"
+                style={{ background: `${P.jade}10` }}
+              >
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 11c0-1.1.9-2 2-2s2 .9 2 2-0.9 2-2 2" />
+                  <path d="M14 13v4l-2 2-2-2v-4" />
+                  <circle cx="14" cy="7" r="4" />
+                  <path d="M5.5 21a8.38 8.38 0 0 1-.5-3c0-2 1-3.5 3-4.5" />
+                </svg>
+              </motion.div>
+
+              <motion.h2
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.6, ease }}
+                className="text-3xl md:text-5xl font-bold mb-5 leading-tight"
+              >
+                Sign in with your <span style={{ color: P.jade }}>fingerprint</span>
+              </motion.h2>
+
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.5, ease }}
+                className="text-lg mb-4"
+                style={{ color: P.gray }}
+              >
+                Next time, skip the email code. Just use Face ID, Touch ID, or your device PIN.
+              </motion.p>
+
+              <motion.p
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.5, ease }}
+                className="text-[14px] mb-12"
+                style={{ color: `${P.gray}80` }}
+              >
+                It takes 3 seconds and works on all your devices.
+              </motion.p>
+
+              <AnimatePresence mode="wait">
+                {passkeyState === "idle" && (
+                  <motion.div key="pk-idle" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                    <motion.button
+                      whileHover={{ scale: 1.06 }}
+                      whileTap={{ scale: 0.95 }}
+                      transition={spring}
+                      onClick={async () => {
+                        setPasskeyState("loading");
+                        try {
+                          await registerPasskey();
+                          setPasskeyState("done");
+                          setTimeout(finishOnboarding, 1500);
+                        } catch {
+                          setPasskeyState("error");
+                        }
+                      }}
+                      className="w-full py-5 rounded-2xl text-[17px] font-bold cursor-pointer flex items-center justify-center gap-3"
+                      style={{ background: P.dark, color: P.white }}
+                    >
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 11c0-1.1.9-2 2-2s2 .9 2 2-0.9 2-2 2" />
+                        <path d="M14 13v4l-2 2-2-2v-4" />
+                        <circle cx="14" cy="7" r="4" />
+                      </svg>
+                      Set up fingerprint login
+                    </motion.button>
+                  </motion.div>
+                )}
+
+                {passkeyState === "loading" && (
+                  <motion.div key="pk-loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center py-8">
+                    <div className="w-10 h-10 rounded-full animate-spin mb-4" style={{ border: `3px solid ${P.border}20`, borderTopColor: P.jade }} />
+                    <p className="text-[15px] font-semibold">Waiting for your device...</p>
+                    <p className="text-[13px] mt-1" style={{ color: P.gray }}>Follow the prompt on screen</p>
+                  </motion.div>
+                )}
+
+                {passkeyState === "done" && (
+                  <motion.div key="pk-done" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center py-8">
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: `${P.jade}12` }}>
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                    <p className="text-xl font-bold">Fingerprint ready</p>
+                    <p className="text-[14px] mt-2" style={{ color: P.gray }}>Next time, just tap to sign in.</p>
+                  </motion.div>
+                )}
+
+                {passkeyState === "error" && (
+                  <motion.div key="pk-error" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                    <p className="text-[13px] mb-5" style={{ color: P.loss }}>
+                      Something went wrong. You can always set this up later in Settings.
+                    </p>
+                    <motion.button
+                      whileHover={{ scale: 1.06 }}
+                      whileTap={{ scale: 0.95 }}
+                      transition={spring}
+                      onClick={() => setPasskeyState("idle")}
+                      className="w-full py-4 rounded-xl text-[15px] font-semibold cursor-pointer mb-3"
+                      style={{ background: P.dark, color: P.white }}
+                    >
+                      Try again
+                    </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {(passkeyState === "idle" || passkeyState === "error") && (
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6, duration: 0.4 }}
+                  onClick={finishOnboarding}
+                  className="block mx-auto mt-8 text-[14px] font-medium cursor-pointer"
+                  style={{ color: P.gray }}
+                >
+                  Maybe later
+                </motion.button>
+              )}
             </div>
           </motion.section>
         )}

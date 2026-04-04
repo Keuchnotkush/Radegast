@@ -60,22 +60,15 @@ export function LivePriceProvider({ children }: { children: ReactNode }) {
 
   const fetchPrices = useCallback(async () => {
     try {
-      const results = await Promise.allSettled(
-        MARKET.map(async (s) => {
-          const res = await fetch(`/api/chart?symbol=${encodeURIComponent(s.ticker)}&period=1D`);
-          const json = await res.json();
-          const arr: number[] = json?.prices ?? [];
-          if (arr.length > 0) return { ticker: s.ticker, price: arr[arr.length - 1] };
-          return null;
-        })
-      );
+      const res = await fetch("/api/prices");
+      const json = await res.json();
+      const list: { symbol: string; priceUsd: number }[] = json?.prices ?? [];
       const newPrices: Record<string, number> = {};
-      for (const r of results) {
-        if (r.status === "fulfilled" && r.value) {
-          newPrices[r.value.ticker] = r.value.price;
-        }
+      for (const p of list) {
+        const ticker = XSTOCK_TO_TICKER[p.symbol];
+        if (ticker) newPrices[ticker] = p.priceUsd;
       }
-      setPrices(newPrices);
+      if (Object.keys(newPrices).length > 0) setPrices(newPrices);
     } catch {
       // keep stale prices
     } finally {
