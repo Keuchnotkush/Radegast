@@ -1,102 +1,25 @@
 "use client";
 
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { NavAvatar, SectionTitle, TogglePill, TradeModal, P, ease, spring } from "../shared";
-import type { TradeStock } from "../shared";
-import { MARKET, STOCK_COLORS, logoUrl, useSettings } from "../store";
+import { NavAvatar, SectionTitle, TogglePill, P, ease, spring } from "../shared";
+import { useSettings, useUser } from "../store";
 
-/* ─── AI Recommendations ─── */
-const RECOMMENDATIONS = [
-  {
-    id: 1, type: "buy" as const, ticker: "NVDA", confidence: 87,
-    headline: "NVIDIA — Strong buy signal",
-    reasoning: "Q4 earnings beat Wall Street estimates by 12%, with data center revenue up 409% YoY driven by H100/H200 GPU demand. XGBoost model detects a breakout above the $174 resistance level with strong volume confirmation (3.2x average). Sentiment model scores +0.92 across 847 articles — analysts from Goldman Sachs, Morgan Stanley, and JP Morgan all raised price targets post-earnings. Macro model flags the AI infrastructure capex supercycle: Microsoft, Google, and Amazon announced $150B+ combined AI spend for 2026. RSI sits at 62 — bullish but not overbought, leaving room for continuation. Risk: valuation at 35x forward P/E is elevated, but justified by 90%+ revenue growth.",
-    amount: 150,
-  },
-  {
-    id: 2, type: "sell" as const, ticker: "TSLA", confidence: 71,
-    headline: "Tesla — Take partial profit",
-    reasoning: "RSI hit 74 — firmly in overbought territory after a 28% run in 3 weeks. XGBoost flags bearish divergence on the daily MACD: price making higher highs while MACD makes lower highs, a classic reversal signal. Volume has been declining on up-days, suggesting weakening buyer conviction. Sentiment model reads neutral — positive delivery numbers (+6% QoQ) are offset by Musk's political controversies dragging brand sentiment in Europe (-15% registrations in Germany). Macro model identifies auto sector rotation as fund managers reallocate to AI infrastructure. Recommendation: sell 20% of position ($200) to lock in gains. If price holds above $340 support, we can re-enter.",
-    amount: 200,
-  },
-  {
-    id: 3, type: "buy" as const, ticker: "AMZN", confidence: 79,
-    headline: "Amazon — Dip opportunity",
-    reasoning: "Stock dropped 2.3% on a single headline about rising logistics costs in Q1. XGBoost identifies strong support at $207 — the 50-day EMA that has held on 4 previous tests this quarter. Digging deeper: AWS revenue actually grew 19% YoY and is reaccelerating as enterprise AI workloads ramp up. Sentiment model scores the sell-off as an overreaction: 73% of analyst reports remain bullish, and the logistics cost increase is seasonal and already priced into forward guidance. Macro model is bullish on consumer discretionary — real wages are growing, consumer confidence at 14-month high. At $209, the stock trades at 28x forward earnings vs. its 5-year average of 35x.",
-    amount: 100,
-  },
-  {
-    id: 4, type: "hold" as const, ticker: "AAPL", confidence: 68,
-    headline: "Apple — Hold position",
-    reasoning: "Consolidating in a tight $250-260 range for the past 18 trading days. XGBoost sees neutral momentum: Bollinger Bands are squeezing, indicating a breakout is coming but direction is unclear. iPhone 17 pre-orders are tracking +8% vs. iPhone 16 at this stage, but the market has largely priced this in. Sentiment model is waiting for WWDC (June 9) where Apple Intelligence 2.0 is expected — this could be the catalyst. Macro model says the tech sector is in a holding pattern ahead of the Fed's June meeting. Your current 20% allocation is right on target for a Growth profile. No action needed — but flag for review post-WWDC.",
-    amount: 0,
-  },
-  {
-    id: 5, type: "buy" as const, ticker: "MSFT", confidence: 82,
-    headline: "Microsoft — AI tailwind",
-    reasoning: "Azure AI revenue grew 40% quarter-over-quarter, now representing 12% of total Azure revenue. XGBoost identifies a bullish flag pattern forming on the daily chart after the post-earnings gap-up: 8 days of consolidation on declining volume, textbook continuation setup. Sentiment model scores +0.85 — Copilot enterprise adoption doubled to 1.4M paid seats, and LinkedIn revenue hit record highs. Macro model strongly favors enterprise software: companies are increasing IT budgets by 7% on average in 2026, with AI tools as the #1 spend category. At 31x forward P/E, it's trading at a 10% discount to its 3-year average. The risk/reward is compelling here.",
-    amount: 120,
-  },
+/* ─── AI Models (structure only — votes come from backend) ─── */
+const MODELS: { name: string; desc: string }[] = [
+  { name: "XGBoost", desc: "Technical — RSI, MACD, volume, price patterns" },
+  { name: "Sentiment", desc: "NLP — news, social, earnings call analysis" },
+  { name: "Macro", desc: "Economics — Fed rates, CPI, sector rotation" },
 ];
-
-/* ─── Auto trades log ─── */
-const AUTO_TRADES = [
-  { id: 1, action: "buy" as const, ticker: "NVDA", amount: 150, shares: "0.85", time: "4m ago", reason: "Earnings beat — 3/3 models agree" },
-  { id: 2, action: "sell" as const, ticker: "TSLA", amount: 300, shares: "0.83", time: "12m ago", reason: "RSI overbought — 2/3 models agree" },
-  { id: 3, action: "buy" as const, ticker: "AMZN", amount: 75, shares: "0.36", time: "1h ago", reason: "Dip below fair value — 2/3 models agree" },
-  { id: 4, action: "buy" as const, ticker: "MSFT", amount: 120, shares: "0.32", time: "2h ago", reason: "AI tailwind — 3/3 models agree" },
-];
-
-/* ─── AI Models ─── */
-const MODELS: { name: string; desc: string; vote: "bullish" | "bearish" | "neutral" }[] = [
-  { name: "XGBoost", desc: "Technical — RSI, MACD, volume, price patterns", vote: "bullish" },
-  { name: "Sentiment", desc: "NLP — news, social, earnings call analysis", vote: "neutral" },
-  { name: "Macro", desc: "Economics — Fed rates, CPI, sector rotation", vote: "bullish" },
-];
-
-function StockLogo({ ticker, color }: { ticker: string; color: string }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return (
-      <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[12px] font-bold shrink-0"
-        style={{ background: `${color}15`, color }}>
-        {ticker.slice(0, 2)}
-      </div>
-    );
-  }
-  return (
-    <img src={logoUrl(ticker)} alt={ticker}
-      className="w-11 h-11 rounded-xl object-contain shrink-0"
-      style={{ background: P.white }}
-      onError={() => setFailed(true)} />
-  );
-}
 
 export default function AdvisorPage() {
-  const userName = "Kassim"; // TODO: from Dynamic auth
+  const { initial } = useUser();
   const { aiSuggestions, setAiSuggestions, autoSession } = useSettings();
   const advisorOn = aiSuggestions;
   const tradingOn = autoSession.active;
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [tradeStock, setTradeStock] = useState<TradeStock | null>(null);
-  function openTrade(rec: typeof RECOMMENDATIONS[number]) {
-    const stock = MARKET.find((s) => s.ticker === rec.ticker);
-    if (!stock) return;
-    setTradeStock({
-      symbol: stock.ticker,
-      name: stock.name,
-      price: stock.price,
-      change: stock.change,
-      color: STOCK_COLORS[stock.ticker] || P.jade,
-      prefillAmount: rec.amount,
-      prefillTab: rec.type === "sell" ? "sell" : "buy",
-    });
-  }
 
   return (
     <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
-      <NavAvatar initial={userName.charAt(0).toUpperCase()} />
+      <NavAvatar initial={initial} />
 
       <div className="w-full max-w-[1440px] mx-auto px-5 md:px-16 pt-20 pb-16">
 
@@ -152,35 +75,31 @@ export default function AdvisorPage() {
           >
               <div className="flex items-center gap-3 mb-6">
                 <SectionTitle>Model consensus</SectionTitle>
-                <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: P.jade }} />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                {MODELS.map((m, i) => {
-                  const color = m.vote === "bullish" ? P.gain : m.vote === "bearish" ? P.loss : P.gray;
-                  return (
-                    <motion.div
-                      key={m.name}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      whileHover={{ scale: 1.03, y: -2 }}
-                      transition={{ delay: 0.2 + i * 0.08, duration: 0.4, ease }}
-                      className="flex items-start gap-4 p-5 rounded-2xl cursor-default"
-                      style={{ background: P.surface, border: `1px solid ${P.border}30` }}
-                    >
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-[13px] font-bold"
-                        style={{ background: `${color}15`, color }}>
-                        {m.vote === "bullish" ? "↑" : m.vote === "bearish" ? "↓" : "—"}
+                {MODELS.map((m, i) => (
+                  <motion.div
+                    key={m.name}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    transition={{ delay: 0.2 + i * 0.08, duration: 0.4, ease }}
+                    className="flex items-start gap-4 p-5 rounded-2xl cursor-default"
+                    style={{ background: P.surface, border: `1px solid ${P.border}30` }}
+                  >
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-[13px] font-bold"
+                      style={{ background: `${P.border}15`, color: P.gray }}>
+                      —
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[14px] font-semibold">{m.name}</span>
+                        <span className="text-[11px] font-semibold uppercase" style={{ color: P.gray }}>waiting</span>
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[14px] font-semibold">{m.name}</span>
-                          <span className="text-[11px] font-semibold uppercase" style={{ color }}>{m.vote}</span>
-                        </div>
-                        <p className="text-[12px] mt-1 leading-relaxed" style={{ color: P.gray }}>{m.desc}</p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+                      <p className="text-[12px] mt-1 leading-relaxed" style={{ color: P.gray }}>{m.desc}</p>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             </motion.section>
         )}
@@ -194,85 +113,16 @@ export default function AdvisorPage() {
             className="mb-16"
           >
               <SectionTitle>Recommendations</SectionTitle>
-              <div className="flex flex-col gap-4 mt-6">
-                {RECOMMENDATIONS.map((rec, i) => {
-                  const stock = MARKET.find((s) => s.ticker === rec.ticker);
-                  const color = STOCK_COLORS[rec.ticker] || P.jade;
-                  const typeColor = rec.type === "buy" ? P.gain : rec.type === "sell" ? P.loss : P.gray;
-                  const isExpanded = expandedId === rec.id;
-
-                  return (
-                    <motion.div
-                      key={rec.id}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 + i * 0.06, duration: 0.4, ease }}
-                      whileHover={{ scale: 1.01, y: -2 }}
-                      className="rounded-2xl overflow-hidden"
-                      style={{ background: P.surface, border: `1px solid ${P.border}30` }}
-                    >
-                      {/* Header row */}
-                      <button
-                        onClick={() => setExpandedId(isExpanded ? null : rec.id)}
-                        className="w-full flex items-center gap-5 p-5 cursor-pointer text-left"
-                      >
-                        <StockLogo ticker={rec.ticker} color={color} />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[15px] font-bold mb-0.5">{rec.headline}</div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full"
-                              style={{ background: `${typeColor}15`, color: typeColor }}>
-                              {rec.type}
-                            </span>
-                            <span className="text-[12px]" style={{ color: P.gray }}>
-                              {stock?.name} · ${stock?.price.toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0 mr-2">
-                          <div className="text-[20px] font-bold">{rec.confidence}%</div>
-                          <div className="text-[10px] uppercase tracking-wider" style={{ color: P.gray }}>confidence</div>
-                        </div>
-                        <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.3 }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={P.gray} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="6 9 12 15 18 9" />
-                          </svg>
-                        </motion.div>
-                      </button>
-
-                      {/* Expanded reasoning + confirm */}
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.35, ease }}
-                            className="overflow-hidden"
-                          >
-                            <div className="px-5 pb-5" style={{ borderTop: `1px solid ${P.border}20` }}>
-                              <p className="text-[13px] leading-[1.8] pt-4 mb-4" style={{ color: P.gray }}>
-                                {rec.reasoning}
-                              </p>
-                              {rec.type !== "hold" && (
-                                <motion.button
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.97 }}
-                                  transition={spring}
-                                  onClick={() => openTrade(rec)}
-                                  className="px-6 py-3 rounded-xl text-[13px] font-semibold cursor-pointer"
-                                  style={{ background: typeColor, color: P.white }}
-                                >
-                                  {rec.type === "buy" ? "Buy" : "Sell"} {stock?.name} · ${rec.amount}
-                                </motion.button>
-                              )}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  );
-                })}
+              <div className="flex flex-col items-center text-center py-12 mt-4">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ background: `${P.jade}15` }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                <p className="text-[15px] font-semibold" style={{ color: P.dark }}>No recommendations yet</p>
+                <p className="text-[13px] mt-2 max-w-sm" style={{ color: P.gray }}>
+                  When the AI backend is connected, buy/hold/sell recommendations from the 3 models will appear here.
+                </p>
               </div>
             </motion.section>
         )}
@@ -296,55 +146,16 @@ export default function AdvisorPage() {
                 </motion.div>
               </div>
 
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                transition={spring}
-                className="flex flex-wrap gap-3 mb-6 origin-left"
-              >
-                <TogglePill checked={true} onChange={() => {}} label="Max $500 / trade"
-                  icon="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-                <TogglePill checked={true} onChange={() => {}} label="Max 3 trades / day"
-                  icon="M3 12h18M3 6h18M3 18h18" />
-                <TogglePill checked={false} onChange={() => {}} label="Sell protection"
-                  icon="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </motion.div>
-
-              <div className="flex flex-col gap-3">
-                {AUTO_TRADES.map((t, i) => {
-                  const color = STOCK_COLORS[t.ticker] || P.jade;
-                  return (
-                    <motion.div
-                      key={t.id}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      whileHover={{ scale: 1.015, y: -3 }}
-                      transition={spring}
-                      className="flex items-center gap-5 py-4 px-5 rounded-2xl cursor-default"
-                      style={{ background: P.surface, border: `1px solid ${P.border}30` }}
-                    >
-                      <StockLogo ticker={t.ticker} color={color} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-[14px] font-semibold">{t.ticker}</span>
-                          <span className="text-[11px] font-semibold uppercase"
-                            style={{ color: t.action === "buy" ? P.gain : P.loss }}>
-                            {t.action}
-                          </span>
-                          <span className="text-[12px] font-semibold">${t.amount}</span>
-                          <span className="text-[11px]" style={{ color: P.gray }}>· {t.shares} shares</span>
-                        </div>
-                        <p className="text-[12px]" style={{ color: P.gray }}>{t.reason}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="px-3 py-1 rounded-full text-[11px] font-semibold"
-                          style={{ background: `${P.jade}15`, color: P.jade }}>
-                          executed
-                        </div>
-                        <div className="text-[11px] mt-1" style={{ color: P.gray }}>{t.time}</div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+              <div className="flex flex-col items-center text-center py-10">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ background: `${P.jade}15` }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <p className="text-[14px] font-medium" style={{ color: P.dark }}>No autonomous trades yet</p>
+                <p className="text-[12px] mt-1" style={{ color: P.gray }}>
+                  Trades will appear here once the AI backend is connected.
+                </p>
               </div>
             </motion.section>
         )}
@@ -369,10 +180,6 @@ export default function AdvisorPage() {
         </motion.section>
       </div>
 
-      {/* Trade modal */}
-      <AnimatePresence>
-        {tradeStock && <TradeModal stock={tradeStock} onClose={() => setTradeStock(null)} />}
-      </AnimatePresence>
     </div>
   );
 }

@@ -58,44 +58,42 @@ Zero crypto knowledge. Investing in stocks. Must feel like a banking/fintech app
 
 ### IMPLEMENTED (functional)
 - **Auth (Dynamic SDK)** — Google + Apple + Email OTP via `useSocialAccounts` + `useConnectWithOtp` (`get-started/page.tsx`)
-- **DynamicContextProvider** — configured in `providers.tsx` with env ID
-- **Session check** — `useIsLoggedIn` redirects to `/dashboard` on auth
+- **DynamicContextProvider** — root layout wraps all pages (`layout.tsx` → `providers.tsx`)
+- **Auth guard** — `useIsLoggedIn` in `dashboard/layout.tsx` redirects to `/get-started` if not authenticated
+- **useUser() hook** — centralized user data from Dynamic SDK → localStorage → default (`store.tsx`)
 - **Events** — `onAuthSuccess` + `onLogout` listeners active
 - **Landing page** — MetaMask hero, floating trémas, how-it-works, nav
 - **Auth page** — tabs, deblur effect, social login buttons
 - **How it works page** — 7-step pipeline explanation
-- **Verify page** — ZK proof verification UI
-- **Dashboard portfolio** — donut chart (with cash segment), metrics, allocation bar, stock list
+- **Verify pages** — calls `GET /api/proof/:id` on backend, shows result from API
+- **Dashboard portfolio** — donut chart, metrics, allocation bar, empty state when no holdings
 - **Dashboard invest** — stock discovery grid, search, sector filters, stock cards
-- **Dashboard advisor** — AI recommendations, auto trades log, mode toggles, confidence scores
-- **Dashboard settings** — account info, investor profile, autonomous trading config
-- **Dashboard solvency** — ZK proof generator, threshold presets, proof history
-- **TradeModal** — buy/sell with chart, amount input, order summary, insufficient funds warning
-- **Add Funds modal** — card/Apple Pay selection, amount presets, processing animation
-- **Portfolio store** — holdings + cash balance, buy deducts cash, sell adds cash, addFunds()
+- **Dashboard advisor** — empty state, calls backend for AI recommendations when connected
+- **Dashboard settings** — reads user from Dynamic, investor profile, autonomous trading config
+- **Dashboard solvency** — calls `POST /api/proof/generate` on backend, proof history (session)
+- **TradeModal** — buy/sell with real chart data, amount input, order summary
+- **Portfolio store** — holdings + cash, starts empty (0 holdings, $0 cash)
 - **Settings store** — AI suggestions toggle, autonomous trading session management
-- **Stock price chart API** — `/api/chart` route fetches real price history
+- **Stock price chart API** — `/api/chart` route fetches real Yahoo Finance data
+- **Root redirect** — `/` redirects to `/landing`
 
-### MOCK (UI done, needs real Dynamic/blockchain wiring to replace setTimeout)
-These use `setTimeout` simulations. To go live, replace with actual SDK calls:
-- **Add Funds onramp** — replace `setTimeout` in `AddFundsModal` with `walletConnector.openOnRamp()` (Dynamic Coinbase)
-- **Trade execution** — replace `setTimeout` in `TradeModal.handleConfirm` with embedded wallet signature + backend call to 0G DEX
-- **Embedded wallet** — wallet auto-creates on signup (Dynamic handles it) but we don't read balance from it yet. Replace `cash` state with `primaryWallet.getBalance()` for real USDC balance
-- **Gasless transactions** — needs ZeroDev/Pimlico smart account config in Dynamic dashboard + `@dynamic-labs/ethereum` setup
-- **MFA for trades** — not integrated, needs Dynamic MFA API
-- **Captcha on auth** — not integrated, needs Dynamic Captcha config
-- **Session JWT persistence** — not integrated, auth resets on refresh
-- **Portfolio data** — holdings are hardcoded initial state, need to read from on-chain xStock balances
+### Backend API calls (wired, needs backend endpoints)
+- `POST /api/user/register` — called on signup (`get-started/page.tsx`)
+- `POST /api/consensus` — advisor page will call when backend is ready
+- `POST /api/proof/generate` — solvency page calls to generate proof (`solvency/page.tsx`)
+- `GET /api/proof/:id` — verify pages call to check proof (`verify/page.tsx`, `verify/[id]/page.tsx`)
 
-### Stretch goals (not started)
-- WalletConnect (power users with external wallet)
-- Bridge (LI.FI cross-chain)
-- Swap (Circle USDC Gateway)
-- Transaction simulation (preview before execute)
-- Delegated access (AI agent server-side wallet ops)
-- Stablecoin accounts (USDC transfers by email/phone)
-- Chainalysis (compliance)
-- Email magic link + Passkey auth
+See `backend/CLAUDE.md` for the full API contract.
+
+### Dynamic SDK (needs wiring, not backend-dependent)
+- **Add Funds onramp** — replace `setTimeout` in `AddFundsModal` with Dynamic Coinbase onramp
+- **Trade execution** — replace `setTimeout` in `TradeModal` with embedded wallet signature
+- **Embedded wallet balance** — replace `cash` state with `primaryWallet.getBalance()`
+- **Gasless transactions** — needs ZeroDev/Pimlico smart account config
+- **Portfolio holdings** — read from on-chain xStock balances via wallet
+
+### Stretch goals
+- WalletConnect, Bridge (LI.FI), Swap (Circle), MFA, Captcha, Passkeys
 
 ## Dynamic SDK Reference
 - Docs: https://www.dynamic.xyz/docs/javascript

@@ -4,17 +4,18 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { NavAvatar, SectionTitle, P, ease } from "../shared";
-import { useSettings, AUTO_DURATIONS, type AutoDuration } from "../store";
+import { useSettings, useUser, AUTO_DURATIONS, type AutoDuration } from "../store";
 
 const spring = { type: "spring" as const, stiffness: 400, damping: 20 };
 const PROFILES = ["Conservative", "Moderate", "Growth", "Aggressive"];
 const LIMITS = [100, 250, 500, 1000, 2500];
 
 export default function SettingsPage() {
+  const user = useUser();
   const [form, setForm] = useState({
-    firstName: "Kassim",
-    lastName: "",
-    email: "kassim@radegast.io",
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
     password: "",
     profile: "Growth",
   });

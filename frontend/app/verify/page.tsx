@@ -49,9 +49,8 @@ const STEPS: { num: string; title: string; bg: string; desc: string; detail: str
 export default function Verify() {
   const [hash, setHash] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [hoveredStep, setHoveredStep] = useState<number | null>(null);
   const [threshold, setThreshold] = useState("");
-  const [verifiedAt, setVerifiedAt] = useState("");
+  const [hoveredStep, setHoveredStep] = useState<number | null>(null);
 
   async function handleVerify() {
     if (!hash.trim()) return;
@@ -61,7 +60,6 @@ export default function Verify() {
       if (res.ok) {
         const data = await res.json();
         setThreshold(data.threshold || "Unknown");
-        setVerifiedAt(data.verifiedAt || "");
         setStatus("success");
       } else {
         setStatus("error");
@@ -74,8 +72,6 @@ export default function Verify() {
   function reset() {
     setHash("");
     setStatus("idle");
-    setThreshold("");
-    setVerifiedAt("");
   }
 
   return (
@@ -145,7 +141,7 @@ export default function Verify() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleVerify}
-                    className="get-started-btn px-7 py-2.5 rounded-full text-[13px] font-bold uppercase tracking-wider cursor-pointer flex items-center gap-2 shrink-0 text-white"
+                    className="get-started-btn px-[8px] py-2.5 rounded-full text-[13px] font-bold uppercase tracking-wider cursor-pointer flex items-center gap-2 shrink-0 text-white whitespace-nowrap"
                     style={{ opacity: hash.trim() ? 1 : 0.5 }}
                   >
                     {status === "loading" ? (
@@ -185,7 +181,7 @@ export default function Verify() {
                       Exceeds <span style={{ color: P.cream }}>{threshold}</span>
                     </p>
                     <p className="text-[13px]" style={{ color: `${P.white}AA` }}>
-                      Verified on 0G Chain &middot; {verifiedAt ? new Date(verifiedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"} &middot; Mathematically valid
+                      Verified on 0G Chain &middot; {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} &middot; Mathematically valid
                     </p>
                   </div>
                 </div>

@@ -139,7 +139,7 @@ export function NavAvatar({ initial }: { initial: string }) {
     >
       <motion.div
         animate={{
-          maxWidth: open ? 400 : 0,
+          maxWidth: open ? 520 : 0,
           paddingLeft: open ? 24 : 0,
           paddingRight: open ? 8 : 0,
           opacity: open ? 1 : 0,
@@ -158,12 +158,12 @@ export function NavAvatar({ initial }: { initial: string }) {
           );
         })}
       </motion.div>
-      <Link href="/dashboard/settings" className="p-1.5 shrink-0">
+      <Link href="/dashboard/settings" className="p-[8px] shrink-0">
         <motion.div
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
           transition={spring}
-          className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold"
+          className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
           style={{ background: P.terracotta, color: P.white }}
         >
           {initial}
@@ -288,7 +288,7 @@ export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () 
 
   const handleConfirm = useCallback(() => {
     setStep("processing");
-    // Simulate wallet signature + transaction (user sees "Processing purchase...")
+    // TODO: replace with real wallet signature + contract call
     setTimeout(() => {
       if (tab === "buy") portfolio.buy(ticker, usdAmount);
       else portfolio.sell(ticker, usdAmount);

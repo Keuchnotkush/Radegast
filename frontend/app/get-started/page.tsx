@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import {
-  DynamicContextProvider,
   useSocialAccounts,
   useConnectWithOtp,
   useIsLoggedIn,
@@ -271,36 +270,26 @@ function AuthCard() {
 
 export default function GetStarted() {
   return (
-    <DynamicContextProvider
-      settings={{
-        environmentId: process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID!,
-        events: {
-          onAuthSuccess: (args) => console.log("[Dynamic] Auth success", args),
-          onLogout: () => console.log("[Dynamic] Logged out"),
-        },
-      }}
+    <div
+      className="min-h-screen flex items-center justify-center"
+      style={{ background: P.bg, fontFamily: "Sora, sans-serif" }}
     >
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: P.bg, fontFamily: "Sora, sans-serif" }}
-      >
-        <Link href="/landing" className="fixed top-6 left-8 z-40">
-          <img src="/logo.svg" alt="Radegast" style={{ height: 22 }} />
-        </Link>
+      <Link href="/landing" className="fixed top-6 left-8 z-40">
+        <img src="/logo.svg" alt="Radegast" style={{ height: 22 }} />
+      </Link>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease }}
-          className="w-full max-w-lg"
-        >
-          <AuthCard />
-          <p className="text-center text-[11px] mt-6" style={{ color: P.gray }}>
-            By continuing, you agree to the Terms of Service and Privacy Policy.
-          </p>
-        </motion.div>
-      </div>
-    </DynamicContextProvider>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease }}
+        className="w-full max-w-lg"
+      >
+        <AuthCard />
+        <p className="text-center text-[11px] mt-6" style={{ color: P.gray }}>
+          By continuing, you agree to the Terms of Service and Privacy Policy.
+        </p>
+      </motion.div>
+    </div>
   );
 }
 
