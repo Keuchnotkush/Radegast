@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 
 /* ─── Stock logo helper ─── */
 const LOGO_TOKEN = "pk_PCBX5rd6QsqwX0zT-1bPCg";
@@ -49,6 +49,63 @@ export const MARKET: MarketStock[] = [
   { ticker: "LLY", name: "Eli Lilly", price: 935.58, change: -1.98, sector: "Pharma" },
   { ticker: "MC.PA", name: "LVMH", price: 471.05, change: -0.01, sector: "Luxury" },
 ];
+
+/* ─── Live prices context ─── */
+const LivePriceContext = createContext<{ prices: Record<string, number>; loading: boolean }>({ prices: {}, loading: false });
+
+export function LivePriceProvider({ children }: { children: ReactNode }) {
+  const [prices, setPrices] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+
+  const fetchPrices = useCallback(async () => {
+    try {
+      const results = await Promise.allSettled(
+        MARKET.map(async (s) => {
+          const res = await fetch(`/api/chart?symbol=${encodeURIComponent(s.ticker)}&period=1D`);
+          const json = await res.json();
+          const arr: number[] = json?.prices ?? [];
+          if (arr.length > 0) return { ticker: s.ticker, price: arr[arr.length - 1] };
+          return null;
+        })
+      );
+      const newPrices: Record<string, number> = {};
+      for (const r of results) {
+        if (r.status === "fulfilled" && r.value) {
+          newPrices[r.value.ticker] = r.value.price;
+        }
+      }
+      setPrices(newPrices);
+    } catch {
+      // keep stale prices
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 60_000);
+    return () => clearInterval(interval);
+  }, [fetchPrices]);
+
+  return (
+    <LivePriceContext.Provider value={{ prices, loading }}>
+      {children}
+    </LivePriceContext.Provider>
+  );
+}
+
+export function useLivePrices() {
+  return useContext(LivePriceContext);
+}
+
+export function useLiveMarket() {
+  const { prices } = useLivePrices();
+  return MARKET.map((s) => ({
+    ...s,
+    price: prices[s.ticker] ?? s.price,
+  }));
+}
 
 /* ─── Holdings state (what the user owns) ─── */
 export interface Holding {
