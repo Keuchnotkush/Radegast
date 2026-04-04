@@ -75,7 +75,17 @@ const xStockAbi = [
   { type: "function", name: "price", inputs: [], outputs: [{ type: "uint192" }], stateMutability: "view" },
   { type: "function", name: "symbol", inputs: [], outputs: [{ type: "string" }], stateMutability: "view" },
   { type: "function", name: "valueOf", inputs: [{ name: "a", type: "address" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "mint", inputs: [{ name: "to", type: "address" }, { name: "a", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "burn", inputs: [{ name: "f", type: "address" }, { name: "a", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
 ];
+
+/* Frontend ticker → xStock symbol */
+const TICKER_TO_XSTOCK = {
+  TSLA: "TSLAx", AAPL: "AAPLx", NVDA: "NVDAx", GOOGL: "GOOGx",
+  AMZN: "AMZNx", META: "METAx", SPY: "SPYx", QQQ: "NDXx",
+  MSTR: "MSTRx", MSFT: "MSFTx", JPM: "JPMx", V: "Vx",
+  XOM: "XOMx", LLY: "LLYx", "MC.PA": "LVMHx",
+};
 
 const consensusSettlementAbi = [
   {
@@ -350,6 +360,64 @@ app.get("/api/prices", async (_req, res) => {
   } catch (err) {
     console.error("Prices error:", err.message);
     res.status(500).json({ error: "Failed to read prices" });
+  }
+});
+
+// ── Trade: buy (mint) or sell (burn) xStocks ──
+app.post("/api/trade", async (req, res) => {
+  const { action, ticker, usdAmount, walletAddress } = req.body;
+  if (!action || !ticker || !usdAmount || !walletAddress) {
+    return res.status(400).json({ error: "action, ticker, usdAmount, and walletAddress are required" });
+  }
+  if (!walletClient) {
+    return res.status(500).json({ error: "No signer configured — set PRIVATE_KEY in .env" });
+  }
+
+  const xSymbol = TICKER_TO_XSTOCK[ticker];
+  if (!xSymbol) return res.status(400).json({ error: `Unknown ticker: ${ticker}` });
+
+  const contractAddr = CONTRACTS.xStocks[xSymbol];
+  if (!contractAddr) return res.status(400).json({ error: `No contract for ${xSymbol}` });
+
+  try {
+    // Read on-chain price to calculate shares
+    const price = await publicClient.readContract({
+      address: contractAddr, abi: xStockAbi, functionName: "price", args: [],
+    });
+    const priceUsd = Number(price) / 1e6;
+    const shares = usdAmount / priceUsd;
+    // Convert shares to 18-decimal wei
+    const weiAmount = BigInt(Math.floor(shares * 1e18));
+
+    let txHash;
+    if (action === "buy") {
+      txHash = await walletClient.writeContract({
+        address: contractAddr, abi: xStockAbi, functionName: "mint",
+        args: [walletAddress, weiAmount],
+      });
+    } else if (action === "sell") {
+      txHash = await walletClient.writeContract({
+        address: contractAddr, abi: xStockAbi, functionName: "burn",
+        args: [walletAddress, weiAmount],
+      });
+    } else {
+      return res.status(400).json({ error: "action must be 'buy' or 'sell'" });
+    }
+
+    // Don't wait for receipt — 0G testnet is slow but txs go through
+    res.json({
+      success: true,
+      txHash,
+      action,
+      ticker,
+      xSymbol,
+      shares,
+      usdAmount,
+      priceUsd,
+    });
+  } catch (err) {
+    console.error("Trade error:", err.message);
+    res.status(500).json({ error: "Trade failed: " + err.message });
   }
 });
 
