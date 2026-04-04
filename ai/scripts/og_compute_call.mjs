@@ -3,6 +3,12 @@
 //   node og_compute_call.mjs call <providerAddr> <prompt_json>  → appelle un provider
 //   node og_compute_call.mjs setup <amount>            → dépose des fonds dans le ledger
 
+// Redirect console.log to stderr so SDK noise doesn't pollute stdout
+const originalLog = console.log;
+console.log = (...args) => process.stderr.write(args.join(' ') + '\n');
+// Clean output function — only this writes to stdout
+const output = (obj) => process.stdout.write(JSON.stringify(obj) + '\n');
+
 import { ethers } from "ethers";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
 
@@ -10,7 +16,7 @@ const RPC_URL = process.env.OG_RPC || "https://evmrpc-testnet.0g.ai";
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
 if (!PRIVATE_KEY) {
-  console.log(JSON.stringify({ error: "PRIVATE_KEY not set" }));
+  output({ error: "PRIVATE_KEY not set" });
   process.exit(1);
 }
 
@@ -21,7 +27,7 @@ let broker;
 try {
   broker = await createZGComputeNetworkBroker(wallet);
 } catch (e) {
-  console.log(JSON.stringify({ error: `Broker init failed: ${e.message}` }));
+  output({ error: `Broker init failed: ${e.message}` });
   process.exit(1);
 }
 
@@ -37,9 +43,9 @@ if (command === "list") {
       serviceType: s.serviceType,
       url: s.url,
     }));
-    console.log(JSON.stringify({ services: result }));
+    output({ services: result });
   } catch (e) {
-    console.log(JSON.stringify({ error: `List failed: ${e.message}` }));
+    output({ error: `List failed: ${e.message}` });
     process.exit(1);
   }
 }
@@ -50,12 +56,12 @@ else if (command === "setup") {
   try {
     await broker.ledger.addLedger(parseFloat(amount));
     const account = await broker.ledger.getLedger();
-    console.log(JSON.stringify({
+    output({
       success: true,
       balance: ethers.formatEther(account.totalBalance || account.balance || "0"),
-    }));
+    });
   } catch (e) {
-    console.log(JSON.stringify({ error: `Setup failed: ${e.message}` }));
+    output({ error: `Setup failed: ${e.message}` });
     process.exit(1);
   }
 }
@@ -66,7 +72,7 @@ else if (command === "call") {
   const promptJson = process.argv[4];
 
   if (!providerAddress || !promptJson) {
-    console.log(JSON.stringify({ error: "Usage: call <providerAddr> <prompt_json>" }));
+    output({ error: "Usage: call <providerAddr> <prompt_json>" });
     process.exit(1);
   }
 
@@ -98,7 +104,7 @@ else if (command === "call") {
 
     if (!response.ok) {
       const text = await response.text();
-      console.log(JSON.stringify({ error: `HTTP ${response.status}: ${text}` }));
+      output({ error: `HTTP ${response.status}: ${text}` });
       process.exit(1);
     }
 
@@ -114,20 +120,20 @@ else if (command === "call") {
       } catch { verified = false; }
     }
 
-    console.log(JSON.stringify({
+    output({
       content,
       model,
       provider: providerAddress,
       verified,
-    }));
+    });
 
   } catch (e) {
-    console.log(JSON.stringify({ error: `Call failed: ${e.message}` }));
+    output({ error: `Call failed: ${e.message}` });
     process.exit(1);
   }
 }
 
 else {
-  console.log(JSON.stringify({ error: "Unknown command. Use: list, setup, call" }));
+  output({ error: "Unknown command. Use: list, setup, call" });
   process.exit(1);
 }

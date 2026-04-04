@@ -13,6 +13,11 @@
  * Errors go to stderr as JSON: { "error": "..." }
  */
 
+// Redirect console.log to stderr so SDK noise doesn't pollute stdout
+const originalLog = console.log;
+console.log = (...args) => process.stderr.write(args.join(' ') + '\n');
+const output = (obj) => process.stdout.write(JSON.stringify(obj) + '\n');
+
 import { Indexer, MemData } from "@0gfoundation/0g-ts-sdk";
 import { ethers } from "ethers";
 import { readFileSync } from "fs";
@@ -70,7 +75,7 @@ try {
     rootHash,
     txHash: tx?.txHash || tx?.txHashes?.[0] || null,
   };
-  console.log(JSON.stringify(result));
+  output(result);
 } catch (err) {
   console.error(JSON.stringify({ error: err.message || String(err) }));
   process.exit(1);
