@@ -35,6 +35,16 @@ export function BottomTabBar() {
       isActive: pathname.startsWith("/dashboard/invest"),
     },
     {
+      href: "/dashboard/chat",
+      label: "Chat",
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+      ),
+      isActive: pathname.startsWith("/dashboard/chat"),
+    },
+    {
       href: "/dashboard/advisor",
       label: "AI",
       icon: (
@@ -105,6 +115,7 @@ export function NavAvatar({ initial }: { initial: string }) {
   const links = [
     { href: "/dashboard", label: "Portfolio" },
     { href: "/dashboard/invest", label: "Invest" },
+    { href: "/dashboard/chat", label: "Chat" },
     { href: "/dashboard/advisor", label: "Advisor" },
     { href: "/dashboard/solvency", label: "Solvency" },
     { href: "/dashboard/settings", label: "Settings" },
