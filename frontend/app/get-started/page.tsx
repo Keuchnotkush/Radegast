@@ -155,10 +155,10 @@ function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
       <AnimatePresence mode="wait">
         <motion.div
           key={mode + (otpSent ? "-otp" : "")}
-          initial={{ opacity: 0, x: mode === "signin" ? -20 : 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: mode === "signin" ? 20 : -20 }}
-          transition={{ duration: 0.35, ease }}
+          initial={{ opacity: 0, filter: "blur(6px)" }}
+          animate={{ opacity: 1, filter: "blur(0px)" }}
+          exit={{ opacity: 0, filter: "blur(6px)" }}
+          transition={{ duration: 0.25, ease }}
         >
           <form onSubmit={handleEmail} className="flex flex-col gap-8">
 
