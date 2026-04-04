@@ -14,7 +14,7 @@ const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export default function Verify() {
   return (
-    <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark, cursor: "none" }}>
+    <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
       <Nav />
 
       <div className="max-w-3xl mx-auto px-8 pt-32 pb-24">
@@ -49,7 +49,7 @@ export default function Verify() {
             />
             <button
               className="px-6 py-2.5 rounded-full text-[13px] font-semibold transition-opacity duration-200 hover:opacity-80"
-              style={{ background: P.jade, color: "#FFFFFF", cursor: "none" }}
+              style={{ background: P.jade, color: "#FFFFFF" }}
             >
               Verify
             </button>

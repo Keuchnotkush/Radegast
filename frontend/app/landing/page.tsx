@@ -2,7 +2,6 @@
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import GhostCursor from "./ghost-cursor";
 import Nav from "./nav";
 
 const P = {
@@ -41,8 +40,7 @@ export default function Landing() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   return (
-    <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark, cursor: "none" }}>
-      <GhostCursor />
+    <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
 
       <Nav />
 
@@ -92,7 +90,7 @@ export default function Landing() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="px-8 py-3.5 rounded-xl text-[15px] font-semibold"
-              style={{ background: P.jade, color: P.white, cursor: "none" }}
+              style={{ background: P.jade, color: P.white }}
             >
               Start Investing
             </motion.button>
@@ -100,7 +98,7 @@ export default function Landing() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="px-8 py-3.5 rounded-xl text-[15px] font-semibold"
-              style={{ background: "transparent", color: P.dark, border: `1.5px solid ${P.dark}30`, cursor: "none" }}
+              style={{ background: "transparent", color: P.dark, border: `1.5px solid ${P.dark}30` }}
             >
               Watch Demo
             </motion.button>
@@ -221,7 +219,7 @@ export default function Landing() {
                 transition={{ delay: i * 0.1, duration: 0.6, ease }}
                 whileHover={{ y: -8, transition: { duration: 0.3 } }}
                 className="p-6 rounded-2xl flex flex-col gap-3"
-                style={{ background: `${s.color}12`, border: `1px solid ${s.color}30`, cursor: "none" }}
+                style={{ background: `${s.color}12`, border: `1px solid ${s.color}30` }}
               >
                 <span className="text-3xl">{s.emoji}</span>
                 <h3 className="text-[15px] font-semibold">{s.name}</h3>
@@ -313,7 +311,7 @@ export default function Landing() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="px-10 py-4 rounded-xl text-base font-semibold"
-            style={{ background: P.jade, color: P.white, cursor: "none" }}
+            style={{ background: P.jade, color: P.white }}
           >
             Sign in with Google
           </motion.button>

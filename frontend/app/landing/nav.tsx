@@ -21,7 +21,7 @@ export default function Nav() {
         className="fixed top-6 left-8 z-40"
       >
         <Link href="/landing">
-          <img src="/logo.svg" alt="Radegast" style={{ height: 22, cursor: "none" }} />
+          <img src="/logo.svg" alt="Radegast" style={{ height: 22 }} />
         </Link>
       </motion.div>
 
@@ -33,13 +33,13 @@ export default function Nav() {
         className="fixed top-4 right-8 z-40 flex items-center gap-6 px-6 py-3 rounded-full"
         style={{ background: "#F0EDE8", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
       >
-        <Link href="/landing" className="text-[13px] font-medium transition-opacity duration-200 hover:opacity-60" style={{ color: P.dark, cursor: "none" }}>Home</Link>
-        <Link href="/how-it-works" className="text-[13px] font-medium transition-opacity duration-200 hover:opacity-60" style={{ color: P.dark, cursor: "none" }}>How it works</Link>
-        <Link href="/verify" className="text-[13px] font-medium transition-opacity duration-200 hover:opacity-60" style={{ color: P.dark, cursor: "none" }}>Verify</Link>
+        <Link href="/landing" className="text-[13px] font-medium transition-opacity duration-300 hover:opacity-50" style={{ color: P.dark }}>Home</Link>
+        <Link href="/how-it-works" className="text-[13px] font-medium transition-opacity duration-300 hover:opacity-50" style={{ color: P.dark }}>How it works</Link>
+        <Link href="/verify" className="text-[13px] font-medium transition-opacity duration-300 hover:opacity-50" style={{ color: P.dark }}>Verify</Link>
         <Link
           href="/get-started"
-          className="px-5 py-2 rounded-full text-[12px] font-semibold uppercase tracking-wider transition-opacity duration-200 hover:opacity-80"
-          style={{ background: P.dark, color: P.white, cursor: "none" }}
+          className="block px-5 py-2 rounded-full text-[12px] font-semibold uppercase tracking-wider transition-opacity duration-300 hover:opacity-80"
+          style={{ background: P.dark, color: P.white }}
         >
           Get Started
         </Link>

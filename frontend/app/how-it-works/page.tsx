@@ -29,7 +29,7 @@ const STATS = [
 
 export default function HowItWorks() {
   return (
-    <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark, cursor: "none" }}>
+    <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
       <Nav />
 
       <div className="max-w-4xl mx-auto px-8 pt-32 pb-24">
