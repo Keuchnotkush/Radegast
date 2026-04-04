@@ -134,11 +134,11 @@ export default function SolvencyPage() {
           <AnimatePresence>
             {hasThreshold && state === "idle" && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={spring}
-                className="mb-8"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                className="mb-8 overflow-hidden"
               >
                 <SectionTitle>Export format</SectionTitle>
                 <div className="flex gap-4 mt-4">
@@ -172,12 +172,12 @@ export default function SolvencyPage() {
             {state === "idle" && (
               <motion.button
                 key="idle"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
-                transition={spring}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                 onClick={generate}
                 disabled={!hasThreshold}
                 className="w-full py-5 rounded-xl text-[16px] font-bold cursor-pointer"
@@ -194,9 +194,10 @@ export default function SolvencyPage() {
             {state === "generating" && (
               <motion.div
                 key="generating"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                 className="w-full py-6 rounded-xl text-center"
                 style={{ background: P.surface, border: `1px solid ${P.border}40` }}
               >
@@ -226,10 +227,10 @@ export default function SolvencyPage() {
             {state === "done" && proof && (
               <motion.div
                 key="done"
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={spring}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className="rounded-2xl p-6"
                 style={{ background: P.surface, border: `1px solid ${P.jade}30` }}
               >
