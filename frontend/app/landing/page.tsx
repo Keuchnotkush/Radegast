@@ -48,26 +48,29 @@ export default function Landing() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
-        className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-8 py-5"
-        style={{ backdropFilter: "blur(20px)", background: `${P.bg}CC` }}
+        className="fixed top-0 left-0 right-0 z-40 flex items-center px-8 py-4"
+        style={{ backdropFilter: "blur(20px)", background: `${P.bg}EE` }}
       >
-        <img src="/logo.svg" alt="Radegast" style={{ height: 24 }} />
-        <div className="flex items-center gap-6">
-          <span className="text-[13px] font-medium" style={{ color: P.gray, cursor: "none" }}>How it works</span>
-          <span className="text-[13px] font-medium" style={{ color: P.gray, cursor: "none" }}>Strategies</span>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-5 py-2 rounded-lg text-[13px] font-semibold"
-            style={{ background: P.jade, color: P.white, cursor: "none" }}
-          >
-            Get Started
-          </motion.button>
+        <div className="flex items-center gap-10 flex-1">
+          <img src="/logo.svg" alt="Radegast" style={{ height: 22, cursor: "none" }} />
+          <div className="flex items-center gap-8">
+            <a href="#home" className="text-[14px] font-medium transition hover:opacity-70" style={{ color: P.dark, cursor: "none" }}>Home</a>
+            <a href="#how-it-works" className="text-[14px] font-medium transition hover:opacity-70" style={{ color: P.dark, cursor: "none" }}>How it works</a>
+            <a href="#verify" className="text-[14px] font-medium transition hover:opacity-70" style={{ color: P.dark, cursor: "none" }}>Verify</a>
+          </div>
         </div>
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          className="px-6 py-2.5 rounded-full text-[13px] font-semibold uppercase tracking-wider"
+          style={{ background: P.dark, color: P.white, cursor: "none" }}
+        >
+          Get Started
+        </motion.button>
       </motion.nav>
 
       {/* HERO */}
-      <section ref={heroRef} className="min-h-screen flex flex-col items-center justify-center text-center px-8 pt-20 relative">
+      <section id="home" ref={heroRef} className="min-h-screen flex flex-col items-center justify-center text-center px-8 pt-20 relative">
         <motion.div style={{ y: heroY, opacity: heroOpacity }} className="flex flex-col items-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
@@ -167,7 +170,7 @@ export default function Landing() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="py-32 px-8">
+      <section id="how-it-works" className="py-32 px-8">
         <div className="max-w-5xl mx-auto">
           <motion.h2
             initial={{ opacity: 0, y: 40 }}
@@ -263,7 +266,7 @@ export default function Landing() {
       </section>
 
       {/* ZK VERIFY */}
-      <section className="py-32 px-8">
+      <section id="verify" className="py-32 px-8">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
