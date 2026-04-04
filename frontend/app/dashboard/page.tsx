@@ -2,27 +2,12 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { NavAvatar, SectionTitle, TradeModal, P, ease, spring } from "./shared";
+import { NavAvatar, SectionTitle, TradeModal, StockLogo, P, ease, spring } from "./shared";
 import type { TradeStock } from "./shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { usePortfolio, MARKET, STOCK_COLORS, logoUrl, useSettings, useLiveMarket, useUser } from "./store";
-
-/* ─── Stock logo with fallback ─── */
-function StockLogo({ ticker, name, color, size = 48 }: { ticker: string; name: string; color: string; size?: number }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return (
-      <div className="rounded-xl flex items-center justify-center text-[14px] font-bold" style={{ width: size, height: size, background: color, color: "#FFFFFF" }}>
-        {ticker.slice(0, 2)}
-      </div>
-    );
-  }
-  const dark = ticker === "AAPL";
-  return (
-    <img src={logoUrl(ticker)} alt={name} style={{ width: size, height: size, background: dark ? "#FFFFFF" : undefined, padding: dark ? 6 : undefined }} className="rounded-xl object-contain" onError={() => setFailed(true)} />
-  );
-}
+import { usePortfolio, MARKET, STOCK_COLORS, useSettings, useLiveMarket, useUser, useWallet } from "./store";
+import { useOnramp } from "@dynamic-labs/sdk-react-core";
 
 
 export default function DashboardPage() {
@@ -40,7 +25,12 @@ export default function DashboardPage() {
   const { holdings, cash, totalValue, totalWithCash, addFunds } = usePortfolio();
   const { aiSuggestions, autoSession } = useSettings();
   const liveMarket = useLiveMarket();
+  const wallet = useWallet();
+  const onramp = useOnramp();
   const isAutonomous = autoSession.active;
+
+  // Use real wallet balance when available, fallback to mock cash
+  const availableCash = wallet.address ? wallet.usdcBalance : cash;
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const [showAddFunds, setShowAddFunds] = useState(false);
 
@@ -125,7 +115,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                 <MetricCard label="24h Return" value="—" sub="Coming soon" color={P.gray} index={0} />
                 <MetricCard label="Invested" value={`$${invested.toLocaleString("en-US", { maximumFractionDigits: 0 })}`} sub={`${portfolioStocks.length} stocks`} color={P.dark} index={1} />
-                <MetricCard label="Available" value={`$${cash.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} sub="Ready to invest" color={P.jade} index={2} />
+                <MetricCard label="Available" value={`$${availableCash.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} sub={wallet.address ? "USDC balance" : "Ready to invest"} color={P.jade} index={2} />
                 <MetricCard label="All-time P&L" value="—" sub="Coming soon" color={P.gray} index={3} />
               </div>
 
@@ -280,7 +270,7 @@ export default function DashboardPage() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {showAddFunds && <AddFundsModal onClose={() => setShowAddFunds(false)} onAdd={addFunds} />}
+        {showAddFunds && <AddFundsModal onClose={() => setShowAddFunds(false)} onAdd={addFunds} onramp={onramp} walletAddress={wallet.address} refreshBalance={wallet.refreshBalance} />}
       </AnimatePresence>
     </div>
   );
@@ -348,23 +338,54 @@ function DonutChart({ stocks, cashPct, total }: { stocks: { ticker: string; allo
 }
 
 /* ─── Add Funds Modal ─── */
-function AddFundsModal({ onClose, onAdd }: { onClose: () => void; onAdd: (amount: number) => void }) {
+function AddFundsModal({ onClose, onAdd, onramp, walletAddress, refreshBalance }: {
+  onClose: () => void;
+  onAdd: (amount: number) => void;
+  onramp: ReturnType<typeof useOnramp>;
+  walletAddress: string | undefined;
+  refreshBalance: () => Promise<void>;
+}) {
   const [amount, setAmount] = useState("");
   const [step, setStep] = useState<"input" | "processing" | "done">("input");
   const [payMethod, setPayMethod] = useState<"card" | "apple">("card");
   const presets = [50, 100, 250, 500];
   const usd = parseFloat(amount) || 0;
 
-  const handleAdd = useCallback(() => {
+  const handleAdd = useCallback(async () => {
     if (usd <= 0) return;
-    setStep("processing");
-    // TODO: replace with Dynamic onramp (Coinbase)
-    setTimeout(() => {
-      onAdd(usd);
-      setStep("done");
-      setTimeout(onClose, 1200);
-    }, 1800);
-  }, [usd, onAdd, onClose]);
+
+    // If Dynamic onramp is available and wallet is connected, use real onramp
+    if (onramp.enabled && walletAddress && onramp.providers.length > 0) {
+      try {
+        setStep("processing");
+        await onramp.open({
+          address: walletAddress,
+          onrampProvider: onramp.providers[0].provider,
+          token: "USDC",
+          tokenAmount: usd,
+          currency: "USD",
+        });
+        // After onramp popup closes, refresh balance
+        await refreshBalance();
+        setStep("done");
+        setTimeout(onClose, 1200);
+      } catch (err) {
+        console.error("[Onramp] Error:", err);
+        // Fallback to mock on error
+        onAdd(usd);
+        setStep("done");
+        setTimeout(onClose, 1200);
+      }
+    } else {
+      // Fallback: mock flow (no wallet or onramp not configured)
+      setStep("processing");
+      setTimeout(() => {
+        onAdd(usd);
+        setStep("done");
+        setTimeout(onClose, 1200);
+      }, 1800);
+    }
+  }, [usd, onAdd, onClose, onramp, walletAddress, refreshBalance]);
 
   return (
     <>

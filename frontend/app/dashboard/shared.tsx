@@ -161,6 +161,29 @@ export function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h3 className="text-[11px] font-semibold uppercase tracking-wider" style={{ fontFamily: "Lexend", color: P.gray }}>{children}</h3>;
 }
 
+/* ─── Stock Logo (shared across dashboard) ─── */
+export function StockLogo({ ticker, name, color, size = 48, radius = "xl" }: {
+  ticker: string; name: string; color: string; size?: number; radius?: "xl" | "2xl";
+}) {
+  const [failed, setFailed] = useState(false);
+  const r = radius === "2xl" ? "rounded-2xl" : "rounded-xl";
+  if (failed) {
+    return (
+      <div className={`${r} flex items-center justify-center font-bold shrink-0`}
+        style={{ width: size, height: size, fontSize: size * 0.28, background: color, color: P.white }}>
+        {ticker.replace("x", "").slice(0, 2)}
+      </div>
+    );
+  }
+  const dark = ticker === "AAPL" || ticker === "xAAPL";
+  return (
+    <img src={logoUrl(ticker)} alt={name}
+      className={`${r} object-contain shrink-0`}
+      style={{ width: size, height: size, background: dark ? "#FFFFFF" : undefined, padding: dark ? Math.round(size * 0.12) : undefined }}
+      onError={() => setFailed(true)} />
+  );
+}
+
 /* ─── Buy/Sell Modal (Phantom-style slide-up) ─── */
 export interface TradeStock {
   symbol: string;
@@ -226,18 +249,7 @@ function pricesToSvgPoints(prices: number[], width: number, height: number): str
 }
 
 function ModalStockLogo({ ticker, name, color }: { ticker: string; name: string; color: string }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return (
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-[18px] font-bold" style={{ background: color, color: P.white }}>
-        {ticker.replace("x", "").slice(0, 2)}
-      </div>
-    );
-  }
-  const dark = ticker === "AAPL" || ticker === "xAAPL";
-  return (
-    <img src={logoUrl(ticker)} alt={name} className="w-14 h-14 rounded-2xl object-contain" style={{ background: dark ? "#FFFFFF" : undefined, padding: dark ? 8 : undefined }} onError={() => setFailed(true)} />
-  );
+  return <StockLogo ticker={ticker} name={name} color={color} size={56} radius="2xl" />;
 }
 
 export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () => void }) {

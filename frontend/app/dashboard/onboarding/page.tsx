@@ -3,38 +3,19 @@
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { P, ease, spring } from "../shared";
-import { usePortfolio, MARKET, STOCK_COLORS, logoUrl } from "../store";
+import { StockLogo, P, ease, spring } from "../shared";
+import { usePortfolio, MARKET, STOCK_COLORS, PROFILES, useWallet } from "../store";
+import { useOnramp } from "@dynamic-labs/sdk-react-core";
 
 type Step = "welcome" | "discover" | "profile" | "fund" | "pick" | "done";
 
-const PROFILES = [
-  { key: "conservative", label: "Conservative", desc: "Steady growth, lower risk. Blue-chips, bonds." },
-  { key: "moderate", label: "Moderate", desc: "Balanced risk and return. Diversified mix." },
-  { key: "growth", label: "Growth", desc: "Higher returns, tech-heavy, momentum-driven." },
-  { key: "aggressive", label: "Aggressive", desc: "Maximum growth potential. Concentrated bets." },
-] as const;
-
 const POPULAR_STOCKS = ["TSLA", "AAPL", "NVDA", "GOOGL", "AMZN", "META", "MSFT", "SPY"];
-
-function StockLogo({ ticker, name, color, size = 56 }: { ticker: string; name: string; color: string; size?: number }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return (
-      <div className="rounded-2xl flex items-center justify-center text-[16px] font-bold" style={{ width: size, height: size, background: color, color: "#FFFFFF" }}>
-        {ticker.slice(0, 2)}
-      </div>
-    );
-  }
-  const dark = ticker === "AAPL";
-  return (
-    <img src={logoUrl(ticker)} alt={name} style={{ width: size, height: size, background: dark ? "#FFFFFF" : undefined, padding: dark ? 8 : undefined }} className="rounded-2xl object-contain" onError={() => setFailed(true)} />
-  );
-}
 
 export default function OnboardingPage() {
   const router = useRouter();
   const { addFunds, buy } = usePortfolio();
+  const wallet = useWallet();
+  const onramp = useOnramp();
   const [step, setStep] = useState<Step>("welcome");
   const [profile, setProfile] = useState<string | null>(null);
   const [fundAmount, setFundAmount] = useState("");
@@ -60,16 +41,39 @@ export default function OnboardingPage() {
     });
   };
 
-  const handleFund = useCallback(() => {
+  const handleFund = useCallback(async () => {
     if (usd <= 0) return;
-    setFundStep("processing");
-    // TODO: replace with Dynamic onramp (Coinbase)
-    setTimeout(() => {
-      addFunds(usd);
-      setFundStep("done");
-      setTimeout(() => setStep("pick"), 1200);
-    }, 1800);
-  }, [usd, addFunds]);
+
+    // If Dynamic onramp is available and wallet is connected, use real onramp
+    if (onramp.enabled && wallet.address && onramp.providers.length > 0) {
+      try {
+        setFundStep("processing");
+        await onramp.open({
+          address: wallet.address,
+          onrampProvider: onramp.providers[0].provider,
+          token: "USDC",
+          tokenAmount: usd,
+          currency: "USD",
+        });
+        await wallet.refreshBalance();
+        setFundStep("done");
+        setTimeout(() => setStep("pick"), 1200);
+      } catch (err) {
+        console.error("[Onramp] Error:", err);
+        addFunds(usd);
+        setFundStep("done");
+        setTimeout(() => setStep("pick"), 1200);
+      }
+    } else {
+      // Fallback: mock flow
+      setFundStep("processing");
+      setTimeout(() => {
+        addFunds(usd);
+        setFundStep("done");
+        setTimeout(() => setStep("pick"), 1200);
+      }, 1800);
+    }
+  }, [usd, addFunds, onramp, wallet]);
 
   const handleFinish = useCallback(() => {
     if (selectedStocks.size > 0 && usd > 0) {

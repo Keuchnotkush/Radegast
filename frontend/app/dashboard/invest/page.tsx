@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { NavAvatar, SectionTitle, TradeModal, P, ease, spring } from "../shared";
+import { NavAvatar, SectionTitle, TradeModal, StockLogo, P, ease, spring } from "../shared";
 import type { TradeStock } from "../shared";
 import { usePortfolio, MARKET, STOCK_COLORS, logoUrl, useLiveMarket, useUser } from "../store";
 
@@ -256,7 +256,7 @@ function StockCard({ stock, index, holding, onSelect }: {
 
       {/* Logo + name */}
       <div className="flex items-center gap-3 mb-3">
-        <StockLogo ticker={stock.ticker} name={stock.name} color={color} />
+        <StockLogo ticker={stock.ticker} name={stock.name} color={color} size={40} />
         <div className="flex-1 min-w-0">
           <div className="text-[14px] md:text-[15px] font-semibold truncate">{stock.name}</div>
           <div className="text-[10px] md:text-[11px] font-medium" style={{ color: P.gray }}>{stock.ticker}</div>
@@ -291,25 +291,7 @@ function StockCard({ stock, index, holding, onSelect }: {
 
 /* ═══ SUB-COMPONENTS ═══ */
 
-function StockLogo({ ticker, name, color }: { ticker: string; name: string; color: string }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return (
-      <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center text-[12px] font-bold shrink-0" style={{ background: color, color: P.white }}>
-        {ticker.slice(0, 2)}
-      </div>
-    );
-  }
-  return (
-    <img
-      src={logoUrl(ticker)}
-      alt={name}
-      className="w-10 h-10 md:w-11 md:h-11 rounded-xl object-contain shrink-0"
-      style={{ background: ticker === "AAPL" ? "#FFFFFF" : undefined, padding: ticker === "AAPL" ? 5 : undefined }}
-      onError={() => setFailed(true)}
-    />
-  );
-}
+/* StockLogo imported from shared.tsx */
 
 function MoverLogo({ ticker, name, color }: { ticker: string; name: string; color: string }) {
   const [failed, setFailed] = useState(false);

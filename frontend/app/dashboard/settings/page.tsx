@@ -6,9 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { NavAvatar, SectionTitle, P } from "../shared";
-import { useSettings, useUser, AUTO_DURATIONS, type AutoDuration } from "../store";
+import { useSettings, useUser, AUTO_DURATIONS, PROFILE_LABELS, type AutoDuration } from "../store";
 import { ease, spring } from "../../lib/theme";
-const PROFILES = ["Conservative", "Moderate", "Growth", "Aggressive"];
 const LIMITS = [100, 250, 500, 1000, 2500];
 
 export default function SettingsPage() {
@@ -140,7 +139,7 @@ export default function SettingsPage() {
             className="flex rounded-full p-1"
             style={{ background: P.bg }}
           >
-            {PROFILES.map((p) => {
+            {PROFILE_LABELS.map((p) => {
               const active = form.profile === p;
               return (
                 <motion.button

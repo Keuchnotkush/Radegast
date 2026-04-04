@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@dynamic-labs/ethereum": "^4.75.0",
     "@dynamic-labs/sdk-react-core": "^4.75.0",
     "framer-motion": "^12.38.0",
     "jspdf": "^4.2.1",

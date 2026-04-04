@@ -4,45 +4,62 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { NavAvatar, BottomTabBar, SectionTitle, P, ease, spring } from "../shared";
-
-/* ─── Mock data (à vider + brancher sur l'API plus tard) ─── */
-const MOCK = {
-  firstName: "Kassim",
-  lastName: "Moussaoui",
-  email: "kassim.moussaoui@gmail.com",
-  phone: "+33 6 45 12 89 03",
-  country: "France",
-  city: "Cannes",
-  dateOfBirth: "1998-03-15",
-  investorProfile: "Growth",
-  currency: "EUR",
-  language: "Fran\u00e7ais",
-  notifications: {
-    trades: true,
-    aiRecommendations: true,
-    priceAlerts: true,
-    weeklyReport: false,
-    marketing: false,
-  },
-};
-
-const PROFILES = ["Conservative", "Moderate", "Growth", "Aggressive"];
+import { useUser, PROFILE_LABELS } from "../store";
 const CURRENCIES = ["USD", "EUR", "GBP", "CHF"];
 const LANGUAGES = ["English", "Fran\u00e7ais", "Deutsch", "Espa\u00f1ol"];
 
+interface EditForm {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  country: string;
+  city: string;
+  dateOfBirth: string;
+  investorProfile: string;
+  currency: string;
+  language: string;
+  notifications: {
+    trades: boolean;
+    aiRecommendations: boolean;
+    priceAlerts: boolean;
+    weeklyReport: boolean;
+    marketing: boolean;
+  };
+}
+
 export default function EditPage() {
-  const [form, setForm] = useState(MOCK);
+  const user = useUser();
+  const [form, setForm] = useState<EditForm>({
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    phone: "",
+    country: "",
+    city: "",
+    dateOfBirth: "",
+    investorProfile: "Growth",
+    currency: "EUR",
+    language: "Fran\u00e7ais",
+    notifications: {
+      trades: true,
+      aiRecommendations: true,
+      priceAlerts: true,
+      weeklyReport: false,
+      marketing: false,
+    },
+  });
   const [saved, setSaved] = useState(false);
   const [hoverCount, setHoverCount] = useState(0);
 
   const initial = form.firstName.charAt(0).toUpperCase();
 
-  function update<K extends keyof typeof MOCK>(field: K, value: (typeof MOCK)[K]) {
+  function update<K extends keyof EditForm>(field: K, value: EditForm[K]) {
     setForm((f) => ({ ...f, [field]: value }));
     setSaved(false);
   }
 
-  function toggleNotif(key: keyof typeof MOCK.notifications) {
+  function toggleNotif(key: keyof EditForm["notifications"]) {
     setForm((f) => ({ ...f, notifications: { ...f.notifications, [key]: !f.notifications[key] } }));
     setSaved(false);
   }
@@ -103,7 +120,7 @@ export default function EditPage() {
             This shapes how the AI allocates your portfolio and manages risk.
           </p>
           <div className="flex rounded-full p-1" style={{ background: P.bg }}>
-            {PROFILES.map((p) => {
+            {PROFILE_LABELS.map((p) => {
               const active = form.investorProfile === p;
               return (
                 <motion.button

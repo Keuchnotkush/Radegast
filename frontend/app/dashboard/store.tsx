@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from "react";
-import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { useDynamicContext, useUserWallets, useTokenBalances } from "@dynamic-labs/sdk-react-core";
 
 /* ─── Stock logo helper ─── */
 const LOGO_TOKEN = "pk_PCBX5rd6QsqwX0zT-1bPCg";
@@ -270,6 +270,16 @@ export function useSettings() {
   return ctx;
 }
 
+/* ─── Shared constants ─── */
+export const PROFILES = [
+  { key: "conservative", label: "Conservative", desc: "Steady growth, lower risk. Blue-chips, bonds." },
+  { key: "moderate", label: "Moderate", desc: "Balanced risk and return. Diversified mix." },
+  { key: "growth", label: "Growth", desc: "Higher returns, tech-heavy, momentum-driven." },
+  { key: "aggressive", label: "Aggressive", desc: "Maximum growth potential. Concentrated bets." },
+] as const;
+
+export const PROFILE_LABELS = PROFILES.map((p) => p.label);
+
 /* ─── User hook (Dynamic → localStorage → default) ─── */
 export function useUser() {
   const { user } = useDynamicContext();
@@ -289,4 +299,67 @@ export function useUser() {
       initial: firstName.charAt(0).toUpperCase(),
     };
   }, [user, storedName]);
+}
+
+/* ─── Wallet hook (Dynamic embedded wallet + token balances) ─── */
+interface WalletCtx {
+  address: string | undefined;
+  usdcBalance: number;
+  isLoadingBalance: boolean;
+  refreshBalance: () => Promise<void>;
+  primaryWallet: ReturnType<typeof useUserWallets>[number] | undefined;
+}
+
+const WalletContext = createContext<WalletCtx>({
+  address: undefined,
+  usdcBalance: 0,
+  isLoadingBalance: false,
+  refreshBalance: async () => {},
+  primaryWallet: undefined,
+});
+
+export function WalletProvider({ children }: { children: ReactNode }) {
+  const userWallets = useUserWallets();
+  const primaryWallet = userWallets?.[0];
+  const address = primaryWallet?.address;
+
+  const { tokenBalances, isLoading: isLoadingBalance, fetchAccountBalances } = useTokenBalances({
+    accountAddress: address,
+    includeFiat: true,
+    includeNativeBalance: true,
+  });
+
+  // Extract USDC balance (or native balance as fallback for testnet)
+  const usdcBalance = useMemo(() => {
+    if (!tokenBalances || tokenBalances.length === 0) return 0;
+    // Look for USDC first
+    const usdc = tokenBalances.find(
+      (t) => t.symbol?.toUpperCase() === "USDC" || t.name?.toUpperCase() === "USDC"
+    );
+    if (usdc?.balance) return parseFloat(usdc.balance);
+    // Fallback: sum all fiat-valued balances
+    const total = tokenBalances.reduce((sum, t) => {
+      return sum + (t.balance ? parseFloat(t.balance) : 0);
+    }, 0);
+    return total;
+  }, [tokenBalances]);
+
+  const refreshBalance = useCallback(async () => {
+    await fetchAccountBalances(true);
+  }, [fetchAccountBalances]);
+
+  const value = useMemo(
+    () => ({ address, usdcBalance, isLoadingBalance, refreshBalance, primaryWallet }),
+    [address, usdcBalance, isLoadingBalance, refreshBalance, primaryWallet]
+  );
+
+  return (
+    <WalletContext.Provider value={value}>
+      {children}
+    </WalletContext.Provider>
+  );
+}
+
+export function useWallet() {
+  return useContext(WalletContext);
 }

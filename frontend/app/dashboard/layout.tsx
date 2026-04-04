@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
-import { PortfolioProvider, SettingsProvider, LivePriceProvider } from "./store";
+import { PortfolioProvider, SettingsProvider, LivePriceProvider, WalletProvider } from "./store";
 import { BottomTabBar } from "./shared";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -20,12 +20,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <LivePriceProvider>
-      <SettingsProvider>
-        <PortfolioProvider>
-          <div className="pb-20 md:pb-0">{children}</div>
-          <BottomTabBar />
-        </PortfolioProvider>
-      </SettingsProvider>
+      <WalletProvider>
+        <SettingsProvider>
+          <PortfolioProvider>
+            <div className="pb-20 md:pb-0">{children}</div>
+            <BottomTabBar />
+          </PortfolioProvider>
+        </SettingsProvider>
+      </WalletProvider>
     </LivePriceProvider>
   );
 }
