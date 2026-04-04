@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavAvatar, SectionTitle, TogglePill, P, ease, spring } from "../shared";
-import { useUser } from "../store";
+import { useUser, usePortfolio, useLiveMarket, MARKET } from "../store";
 // Dynamic import — bb.js WASM can't load during SSR/build
 const loadProver = () => import("@/lib/noir/prover").then((m) => m.generateProof);
 
@@ -20,8 +20,38 @@ interface Proof {
   qr: boolean;
 }
 
+/* ─── Fixed 9-slot mapping for the Noir circuit (balances[9], prices[9]) ─── */
+const ZK_SLOTS = MARKET.slice(0, 9).map((s) => s.ticker);
+
+function useZkInputs() {
+  const { holdings } = usePortfolio();
+  const liveMarket = useLiveMarket();
+
+  // Build balances[9] and prices[9] from real portfolio data
+  // Noir works with integers — we scale: shares × 100, price × 100 (cents)
+  const balances = ZK_SLOTS.map((ticker) => {
+    const h = holdings.find((h) => h.ticker === ticker);
+    return Math.round((h?.shares ?? 0) * 100).toString();
+  });
+
+  const prices = ZK_SLOTS.map((ticker) => {
+    const m = liveMarket.find((s) => s.ticker === ticker);
+    return Math.round((m?.price ?? 0) * 100).toString();
+  });
+
+  // Total portfolio value in cents (for threshold comparison)
+  const totalCents = balances.reduce((sum, b, i) => {
+    return sum + (parseInt(b) || 0) * (parseInt(prices[i]) || 0);
+  }, 0);
+  // totalCents is shares*100 * price*100 = value * 10000
+  const totalUsd = totalCents / 10000;
+
+  return { balances, prices, totalUsd };
+}
+
 export default function SolvencyContent() {
   const { initial } = useUser();
+  const { balances, prices, totalUsd } = useZkInputs();
   const [threshold, setThreshold] = useState("");
   const [custom, setCustom] = useState("");
   const [wantPdf, setWantPdf] = useState(false);
@@ -31,7 +61,10 @@ export default function SolvencyContent() {
   const [history, setHistory] = useState<Proof[]>([]);
 
   const activeThreshold = custom || threshold;
+  const thresholdValue = parseInt((custom || threshold).replace(/[$,]/g, "") || "0");
   const hasThreshold = activeThreshold.length > 0;
+  const portfolioTooLow = hasThreshold && totalUsd > 0 && totalUsd < thresholdValue;
+  const portfolioEmpty = totalUsd === 0;
 
   const [error, setError] = useState<string | null>(null);
 
@@ -41,13 +74,15 @@ export default function SolvencyContent() {
     try {
       const thresholdNum = activeThreshold.replace(/[$,]/g, "");
 
-      const balances = ["100", "50", "80", "30", "40", "20", "100", "25", "10"];
-      const prices = ["250", "198", "140", "175", "185", "510", "530", "480", "1700"];
-      const secret = "12345678";
+      // Threshold in same scale as circuit: shares*100 * price*100 = value * 10000
+      const thresholdScaled = (parseInt(thresholdNum) * 10000).toString();
+
+      // Generate a random secret per proof (stays in browser, never sent to backend)
+      const secret = crypto.getRandomValues(new Uint32Array(1))[0].toString();
 
       // 1. Generate ZK proof client-side (private inputs never leave browser)
       const generateProof = await loadProver();
-      const { proof, publicInputs } = await generateProof(balances, prices, secret, thresholdNum);
+      const { proof, publicInputs } = await generateProof(balances, prices, secret, thresholdScaled);
 
       // 2. Send proof to backend for on-chain verification
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/proof/generate`, {
@@ -205,24 +240,37 @@ export default function SolvencyContent() {
           <AnimatePresence mode="wait">
 
             {state === "idle" && (
-              <motion.button
-                key="idle"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                onClick={generate}
-                disabled={!hasThreshold}
-                className="get-started-btn w-full py-5 rounded-xl text-[16px] font-bold cursor-pointer text-white"
-                style={{
-                  cursor: hasThreshold ? "pointer" : "not-allowed",
-                  opacity: hasThreshold ? 1 : 0.3,
-                }}
-              >
-                Generate Proof
-              </motion.button>
+              <motion.div key="idle" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+                {/* Portfolio value indicator */}
+                {hasThreshold && (
+                  <div className="flex items-center gap-2 mb-4 py-2.5 px-4 rounded-xl" style={{
+                    background: portfolioTooLow ? `${P.loss}08` : portfolioEmpty ? `${P.border}15` : `${P.jade}08`,
+                    border: `1px solid ${portfolioTooLow ? P.loss : portfolioEmpty ? P.border : P.jade}20`,
+                  }}>
+                    <span className="text-[13px]" style={{ color: portfolioTooLow ? P.loss : portfolioEmpty ? P.gray : P.jade }}>
+                      {portfolioEmpty
+                        ? "No holdings in your portfolio — add stocks first."
+                        : portfolioTooLow
+                          ? `Your portfolio ($${totalUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}) is below the $${thresholdValue.toLocaleString("en-US")} threshold — proof will fail.`
+                          : `Portfolio value: $${totalUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })} — proof will succeed.`}
+                    </span>
+                  </div>
+                )}
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                  onClick={generate}
+                  disabled={!hasThreshold || portfolioEmpty}
+                  className="get-started-btn w-full py-5 rounded-xl text-[16px] font-bold cursor-pointer text-white"
+                  style={{
+                    cursor: hasThreshold && !portfolioEmpty ? "pointer" : "not-allowed",
+                    opacity: hasThreshold && !portfolioEmpty ? 1 : 0.3,
+                  }}
+                >
+                  Generate Proof
+                </motion.button>
+              </motion.div>
             )}
 
             {state === "generating" && (
