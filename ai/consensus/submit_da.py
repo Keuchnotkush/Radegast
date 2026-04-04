@@ -1,8 +1,14 @@
-"""Submit ConsensusResult to 0G Storage for data availability."""
+"""Submit ConsensusResult to 0G Storage for data availability.
+
+Production mode shells out to scripts/og_storage_upload.mjs (Node.js)
+which uses @0gfoundation/0g-ts-sdk — the only reliable 0G Storage SDK.
+"""
 import json
 import os
 import hashlib
 import logging
+import subprocess
+from pathlib import Path
 from typing import Optional
 from dataclasses import asdict
 
@@ -10,10 +16,9 @@ from shared.types import ConsensusResult
 
 logger = logging.getLogger(__name__)
 
-OG_STORAGE_INDEXER = os.getenv("OG_STORAGE_INDEXER", "https://indexer-storage-testnet-turbo.0g.ai")
-OG_RPC = os.getenv("OG_RPC", "https://evmrpc-testnet.0g.ai")
-PRIVATE_KEY = os.getenv("PRIVATE_KEY", "")
 MOCK_DA = os.getenv("MOCK_DA", "true").lower() == "true"
+UPLOAD_SCRIPT = Path(__file__).parent.parent / "scripts" / "og_storage_upload.mjs"
+UPLOAD_TIMEOUT_S = 60
 
 
 async def submit_to_da(result: ConsensusResult) -> Optional[str]:
@@ -21,56 +26,53 @@ async def submit_to_da(result: ConsensusResult) -> Optional[str]:
     Upload ConsensusResult JSON to 0G Storage.
     Returns rootHash (used as daHash for on-chain cross-reference).
 
-    In MOCK_DA mode, returns a deterministic hash of the result.
-    In production, uses 0g-storage-sdk (Python) to upload.
+    MOCK_DA=true  → deterministic SHA-256 hash (no network call).
+    MOCK_DA=false → calls og_storage_upload.mjs via subprocess.
     """
     result_json = json.dumps(asdict(result), default=str)
 
     if MOCK_DA:
-        # Deterministic mock hash
         mock_hash = "0x" + hashlib.sha256(result_json.encode()).hexdigest()
         logger.info(f"[MOCK DA] daHash = {mock_hash[:18]}...")
         return mock_hash
 
+    return _upload_via_node(result_json)
+
+
+def _upload_via_node(result_json: str) -> str:
+    """Shell out to the Node.js 0G Storage upload script."""
+    fallback_hash = "0x" + hashlib.sha256(result_json.encode()).hexdigest()
+
+    if not UPLOAD_SCRIPT.exists():
+        logger.error(f"[0G Storage] Script not found: {UPLOAD_SCRIPT}")
+        return fallback_hash
+
     try:
-        # Real 0G Storage upload via Python SDK
-        # pip install 0g-storage-sdk
-        from core.indexer import Indexer
-        from core.file import ZgFile
-        from eth_account import Account
+        proc = subprocess.run(
+            ["node", str(UPLOAD_SCRIPT), result_json],
+            capture_output=True,
+            text=True,
+            timeout=UPLOAD_TIMEOUT_S,
+            env={**os.environ},
+        )
 
-        indexer = Indexer(OG_STORAGE_INDEXER)
-        account = Account.from_key(PRIVATE_KEY)
-
-        # Write result to temp file, upload, delete
-        import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            f.write(result_json)
-            temp_path = f.name
-
-        file = ZgFile.from_file_path(temp_path)
-        upload_opts = {
-            'tags': b'\x00',
-            'finalityRequired': True,
-            'taskSize': 10,
-            'expectedReplica': 1,
-            'skipTx': False,
-            'account': account,
-        }
-
-        upload_result, err = indexer.upload(file, OG_RPC, account, upload_opts)
-        file.close()
-        os.unlink(temp_path)
-
-        if err is None:
-            root_hash = upload_result['rootHash']
-            logger.info(f"[0G Storage] Uploaded consensus blob, rootHash = {root_hash[:18]}...")
+        if proc.returncode == 0:
+            upload_result = json.loads(proc.stdout)
+            root_hash = upload_result.get("rootHash")
+            tx_hash = upload_result.get("txHash")
+            logger.info(
+                f"[0G Storage] Uploaded consensus blob, "
+                f"rootHash={root_hash[:18]}... tx={tx_hash}"
+            )
             return root_hash
-        else:
-            logger.error(f"[0G Storage] Upload failed: {err}")
-            # Fallback to mock
-            return "0x" + hashlib.sha256(result_json.encode()).hexdigest()
 
+        error = proc.stderr.strip() or "Unknown error"
+        logger.error(f"[0G Storage] Upload failed (rc={proc.returncode}): {error}")
+        return fallback_hash
+
+    except subprocess.TimeoutExpired:
+        logger.error(f"[0G Storage] Upload timed out ({UPLOAD_TIMEOUT_S}s)")
+        return fallback_hash
     except Exception as e:
         logger.error(f"[0G Storage] Exception: {e}")
-        return "0x" + hashlib.sha256(result_json.encode()).hexdigest()
+        return fallback_hash

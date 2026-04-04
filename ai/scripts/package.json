@@ -1,0 +1,9 @@
+{
+  "name": "radegast-0g-scripts",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@0gfoundation/0g-ts-sdk": "^1.2.1",
+    "ethers": "^6.13.0"
+  }
+}
