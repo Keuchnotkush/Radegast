@@ -8,7 +8,7 @@ import "../src/UltraVerifier.sol";
 contract Deploy is Script {
     function _deployToken(string memory n, string memory s, uint192 p, address d) internal returns (XStockMock t) {
         t = new XStockMock(n, s, p);
-        t.grantRoles(d, t.MINTER_ROLE());
+        t.grantRoles(d, t.MINTER_ROLE() | t.PRICE_UPDATER_ROLE());
     }
 
     function run() external {

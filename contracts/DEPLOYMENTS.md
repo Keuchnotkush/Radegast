@@ -39,8 +39,18 @@ All tokens minted with 15 units to deployer.
 | Role | Holder | Contract |
 |---|---|---|
 | MINTER_ROLE (1) | Deployer | All xStock tokens |
-| SUBMITTER_ROLE (2) | Deployer | ConsensusSettlement |
+| PRICE_UPDATER_ROLE (2) | Deployer, Kamil (`0x7eE54c6Da2c5ba2b258637E9780c559C562aD393`) | All xStock tokens |
+| SUBMITTER_ROLE (2) | Deployer, Kamil (`0x7eE54c6Da2c5ba2b258637E9780c559C562aD393`) | ConsensusSettlement |
 | Owner | Deployer | All contracts |
+
+## Price Oracle (Option A)
+
+Kamil's AI backend calls `setPrice(uint192)` on each xStock token every ~5 minutes with real Yahoo Finance prices. Kamil's address (`0x7eE54c6Da2c5ba2b258637E9780c559C562aD393`) has `PRICE_UPDATER_ROLE` on all 15 tokens.
+
+```bash
+# Example: update Tesla price to $360
+cast send $TSLAX "setPrice(uint192)" 360000000 --rpc-url $OG_RPC --private-key $KAMIL_PK --gas-price 10000000000 --priority-gas-price 3000000000
+```
 
 ## Environment Variables
 

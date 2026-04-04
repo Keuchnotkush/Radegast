@@ -7,6 +7,7 @@ contract XStockMock is ERC20, OwnableRoles {
     error PriceZero();
 
     uint256 public constant MINTER_ROLE = _ROLE_0;
+    uint256 public constant PRICE_UPDATER_ROLE = _ROLE_1;
 
     string internal _name;
     string internal _symbol;
@@ -38,7 +39,7 @@ contract XStockMock is ERC20, OwnableRoles {
         _burn(f, a);
     }
 
-    function setPrice(uint192 p) external onlyOwner {
+    function setPrice(uint192 p) external onlyOwnerOrRoles(PRICE_UPDATER_ROLE) {
         if (p == 0) revert PriceZero();
         price = p;
         priceUpdatedAt = uint64(block.timestamp);
