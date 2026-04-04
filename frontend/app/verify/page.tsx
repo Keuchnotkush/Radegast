@@ -55,8 +55,12 @@ export default function Verify() {
   async function handleVerify() {
     if (!hash.trim()) return;
     setStatus("loading");
+    const minDelay = new Promise((r) => setTimeout(r, 2000));
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/proof/${encodeURIComponent(hash.trim())}`);
+      const [res] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/proof/${encodeURIComponent(hash.trim())}`),
+        minDelay,
+      ]);
       if (res.ok) {
         const data = await res.json();
         setThreshold(data.threshold || "Unknown");
@@ -65,6 +69,7 @@ export default function Verify() {
         setStatus("error");
       }
     } catch {
+      await minDelay;
       setStatus("error");
     }
   }
@@ -141,7 +146,7 @@ export default function Verify() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleVerify}
-                    className="get-started-btn px-[8px] py-2.5 rounded-full text-[13px] font-bold uppercase tracking-wider cursor-pointer flex items-center gap-2 shrink-0 text-white whitespace-nowrap"
+                    className="get-started-btn px-[12px] py-2.5 rounded-full text-[13px] font-bold uppercase tracking-wider cursor-pointer flex items-center gap-2 shrink-0 text-white whitespace-nowrap"
                     style={{ opacity: hash.trim() ? 1 : 0.5 }}
                   >
                     {status === "loading" ? (
