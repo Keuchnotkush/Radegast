@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 
 /* ─── Stock logo helper ─── */
@@ -127,19 +127,40 @@ interface PortfolioCtx {
 
 const PortfolioContext = createContext<PortfolioCtx | null>(null);
 
-// TODO: clear mock data and read from on-chain balances
-const INITIAL_HOLDINGS: Holding[] = [
-  { ticker: "TSLA", shares: 12.5 },
-  { ticker: "AAPL", shares: 8.3 },
-  { ticker: "NVDA", shares: 15.2 },
-  { ticker: "GOOGL", shares: 4.7 },
-  { ticker: "AMZN", shares: 6.1 },
-  { ticker: "META", shares: 3.4 },
-];
+/* xStock symbol → frontend ticker */
+const XSTOCK_TO_TICKER: Record<string, string> = {
+  TSLAx: "TSLA", AAPLx: "AAPL", NVDAx: "NVDA", GOOGx: "GOOGL",
+  AMZNx: "AMZN", METAx: "META", SPYx: "SPY", NDXx: "QQQ",
+  MSTRx: "MSTR", MSFTx: "MSFT", JPMx: "JPM", Vx: "V",
+  XOMx: "XOM", LLYx: "LLY", LVMHx: "MC.PA",
+};
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
-  const [holdings, setHoldings] = useState<Holding[]>(INITIAL_HOLDINGS);
-  const [cash, setCash] = useState(2450.75);
+  const [holdings, setHoldings] = useState<Holding[]>([]);
+  const [cash, setCash] = useState(0);
+  const { primaryWallet } = useDynamicContext();
+  const fetchedRef = useRef(false);
+
+  // Fetch on-chain holdings when wallet is available
+  useEffect(() => {
+    const addr = primaryWallet?.address;
+    if (!addr || fetchedRef.current) return;
+    fetchedRef.current = true;
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/holdings/${addr}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.holdings && data.holdings.length > 0) {
+          setHoldings(
+            data.holdings.map((h: { symbol: string; shares: number }) => ({
+              ticker: XSTOCK_TO_TICKER[h.symbol] || h.symbol,
+              shares: h.shares,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+  }, [primaryWallet]);
 
   const buy = useCallback((ticker: string, usdAmount: number) => {
     const stock = MARKET.find((s) => s.ticker === ticker);

@@ -334,6 +334,25 @@ app.get("/api/consensus/:address", async (req, res) => {
   }
 });
 
+// ── Get on-chain prices for all xStocks ──
+app.get("/api/prices", async (_req, res) => {
+  try {
+    const entries = Object.entries(CONTRACTS.xStocks);
+    const prices = await Promise.all(
+      entries.map(async ([symbol, contractAddr]) => {
+        const price = await publicClient.readContract({
+          address: contractAddr, abi: xStockAbi, functionName: "price", args: [],
+        });
+        return { symbol, priceUsd: Number(price) / 1e6 };
+      })
+    );
+    res.json({ prices });
+  } catch (err) {
+    console.error("Prices error:", err.message);
+    res.status(500).json({ error: "Failed to read prices" });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`  ⚡ radegast backend — http://localhost:${PORT}`);
   console.log(`  ⛓  0G RPC: ${ogTestnet.rpcUrls.default.http[0]}`);
