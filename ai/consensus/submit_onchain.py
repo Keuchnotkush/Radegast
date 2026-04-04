@@ -1,6 +1,5 @@
 """Submit consensus result on-chain via ConsensusSettlement contract."""
 import os
-import json
 import logging
 from typing import Optional
 
@@ -20,14 +19,34 @@ LABEL_TO_INT = {
     RiskLabel.HIGH: 2,
 }
 
+# ABI for ConsensusSettlement.submit() — from Foundry build output
+SUBMIT_ABI = [
+    {
+        "type": "function",
+        "name": "submit",
+        "inputs": [
+            {"name": "u", "type": "address", "internalType": "address"},
+            {"name": "s", "type": "uint16", "internalType": "uint16"},
+            {"name": "c", "type": "uint16", "internalType": "uint16"},
+            {"name": "l", "type": "uint8", "internalType": "uint8"},
+            {"name": "a", "type": "uint8", "internalType": "uint8"},
+            {"name": "t", "type": "uint8", "internalType": "uint8"},
+            {"name": "d", "type": "bytes32", "internalType": "bytes32"},
+        ],
+        "outputs": [
+            {"name": "id", "type": "uint256", "internalType": "uint256"},
+        ],
+        "stateMutability": "nonpayable",
+    }
+]
+
 
 async def submit_onchain(user: str, result: ConsensusResult) -> Optional[str]:
     """
     Call ConsensusSettlement.submit(user, score, confidence, label, agreed, total, daHash).
-    Score and confidence in basis points (72.3% = 7230).
+    Score and confidence in basis points (72.3 → 7230, 0.67 → 6700).
 
     Returns tx_hash or None.
-    MOCK_ONCHAIN=true by default until Manny deploys the contract.
     """
     if MOCK_ONCHAIN:
         mock_tx = f"0xmock_{hash(f'{user}{result.consensus_score}') & 0xFFFFFFFF:08x}"
@@ -44,17 +63,9 @@ async def submit_onchain(user: str, result: ConsensusResult) -> Optional[str]:
         w3 = Web3(Web3.HTTPProvider(OG_RPC))
         account = w3.eth.account.from_key(PRIVATE_KEY)
 
-        # ABI for submit() — Manny provides the full ABI
-        # submit(address user, uint16 score, uint16 confidence, uint8 label,
-        #        uint8 agreed, uint8 total, bytes32 daHash)
-        abi = json.loads(os.getenv("CONSENSUS_ABI", "[]"))
-        if not abi:
-            logger.error("CONSENSUS_ABI not set")
-            return None
-
         contract = w3.eth.contract(
             address=Web3.to_checksum_address(CONSENSUS_SETTLEMENT),
-            abi=abi
+            abi=SUBMIT_ABI,
         )
 
         # Convert to basis points
@@ -89,7 +100,7 @@ async def submit_onchain(user: str, result: ConsensusResult) -> Optional[str]:
 
         signed = account.sign_transaction(tx)
         tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
-        receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
+        w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
 
         tx_hex = tx_hash.hex()
         logger.info(f"[ON-CHAIN] ConsensusSettlement.submit() tx = {tx_hex[:18]}...")
