@@ -333,15 +333,30 @@ app.post("/api/proof/generate", async (req, res) => {
     // Wait for receipt to get the verifyId from event logs
     let verifyId = txHash;
     try {
-      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 30_000 });
-      // Verified event: id (indexed), user (indexed), threshold, verifyId
-      if (receipt.logs[0]?.data) {
-        const decoded = receipt.logs[0].data;
-        // verifyId is the second 32-byte word in the non-indexed data
-        verifyId = "0x" + decoded.slice(66, 130);
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 60_000 });
+      // Find the Verified event (skip OwnershipTransferred etc)
+      for (const log of receipt.logs) {
+        if (log.data && log.data.length >= 130) {
+          verifyId = "0x" + log.data.slice(66, 130);
+          break;
+        }
       }
+      console.log(`  ✅ Attestation stored on-chain: ${verifyId.slice(0, 18)}...`);
     } catch {
-      console.log("  ⚠️  Receipt timeout — tx submitted, using txHash as ID");
+      console.log("  ⚠️  Receipt timeout — retrying...");
+      // Retry once with longer timeout
+      try {
+        const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 120_000 });
+        for (const log of receipt.logs) {
+          if (log.data && log.data.length >= 130) {
+            verifyId = "0x" + log.data.slice(66, 130);
+            break;
+          }
+        }
+        console.log(`  ✅ Attestation stored (retry): ${verifyId.slice(0, 18)}...`);
+      } catch {
+        console.log("  ⚠️  Receipt still pending — tx submitted as", txHash.slice(0, 18));
+      }
     }
 
     res.json({

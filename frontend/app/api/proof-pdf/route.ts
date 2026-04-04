@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const txStr = txHash || "0xb4e2...8f1a";
     const commitStr = commitment || "0x1a2b3c4d5e6f...abcdef7890";
     const verifierStr = verifierContract || "0xUltraVerifier...d3F7";
-    const explorerUrl = `https://explorer.0g.ai/tx/${txStr}`;
+    const explorerUrl = `${req.nextUrl.origin}/verify/${verifyId}`;
 
     // Parse threshold number and words
     const thresholdNum = threshold.replace(/[^0-9]/g, "");
