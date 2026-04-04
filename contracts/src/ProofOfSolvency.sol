@@ -36,12 +36,12 @@ contract ProofOfSolvency is OwnableRoles {
         (bool ok_, bytes memory ret) = verifier.staticcall(
             abi.encodeWithSignature("verify(bytes,bytes32[])", proof, pub)
         );
-        if (!ok_ || (ret.length >= 32 && abi.decode(ret, (bool)) == false)) revert InvalidProof();
+        if (!ok_ || ret.length != 32 || !abi.decode(ret, (bool))) revert InvalidProof();
 
         uint64 t = uint64(uint256(pub[0]));
         bytes32 c = pub[1];
 
-        vid = keccak256(abi.encodePacked(msg.sender, t, c, block.number));
+        vid = keccak256(abi.encodePacked(msg.sender, t, c, id));
         id = attestations.length;
         attestations.push(Attestation(msg.sender, t, uint32(block.timestamp), c, vid));
         _bv[vid] = id + 1;

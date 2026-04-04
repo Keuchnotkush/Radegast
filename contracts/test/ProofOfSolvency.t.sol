@@ -97,7 +97,7 @@ contract ProofOfSolvencyTest is Test {
 
     function test_verify_emitsEvent() public {
         bytes32 expectedVid = keccak256(
-            abi.encodePacked(alice, THRESHOLD, COMMITMENT, block.number)
+            abi.encodePacked(alice, THRESHOLD, COMMITMENT, uint256(0))
         );
 
         vm.prank(alice);

@@ -31,7 +31,7 @@ All tokens minted with 15 units to deployer.
 | Contract | Address | Purpose |
 |---|---|---|
 | ConsensusSettlement | `0x3dBCdad5Da3a7f345353d8387c7BE6EBe5F6524f` | Records AI consensus votes on-chain |
-| ProofOfSolvency | `0x6CA03Ca29e03a23D1cD4Fbff8A42da8c9feBF72C` | Stores ZK attestations for bank verification |
+| ProofOfSolvency | `0x9ad38b9e70a23BE95186C5935930C6Ab05C49dD9` | Stores ZK attestations for bank verification |
 | HonkVerifier | `0x71E560eC76Ac0CBA7F44D6ba557f0706257deFa1` | Noir UltraPlonk verifier (generated) |
 
 ## Roles
@@ -62,6 +62,6 @@ export XOMX=0x2bEd346a985866B497E052fB807bE4E3FB4D015E
 export LLYX=0xa37e660218B3De658444648873d3016E1aD1681d
 export LVMHX=0x425f1CF3e4f3762B58a32d24a80b7d767Af58441
 export CONSENSUS=0x3dBCdad5Da3a7f345353d8387c7BE6EBe5F6524f
-export PROOF_OF_SOLVENCY=0x6CA03Ca29e03a23D1cD4Fbff8A42da8c9feBF72C
+export PROOF_OF_SOLVENCY=0x9ad38b9e70a23BE95186C5935930C6Ab05C49dD9
 export HONK_VERIFIER=0x71E560eC76Ac0CBA7F44D6ba557f0706257deFa1
 ```
