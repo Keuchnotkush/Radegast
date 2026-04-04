@@ -173,7 +173,8 @@ function PipelineSection() {
 
 export default function HowItWorks() {
   return (
-    <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
+    <div className="min-h-screen relative" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
+      <div className="relative">
       <Nav />
 
       <div className="max-w-4xl mx-auto px-8 pt-32 pb-24">
@@ -652,6 +653,7 @@ export default function HowItWorks() {
         <footer className="pt-8 text-center" style={{ borderTop: `1px solid ${P.gray}15` }}>
           <span className="text-[13px]" style={{ color: P.gray }}>ETHGlobal Cannes 2026</span>
         </footer>
+      </div>
       </div>
     </div>
   );

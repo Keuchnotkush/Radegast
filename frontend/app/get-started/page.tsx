@@ -286,18 +286,6 @@ function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
                   <GoogleIcon />
                   Google
                 </motion.button>
-                <motion.button
-                  onClick={() => signInWithSocialAccount(ProviderEnum.Apple)}
-                  disabled={socialLoading}
-                  whileHover={{ scale: 1.04, y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={spring}
-                  className="flex-1 flex items-center justify-center gap-3 py-5 rounded-2xl text-[16px] font-semibold cursor-pointer"
-                  style={{ background: P.dark, color: P.white, opacity: socialLoading ? 0.6 : 1 }}
-                >
-                  <AppleIcon />
-                  Apple
-                </motion.button>
               </div>
             </>
           )}
@@ -339,16 +327,16 @@ export default function GetStarted() {
       </Link>
 
       {/* LEFT — Giant typographic statement */}
-      <div className="hidden md:flex flex-[1.6] items-center justify-center p-16 relative overflow-hidden">
+      <div className="hidden md:flex flex-[1.6] items-center justify-center p-16 relative">
         <div className="max-w-4xl">
           <motion.h1
-            initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
-            animate={{ clipPath: "inset(0 0% 0 0)", opacity: 1 }}
+            initial={{ clipPath: "inset(-20% 100% 0 0)", opacity: 0 }}
+            animate={{ clipPath: "inset(-20% 0% 0 0)", opacity: 1 }}
             transition={{ duration: 1.6, ease, delay: 0.1 }}
-            className="text-[72px] lg:text-[110px] font-bold leading-[0.90] tracking-tighter"
+            className="text-[72px] lg:text-[110px] font-bold leading-[0.95] tracking-tighter overflow-visible pt-4"
             style={{ color: P.dark }}
           >
-            The <span style={{ color: P.jade }}>m<span style={{ color: P.jade }}>ä</span>rkets</span> never sleep.
+            The <span style={{ color: P.jade }}>m<Trema color={P.jade} />rkets</span> never sleep.
           </motion.h1>
           <div className="h-4 lg:h-6" />
           <motion.p
@@ -392,7 +380,7 @@ export default function GetStarted() {
             className="md:hidden text-center mb-12 mt-8"
           >
             <h1 className="text-3xl font-bold leading-tight" style={{ color: P.dark }}>
-              The m<span style={{ color: P.jade }}>ä</span>rkets never sleep.
+              The m<Trema color={P.dark} />rkets never sleep.
               <br />
               <span style={{ color: P.jade }}>Neither should your money.</span>
             </h1>
@@ -412,6 +400,21 @@ export default function GetStarted() {
         </div>
       </div>
     </div>
+  );
+}
+
+function Trema({ color }: { color: string }) {
+  return (
+    <span className="relative inline-block" style={{ overflow: "visible" }}>
+      a
+      <span
+        className="absolute left-1/2 -translate-x-1/2 flex gap-[0.12em] pointer-events-none"
+        style={{ top: "-0.22em" }}
+      >
+        <span className="block rounded-full" style={{ width: "0.13em", height: "0.13em", background: color }} />
+        <span className="block rounded-full" style={{ width: "0.13em", height: "0.13em", background: color }} />
+      </span>
+    </span>
   );
 }
 

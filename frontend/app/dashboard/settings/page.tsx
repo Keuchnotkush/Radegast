@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { NavAvatar, SectionTitle, P, ease } from "../shared";
 import { useSettings, useUser, AUTO_DURATIONS, type AutoDuration } from "../store";
 
@@ -11,6 +13,8 @@ const PROFILES = ["Conservative", "Moderate", "Growth", "Aggressive"];
 const LIMITS = [100, 250, 500, 1000, 2500];
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const { handleLogOut } = useDynamicContext();
   const user = useUser();
   const [form, setForm] = useState({
     firstName: user.firstName,
@@ -134,7 +138,7 @@ export default function SettingsPage() {
           <motion.div
             whileHover={{ scale: 1.03 }}
             transition={spring}
-            className="flex rounded-full p-1 overflow-x-auto"
+            className="flex rounded-full p-1"
             style={{ background: P.bg }}
           >
             {PROFILES.map((p) => {
@@ -253,7 +257,7 @@ export default function SettingsPage() {
                 <motion.div
                   whileHover={{ scale: 1.03 }}
                   transition={spring}
-                  className="flex rounded-full p-1 overflow-x-auto"
+                  className="flex rounded-full p-1"
                   style={{ background: P.bg }}
                 >
                   {AUTO_DURATIONS.map((d) => {
@@ -336,6 +340,20 @@ export default function SettingsPage() {
 
         {/* ═══ SAVE ═══ */}
         <SaveButton saved={saved} onClick={save} />
+
+        {/* ═══ LOG OUT ═══ */}
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={async () => {
+            await handleLogOut();
+            window.location.href = "/landing";
+          }}
+          className="w-full mt-6 py-4 rounded-xl text-[14px] font-semibold cursor-pointer"
+          style={{ background: P.loss, color: P.white }}
+        >
+          Log out
+        </motion.button>
       </div>
 
       {/* ═══ MFA MODAL ═══ */}
@@ -471,13 +489,13 @@ function SaveButton({ saved, onClick }: { saved: boolean; onClick: () => void })
   const label = saved ? "Saved!" : "Save changes";
   return (
     <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.97 }}
+      whileHover={{ scale: 1.08 }}
+      whileTap={{ scale: 0.95 }}
       onHoverStart={() => setHoverCount((h) => h + 1)}
       transition={spring}
       onClick={onClick}
-      className="relative w-full py-4 rounded-xl text-[15px] font-bold overflow-hidden cursor-pointer"
-      style={{ background: saved ? P.jade : P.dark, color: P.white }}
+      className="get-started-btn relative w-full py-4 rounded-xl text-[15px] font-bold overflow-hidden cursor-pointer"
+      style={{ color: P.white }}
     >
       <motion.span
         key={`${label}-${hoverCount}`}
@@ -496,13 +514,13 @@ function ActivateButton({ onClick }: { onClick: () => void }) {
   const [hoverCount, setHoverCount] = useState(0);
   return (
     <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.97 }}
+      whileHover={{ scale: 1.08 }}
+      whileTap={{ scale: 0.95 }}
       onHoverStart={() => setHoverCount((h) => h + 1)}
       transition={spring}
       onClick={onClick}
-      className="relative w-full py-4 rounded-xl text-[15px] font-bold overflow-hidden cursor-pointer flex items-center justify-center gap-2.5"
-      style={{ background: P.jade, color: P.white }}
+      className="get-started-btn relative w-full py-4 rounded-xl text-[15px] font-bold overflow-hidden cursor-pointer flex items-center justify-center gap-2.5"
+      style={{ color: P.white }}
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />

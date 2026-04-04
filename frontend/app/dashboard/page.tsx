@@ -79,19 +79,33 @@ export default function DashboardPage() {
       <div className="w-full max-w-[1440px] mx-auto px-5 md:px-16 pt-20 pb-16">
 
         {/* WELCOME */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease }}
-          className="mb-14"
-        >
-          <h1 className="text-3xl md:text-5xl font-bold leading-tight">
-            Good to see you, <span style={{ color: P.jade }}>{userName}</span>.
-          </h1>
-          <p className="text-lg mt-3" style={{ color: P.gray }}>
+        <div className="mb-14">
+          <motion.h1
+            initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
+            animate={{ clipPath: "inset(0 0% 0 0)", opacity: 1 }}
+            transition={{ duration: 1.4, ease }}
+            className="text-3xl md:text-5xl font-bold leading-tight"
+          >
+            Good to see you,{" "}
+            <motion.span
+              style={{ color: P.jade }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 1, duration: 0.5, type: "spring", stiffness: 400, damping: 15 }}
+              className="inline-block"
+            >
+              {userName}
+            </motion.span>.
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.6, ease }}
+            className="text-lg mt-3" style={{ color: P.gray }}
+          >
             Your money never sleeps — here&apos;s how it&apos;s doing today.
-          </p>
-        </motion.div>
+          </motion.p>
+        </div>
 
         {/* PORTFOLIO HERO */}
         <motion.section
@@ -109,53 +123,83 @@ export default function DashboardPage() {
             {/* Metrics + legend */}
             <div className="flex-1 flex flex-col gap-6 md:gap-8 w-full">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-                <MetricCard label="24h Return" value="—" sub="Coming soon" color={P.gray} />
-                <MetricCard label="Invested" value={`$${invested.toLocaleString("en-US", { maximumFractionDigits: 0 })}`} sub={`${portfolioStocks.length} stocks`} color={P.dark} />
-                <MetricCard label="Available" value={`$${cash.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} sub="Ready to invest" color={P.jade} />
-                <MetricCard label="All-time P&L" value="—" sub="Coming soon" color={P.gray} />
+                <MetricCard label="24h Return" value="—" sub="Coming soon" color={P.gray} index={0} />
+                <MetricCard label="Invested" value={`$${invested.toLocaleString("en-US", { maximumFractionDigits: 0 })}`} sub={`${portfolioStocks.length} stocks`} color={P.dark} index={1} />
+                <MetricCard label="Available" value={`$${cash.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} sub="Ready to invest" color={P.jade} index={2} />
+                <MetricCard label="All-time P&L" value="—" sub="Coming soon" color={P.gray} index={3} />
               </div>
 
               {/* Add Funds button */}
               <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                transition={spring}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6, type: "spring", stiffness: 400, damping: 15 }}
+                whileHover={{ scale: 1.08, y: -2 }}
+                whileTap={{ scale: 0.9, rotate: -2 }}
                 onClick={() => setShowAddFunds(true)}
                 className="self-start flex items-center gap-2.5 py-3 px-7 rounded-full text-[14px] font-semibold cursor-pointer"
                 style={{ background: P.jade, color: P.white }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <motion.svg
+                  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  animate={{ rotate: [0, 90, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                >
                   <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
+                </motion.svg>
                 Add funds
               </motion.button>
 
               {/* Allocation bar */}
               <div>
                 <div className="flex w-full h-3 rounded-full overflow-hidden gap-[1px]" style={{ background: `${P.border}30` }}>
-                  {totalAllocations.map((s) => (
-                    <div key={s.ticker} style={{ width: `${s.allocation}%`, background: s.color }} className="h-full first:rounded-l-full last:rounded-r-full" />
+                  {totalAllocations.map((s, i) => (
+                    <motion.div
+                      key={s.ticker}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${s.allocation}%` }}
+                      transition={{ duration: 0.8, delay: 0.3 + i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                      style={{ background: s.color }}
+                      className="h-full first:rounded-l-full last:rounded-r-full"
+                    />
                   ))}
                   {cashAllocation > 0.5 && (
-                    <div style={{ width: `${cashAllocation}%`, background: `${P.border}60` }} className="h-full last:rounded-r-full" />
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${cashAllocation}%` }}
+                      transition={{ duration: 0.8, delay: 0.3 + totalAllocations.length * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                      style={{ background: `${P.border}60` }}
+                      className="h-full last:rounded-r-full"
+                    />
                   )}
                 </div>
                 <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4">
-                  {totalAllocations.map((s) => (
-                    <div key={s.ticker} className="flex items-center gap-2">
+                  {totalAllocations.map((s, i) => (
+                    <motion.div
+                      key={s.ticker}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.4, delay: 0.5 + i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                      className="flex items-center gap-2"
+                    >
                       <div className="w-3 h-3 rounded-full" style={{ background: s.color }} />
                       <span className="text-[13px] font-medium" style={{ color: P.gray }}>
                         {s.name} · {s.allocation.toFixed(0)}%
                       </span>
-                    </div>
+                    </motion.div>
                   ))}
                   {cashAllocation > 0.5 && (
-                    <div className="flex items-center gap-2">
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.4, delay: 0.5 + totalAllocations.length * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                      className="flex items-center gap-2"
+                    >
                       <div className="w-3 h-3 rounded-full" style={{ background: `${P.border}60` }} />
                       <span className="text-[13px] font-medium" style={{ color: P.gray }}>
                         Cash · {cashAllocation.toFixed(0)}%
                       </span>
-                    </div>
+                    </motion.div>
                   )}
                 </div>
               </div>
@@ -483,15 +527,22 @@ function StockRow({ stock, index, onSelect }: { stock: { ticker: string; name: s
   return (
     <motion.button
       onClick={onSelect}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.38 + index * 0.05, duration: 0.35, ease }}
-      whileHover={{ x: 6 }}
-      className="flex items-center justify-between py-5 w-full text-left cursor-pointer"
+      initial={{ opacity: 0, x: -30 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.4 + index * 0.08, duration: 0.5, type: "spring", stiffness: 300, damping: 20 }}
+      whileHover={{ x: 10, scale: 1.01, backgroundColor: `${stock.color}06` }}
+      whileTap={{ scale: 0.98 }}
+      className="flex items-center justify-between py-5 w-full text-left cursor-pointer rounded-xl px-3 -mx-3"
       style={{ borderBottom: `1px solid ${P.border}25` }}
     >
       <div className="flex items-center gap-5">
-        <StockLogo ticker={stock.ticker} name={stock.name} color={stock.color} size={48} />
+        <motion.div
+          initial={{ scale: 0, rotate: -20 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ delay: 0.5 + index * 0.08, type: "spring", stiffness: 500, damping: 18 }}
+        >
+          <StockLogo ticker={stock.ticker} name={stock.name} color={stock.color} size={48} />
+        </motion.div>
         <div>
           <div className="text-[16px] font-semibold">{stock.name}</div>
           <div className="text-[12px]" style={{ color: P.gray }}>
@@ -507,9 +558,13 @@ function StockRow({ stock, index, onSelect }: { stock: { ticker: string; name: s
             {isUp ? "+" : ""}{stock.change.toFixed(2)}%
           </div>
         </div>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={P.border} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <motion.svg
+          width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={P.border} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          whileHover={{ x: 4 }}
+          transition={{ type: "spring", stiffness: 500, damping: 20 }}
+        >
           <polyline points="9 18 15 12 9 6" />
-        </svg>
+        </motion.svg>
       </div>
     </motion.button>
   );
@@ -529,18 +584,48 @@ function MiniChart({ color, trend }: { color: string; trend: "up" | "down" }) {
         </linearGradient>
       </defs>
       <polygon points={`0,32 ${pts} 140,32`} fill={`url(#${id})`} />
-      <polyline points={pts} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <motion.polyline
+        points={pts}
+        stroke={color}
+        strokeWidth="2"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+      />
     </svg>
   );
 }
 
-function MetricCard({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
+function MetricCard({ label, value, sub, color, index = 0 }: { label: string; value: string; sub: string; color: string; index?: number }) {
   return (
-    <div className="py-4">
-      <div className="w-8 h-[3px] rounded-full mb-3" style={{ background: color }} />
+    <motion.div
+      className="py-4"
+      initial={{ opacity: 0, y: 30, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.5, delay: 0.2 + index * 0.12, type: "spring", stiffness: 300, damping: 20 }}
+      whileHover={{ y: -4, scale: 1.03 }}
+    >
+      <motion.div
+        className="h-[3px] rounded-full mb-3"
+        style={{ background: color }}
+        initial={{ width: 0 }}
+        animate={{ width: 32 }}
+        transition={{ duration: 0.6, delay: 0.5 + index * 0.12, ease: [0.22, 1, 0.36, 1] }}
+      />
       <div className="text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ fontFamily: "Lexend", color: P.gray }}>{label}</div>
-      <div className="text-2xl font-bold" style={{ color }}>{value}</div>
+      <motion.div
+        className="text-2xl font-bold"
+        style={{ color }}
+        initial={{ opacity: 0, filter: "blur(8px)" }}
+        animate={{ opacity: 1, filter: "blur(0px)" }}
+        transition={{ duration: 0.6, delay: 0.6 + index * 0.12, ease: [0.22, 1, 0.36, 1] }}
+      >
+        {value}
+      </motion.div>
       <div className="text-[13px] font-medium mt-1" style={{ color: P.gray }}>{sub}</div>
-    </div>
+    </motion.div>
   );
 }

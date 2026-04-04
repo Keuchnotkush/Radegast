@@ -8,19 +8,11 @@ import { usePortfolio, MARKET, STOCK_COLORS, logoUrl, useLiveMarket, useUser } f
 
 const SECTORS = ["All", ...Array.from(new Set(MARKET.map((s) => s.sector)))];
 
-type SortKey = "default" | "change" | "price" | "name";
-const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: "default", label: "Popular" },
-  { key: "change", label: "Performance" },
-  { key: "price", label: "Price" },
-  { key: "name", label: "A → Z" },
-];
 
 export default function InvestPage() {
   const { firstName: userName, initial } = useUser();
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState("All");
-  const [sort, setSort] = useState<SortKey>("default");
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const { getHolding, cash } = usePortfolio();
   const liveMarket = useLiveMarket();
@@ -39,12 +31,8 @@ export default function InvestPage() {
       return matchSearch && matchSector;
     });
 
-    if (sort === "change") list = [...list].sort((a, b) => b.change - a.change);
-    else if (sort === "price") list = [...list].sort((a, b) => b.price - a.price);
-    else if (sort === "name") list = [...list].sort((a, b) => a.name.localeCompare(b.name));
-
     return list;
-  }, [liveMarket, search, sector, sort]);
+  }, [liveMarket, search, sector]);
 
   const selectedStock = selectedTicker ? liveMarket.find((m) => m.ticker === selectedTicker) : null;
   const selectedHolding = selectedTicker ? getHolding(selectedTicker) : undefined;
@@ -183,24 +171,6 @@ export default function InvestPage() {
               ))}
             </div>
 
-            <div className="flex items-center gap-2 overflow-x-auto">
-              {SORT_OPTIONS.map((o) => (
-                <motion.button
-                  key={o.key}
-                  onClick={() => setSort(o.key)}
-                  animate={{
-                    background: sort === o.key ? `${P.jade}15` : "transparent",
-                    color: sort === o.key ? P.jade : P.gray,
-                  }}
-                  whileHover={{ scale: 1.06 }}
-                  transition={{ duration: 0.25 }}
-                  className="px-3.5 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer whitespace-nowrap outline-none"
-                  style={{ border: `1px solid ${sort === o.key ? `${P.jade}30` : "transparent"}` }}
-                >
-                  {o.label}
-                </motion.button>
-              ))}
-            </div>
           </div>
         </motion.div>
 

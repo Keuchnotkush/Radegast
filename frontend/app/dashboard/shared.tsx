@@ -266,18 +266,23 @@ export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () 
   const isUp = stock.change >= 0;
   const presets = [10, 50, 100, 500];
 
-  // Auto-scroll to bottom when step changes (so confirm/processing/done are visible)
-  useEffect(() => {
-    if (step !== "input" && panelRef.current) {
-      panelRef.current.scrollTo({ top: panelRef.current.scrollHeight, behavior: "smooth" });
-    }
-  }, [step]);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   const ticker = stock.symbol.replace("x", "");
   const { data: prices, loading } = usePriceHistory(ticker, period);
   const portfolio = usePortfolio();
 
   const usdAmount = parseFloat(amount) || 0;
+
+  // Auto-scroll to bottom when step changes or amount is entered
+  useEffect(() => {
+    if ((step !== "input" || usdAmount > 0) && panelRef.current) {
+      const timer = setTimeout(() => {
+        panelRef.current?.scrollTo({ top: panelRef.current.scrollHeight, behavior: "smooth" });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [step, usdAmount]);
   const shares = usdAmount > 0 ? usdAmount / stock.price : 0;
   const insufficientFunds = tab === "buy" && usdAmount > portfolio.cash;
 
@@ -640,6 +645,7 @@ export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () 
               </motion.div>
             )}
           </AnimatePresence>
+          <div ref={bottomRef} />
         </div>
       </motion.div>
     </>
@@ -654,7 +660,7 @@ export function TogglePill({ checked, onChange, label, icon }: { checked: boolea
       whileTap={{ scale: 0.95 }}
       transition={spring}
       onClick={() => onChange(!checked)}
-      className="flex items-center gap-2.5 py-2.5 px-5 rounded-full cursor-pointer"
+      className="flex items-center gap-2 py-2.5 px-4 rounded-full cursor-pointer whitespace-nowrap"
       style={{
         background: checked ? P.dark : "transparent",
         color: checked ? P.white : P.gray,

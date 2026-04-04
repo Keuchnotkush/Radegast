@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Nav from "../landing/nav";
+import Topography from "../components/topography";
 
 const P = {
   jade: "#38A88A",
@@ -81,6 +82,7 @@ export default function Verify() {
 
   return (
     <div className="min-h-screen relative overflow-hidden transition-colors duration-700" style={{ background: P.cream, fontFamily: "Sora, sans-serif", color: status === "loading" ? P.dark : P.white }}>
+      <Topography />
       {/* ═══ Jade overlay — reveals on load, retracts on verify ═══ */}
       <motion.div
         className="absolute inset-0 z-0"

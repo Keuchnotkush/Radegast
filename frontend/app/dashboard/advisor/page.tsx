@@ -1,19 +1,63 @@
 "use client";
 
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavAvatar, SectionTitle, TogglePill, P, ease, spring } from "../shared";
 import { useSettings, useUser } from "../store";
 
 /* ─── AI Models (structure only — votes come from backend) ─── */
-const MODELS: { name: string; desc: string }[] = [
-  { name: "XGBoost", desc: "Technical — RSI, MACD, volume, price patterns" },
-  { name: "Sentiment", desc: "NLP — news, social, earnings call analysis" },
-  { name: "Macro", desc: "Economics — Fed rates, CPI, sector rotation" },
+const MODELS: { name: string; color: string; desc: string; details: string[]; stats: { val: string; label: string }[] }[] = [
+  {
+    name: "XGBoost",
+    color: "#2E8B57",
+    desc: "Technical — RSI, MACD, volume, price patterns",
+    details: [
+      "37 statistical features computed per asset — momentum, RSI, Bollinger bands, cross-asset correlation matrices",
+      "ONNX runtime for deterministic, reproducible inference across any environment",
+      "Trained on 15 years of daily price data across 500+ equities",
+    ],
+    stats: [
+      { val: "37", label: "features per asset" },
+      { val: "15y", label: "training history" },
+      { val: "<50ms", label: "inference time" },
+    ],
+  },
+  {
+    name: "Sentiment",
+    color: "#4B0082",
+    desc: "NLP — news, social, earnings call analysis",
+    details: [
+      "Processes real-time news feeds, social media signals, and earnings call transcripts",
+      "Multi-source aggregation reduces single-platform bias and noise",
+      "Detects sentiment shifts before they reflect in price action",
+    ],
+    stats: [
+      { val: "50K+", label: "articles/day" },
+      { val: "2", label: "independent LLMs" },
+      { val: "~4h", label: "lead on price" },
+    ],
+  },
+  {
+    name: "Macro",
+    color: "#CC5A3A",
+    desc: "Economics — Fed rates, CPI, sector rotation",
+    details: [
+      "Tracks Fed interest rate decisions, CPI releases, unemployment, GDP revisions",
+      "Models sector rotation cycles — defensive vs cyclical positioning",
+      "Correlates macro regime changes with historical equity performance",
+    ],
+    stats: [
+      { val: "12", label: "macro indicators" },
+      { val: "4", label: "regime types" },
+      { val: "60y", label: "cycle history" },
+    ],
+  },
 ];
 
 export default function AdvisorPage() {
   const { initial } = useUser();
   const { aiSuggestions, setAiSuggestions, autoSession } = useSettings();
+  const [openModel, setOpenModel] = useState<number | null>(null);
   const advisorOn = aiSuggestions;
   const tradingOn = autoSession.active;
 
@@ -76,30 +120,119 @@ export default function AdvisorPage() {
               <div className="flex items-center gap-3 mb-6">
                 <SectionTitle>Model consensus</SectionTitle>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                {MODELS.map((m, i) => (
-                  <motion.div
-                    key={m.name}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    transition={{ delay: 0.2 + i * 0.08, duration: 0.4, ease }}
-                    className="flex items-start gap-4 p-5 rounded-2xl cursor-default"
-                    style={{ background: P.surface, border: `1px solid ${P.border}30` }}
-                  >
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-[13px] font-bold"
-                      style={{ background: `${P.border}15`, color: P.gray }}>
-                      —
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[14px] font-semibold">{m.name}</span>
-                        <span className="text-[11px] font-semibold uppercase" style={{ color: P.gray }}>waiting</span>
-                      </div>
-                      <p className="text-[12px] mt-1 leading-relaxed" style={{ color: P.gray }}>{m.desc}</p>
-                    </div>
-                  </motion.div>
-                ))}
+              <div className="flex flex-row gap-4">
+                {MODELS.map((m, i) => {
+                  const isOpen = openModel === i;
+                  return (
+                    <motion.div
+                      key={m.name}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: "-40px" }}
+                      transition={{ duration: 0.5, ease, delay: i * 0.08 }}
+                      className="overflow-hidden flex-1"
+                    >
+                      {/* Clickable header */}
+                      <motion.button
+                        onClick={() => setOpenModel(isOpen ? null : i)}
+                        className="flex flex-col items-center cursor-pointer w-full group"
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        transition={spring}
+                      >
+                        <motion.span
+                          className="text-4xl md:text-6xl font-bold leading-none select-none"
+                          animate={{ color: isOpen ? m.color : `${m.color}30` }}
+                          transition={{ duration: 0.4, ease }}
+                        >
+                          {m.name}
+                        </motion.span>
+                        <motion.div
+                          animate={{ opacity: isOpen ? 0 : 1, y: isOpen ? -5 : 0 }}
+                          transition={{ duration: 0.3, ease }}
+                          className="mt-1"
+                        >
+                          <p className="text-sm text-center" style={{ color: P.gray }}>{m.desc}</p>
+                        </motion.div>
+                      </motion.button>
+
+                      {/* Expanded block */}
+                      <AnimatePresence initial={false}>
+                        {isOpen && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0, borderRadius: 40 }}
+                            animate={{ height: "auto", opacity: 1, borderRadius: 20 }}
+                            exit={{ height: 0, opacity: 0, borderRadius: 40 }}
+                            transition={{ duration: 0.55, ease }}
+                            className="overflow-hidden mt-3"
+                            style={{ background: m.color }}
+                          >
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.4, ease, delay: 0.15 }}
+                              className="p-6 md:p-10 text-center"
+                            >
+                              <h3 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: "#FFFFFF" }}>{m.name}</h3>
+                              <p className="text-[14px] leading-relaxed max-w-2xl mx-auto mb-8" style={{ color: "rgba(255,255,255,0.75)" }}>
+                                {m.desc}
+                              </p>
+
+                              {/* Stats */}
+                              <div className="flex flex-wrap justify-center gap-6 md:gap-10 mb-8">
+                                {m.stats.map((s, si) => (
+                                  <motion.div
+                                    key={s.label}
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.4, ease, delay: 0.25 + si * 0.08 }}
+                                  >
+                                    <div className="w-8 h-[3px] rounded-full mb-2" style={{ background: "rgba(255,255,255,0.4)" }} />
+                                    <div className="text-2xl font-bold" style={{ color: "#FFFFFF" }}>{s.val}</div>
+                                    <div className="text-[12px] mt-0.5" style={{ color: "rgba(255,255,255,0.6)" }}>{s.label}</div>
+                                  </motion.div>
+                                ))}
+                              </div>
+
+                              {/* Detail cards */}
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                {m.details.map((d, di) => (
+                                  <motion.div
+                                    key={di}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.4, ease, delay: 0.35 + di * 0.08 }}
+                                    whileHover={{ scale: 1.03, y: -3 }}
+                                    className="py-5 px-5 rounded-xl text-left"
+                                    style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)" }}
+                                  >
+                                    <div className="w-6 h-[2px] rounded-full mb-3" style={{ background: "rgba(255,255,255,0.5)" }} />
+                                    <p className="text-[13px] leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>{d}</p>
+                                  </motion.div>
+                                ))}
+                              </div>
+
+                              {/* Status badge */}
+                              <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.6 }}
+                                className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full"
+                                style={{ background: "rgba(255,255,255,0.15)" }}
+                              >
+                                <div className="w-2 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.5)" }} />
+                                <span className="text-[11px] font-semibold uppercase" style={{ color: "rgba(255,255,255,0.7)" }}>
+                                  Waiting for backend
+                                </span>
+                              </motion.div>
+                            </motion.div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  );
+                })}
               </div>
             </motion.section>
         )}

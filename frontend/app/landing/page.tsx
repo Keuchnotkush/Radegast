@@ -185,13 +185,13 @@ function UseCases() {
 
 export default function Landing() {
   return (
-    <div className="min-h-screen pb-20 md:pb-0" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
+    <div className="min-h-screen pb-20 md:pb-0 relative" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
 
       <Nav />
 
       {/* HERO */}
-      <section className="h-screen flex flex-col items-center justify-center text-center px-5 md:px-8">
-        <motion.div className="flex flex-col items-center">
+      <section className="h-screen flex flex-col items-center justify-center text-center px-5 md:px-8 overflow-visible">
+        <motion.div className="flex flex-col items-center overflow-visible">
 
           {/* LOGO */}
           <div className="w-full max-w-[1400px] mb-14 flex justify-center relative overflow-visible">
@@ -200,15 +200,49 @@ export default function Landing() {
               alt="Radegast"
               initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
               animate={{ clipPath: "inset(0 0% 0 0)", opacity: 1 }}
-              transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+              transition={{ duration: 2.4, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
               className="w-full"
             />
-            {/* Floating tréma dots */}
+            {/* Floating tréma dots — CSS keyframes for buttery smooth animation */}
+            <style>{`
+              @keyframes float0 {
+                0%, 100% { transform: translate(0, 0); }
+                17% { transform: translate(3px, -10px); }
+                38% { transform: translate(-2px, 4px); }
+                55% { transform: translate(5px, -6px); }
+                72% { transform: translate(-1px, 8px); }
+                89% { transform: translate(2px, -3px); }
+              }
+              @keyframes float1 {
+                0%, 100% { transform: translate(0, 0); }
+                14% { transform: translate(-4px, 7px); }
+                33% { transform: translate(2px, -9px); }
+                52% { transform: translate(-3px, 3px); }
+                68% { transform: translate(4px, -5px); }
+                85% { transform: translate(-1px, 6px); }
+              }
+              @keyframes float2 {
+                0%, 100% { transform: translate(0, 0); }
+                19% { transform: translate(2px, -8px); }
+                36% { transform: translate(-4px, 5px); }
+                58% { transform: translate(3px, -11px); }
+                77% { transform: translate(-2px, 4px); }
+                91% { transform: translate(1px, -6px); }
+              }
+              @keyframes float3 {
+                0%, 100% { transform: translate(0, 0); }
+                12% { transform: translate(-3px, 9px); }
+                31% { transform: translate(4px, -7px); }
+                49% { transform: translate(-2px, 5px); }
+                71% { transform: translate(3px, -10px); }
+                88% { transform: translate(-1px, 3px); }
+              }
+            `}</style>
             {[
-              { left: "16.2%", top: "-2%", dur: 2.8, del: 0 },
-              { left: "20.9%", top: "-2%", dur: 3.2, del: 0.4 },
-              { left: "66.4%", top: "-2%", dur: 3.0, del: 0.8 },
-              { left: "71.2%", top: "-2%", dur: 2.6, del: 1.2 },
+              { left: "16.2%", top: "-2%", anim: "float0 7s ease-in-out infinite", del: 0 },
+              { left: "20.9%", top: "-2%", anim: "float1 8.2s ease-in-out infinite", del: 0.4 },
+              { left: "66.4%", top: "-2%", anim: "float2 7.6s ease-in-out infinite", del: 0.9 },
+              { left: "71.2%", top: "-2%", anim: "float3 8.8s ease-in-out infinite", del: 1.3 },
             ].map((dot, i) => (
               <motion.div
                 key={i}
@@ -216,16 +250,18 @@ export default function Landing() {
                 style={{
                   left: dot.left,
                   top: dot.top,
-                  width: "1.8%",
-                  height: 0,
-                  paddingBottom: "1.8%",
+                  width: "clamp(12px, 1.8vw, 26px)",
+                  height: "clamp(12px, 1.8vw, 26px)",
                   background: P.jade,
+                  animation: dot.anim,
+                  animationDelay: `${2.8 + dot.del}s`,
+                  willChange: "transform",
                 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, y: [0, -10, 0] }}
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
                 transition={{
-                  opacity: { duration: 0.5, delay: 1.8 + dot.del },
-                  y: { repeat: Infinity, duration: dot.dur, ease: "easeInOut", delay: 2 + dot.del },
+                  opacity: { duration: 0.6, delay: 2.0 + dot.del, ease: [0.16, 1, 0.3, 1] },
+                  scale: { type: "spring", stiffness: 300, damping: 15, delay: 2.0 + dot.del },
                 }}
               />
             ))}
