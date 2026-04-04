@@ -3,7 +3,7 @@
 import { createPublicClient, http, defineChain } from "viem";
 
 export const ogTestnet = defineChain({
-  id: 16600,
+  id: 16602,
   name: "0G Newton Testnet",
   nativeCurrency: { name: "A0GI", symbol: "A0GI", decimals: 18 },
   rpcUrls: {

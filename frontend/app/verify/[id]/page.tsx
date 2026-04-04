@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Nav from "../../landing/nav";
+import { publicClient } from "@/lib/contracts/client";
+import { proofOfSolvencyAbi } from "@/lib/contracts/abis";
+import { OG_TESTNET } from "@/lib/contracts/addresses";
+import type { ProofAttestation } from "@/lib/contracts/hooks";
 
 const P = {
   jade: "#38A88A",
@@ -19,17 +23,26 @@ export default function VerifyById() {
   const id = params.id as string;
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const [result, setResult] = useState<ProofAttestation | null>(null);
 
   useEffect(() => {
-    // Auto-verify on mount — simulate on-chain lookup (replace with ProofOfSolvency.check())
-    const timer = setTimeout(() => {
-      if (id && id.startsWith("0x") && id.length >= 10) {
-        setStatus("success");
-      } else {
-        setStatus("error");
-      }
-    }, 2000);
-    return () => clearTimeout(timer);
+    if (!id) { setStatus("error"); return; }
+    publicClient.readContract({
+      address: OG_TESTNET.proofOfSolvency,
+      abi: proofOfSolvencyAbi,
+      functionName: "check",
+      args: [id as `0x${string}`],
+    }).then((r) => {
+      const att = r as { user: `0x${string}`; threshold: bigint; verifiedAt: number; commitment: `0x${string}`; verifyId: `0x${string}` };
+      setResult({
+        user: att.user,
+        threshold: Number(att.threshold),
+        verifiedAt: att.verifiedAt,
+        commitment: att.commitment,
+        verifyId: att.verifyId,
+      });
+      setStatus("success");
+    }).catch(() => setStatus("error"));
   }, [id]);
 
   return (
@@ -124,10 +137,10 @@ export default function VerifyById() {
                   <div>
                     <h2 className="text-2xl font-bold mb-1">Portfolio verified</h2>
                     <p className="text-lg font-semibold mb-1">
-                      Exceeds <span style={{ color: P.cream }}>$50,000</span>
+                      Exceeds <span style={{ color: P.cream }}>${result ? result.threshold.toLocaleString() : "��"}</span>
                     </p>
                     <p className="text-[13px]" style={{ color: `${P.white}AA` }}>
-                      Verified on 0G Chain &middot; {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} &middot; Mathematically valid
+                      Verified on 0G Chain &middot; {result ? new Date(result.verifiedAt * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"} &middot; Mathematically valid
                     </p>
                   </div>
                 </div>
@@ -135,7 +148,7 @@ export default function VerifyById() {
                 <div className="flex flex-wrap gap-8 py-5 mb-4" style={{ borderTop: `1px solid ${P.white}15`, borderBottom: `1px solid ${P.white}15` }}>
                   {[
                     { label: "Verification ID", value: id.slice(0, 18) + "..." },
-                    { label: "Threshold", value: "$50,000" },
+                    { label: "Threshold", value: result ? `$${result.threshold.toLocaleString()}` : "—" },
                     { label: "Circuit", value: "UltraPlonk" },
                     { label: "Chain", value: "0G Chain" },
                     { label: "Status", value: "Valid", accent: true },
