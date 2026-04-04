@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useDynamicContext, useRegisterPasskey } from "@dynamic-labs/sdk-react-core";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { NavAvatar, SectionTitle, P } from "../shared";
 import { useSettings, useUser, AUTO_DURATIONS, PROFILE_LABELS, type AutoDuration } from "../store";
 import { ease, spring } from "../../lib/theme";
@@ -23,9 +23,6 @@ export default function SettingsPage() {
   });
   const [saved, setSaved] = useState(false);
   const { aiSuggestions, setAiSuggestions, autoSession, activateAuto, revokeAuto, setAutoNotifications } = useSettings();
-
-  const registerPasskey = useRegisterPasskey();
-  const [pkState, setPkState] = useState<"idle" | "loading" | "done" | "error">("idle");
 
   const [showMfa, setShowMfa] = useState(false);
   const [mfaCode, setMfaCode] = useState("");
@@ -181,64 +178,6 @@ export default function SettingsPage() {
               </p>
             </div>
             <Toggle checked={aiSuggestions} onChange={setAiSuggestions} />
-          </div>
-        </motion.section>
-
-        {/* ═══ FINGERPRINT LOGIN ═══ */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={spring}
-          className="p-6 rounded-2xl mb-6"
-          style={{ background: P.surface, border: `1px solid ${P.border}30` }}
-        >
-          <SectionTitle>Fingerprint login</SectionTitle>
-          <div className="flex items-center justify-between mt-5">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${P.jade}10` }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 11c0-1.1.9-2 2-2s2 .9 2 2-0.9 2-2 2" />
-                  <path d="M14 13v4l-2 2-2-2v-4" />
-                  <circle cx="14" cy="7" r="4" />
-                </svg>
-              </div>
-              <div>
-                <div className="text-[15px] font-semibold">
-                  {pkState === "done" ? "Passkey registered" : "Use Face ID, Touch ID, or PIN"}
-                </div>
-                <p className="text-[12px] mt-0.5" style={{ color: P.gray }}>
-                  {pkState === "done" ? "You can now sign in with your fingerprint." : "Skip the email code — sign in instantly next time."}
-                </p>
-              </div>
-            </div>
-            {pkState === "done" ? (
-              <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${P.jade}15` }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-            ) : (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={spring}
-                disabled={pkState === "loading"}
-                onClick={async () => {
-                  setPkState("loading");
-                  try {
-                    await registerPasskey();
-                    setPkState("done");
-                  } catch {
-                    setPkState("error");
-                    setTimeout(() => setPkState("idle"), 3000);
-                  }
-                }}
-                className="py-2.5 px-5 rounded-full text-[13px] font-semibold cursor-pointer shrink-0"
-                style={{ background: pkState === "loading" ? P.border : P.dark, color: P.white }}
-              >
-                {pkState === "loading" ? "Waiting..." : pkState === "error" ? "Failed — retry" : "Set up"}
-              </motion.button>
-            )}
           </div>
         </motion.section>
 

@@ -5,6 +5,7 @@ import {
   useSocialAccounts,
   useConnectWithOtp,
   useIsLoggedIn,
+  useSignInWithPasskey,
 } from "@dynamic-labs/sdk-react-core";
 import { ProviderEnum } from "@dynamic-labs/sdk-api-core";
 import { useRouter } from "next/navigation";
@@ -82,6 +83,9 @@ function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
   const router = useRouter();
   const { signInWithSocialAccount, isProcessing: socialLoading } = useSocialAccounts();
   const { connectWithEmail, verifyOneTimePassword } = useConnectWithOtp();
+  const signInWithPasskey = useSignInWithPasskey();
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [passkeyError, setPasskeyError] = useState("");
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -261,6 +265,36 @@ function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
                 <div className="flex-1 h-px" style={{ background: `${P.border}80` }} />
               </div>
 
+              {/* Passkey — fingerprint / Face ID */}
+              <motion.button
+                onClick={async () => {
+                  setPasskeyLoading(true);
+                  setPasskeyError("");
+                  try { await signInWithPasskey(); }
+                  catch (err) {
+                    const msg = err instanceof Error ? err.message : String(err);
+                    if (msg.includes("cancel") || msg.includes("abort")) {
+                      /* user cancelled — no error to show */
+                    } else {
+                      setPasskeyError("No passkey found. Sign in first, then register a passkey in Settings.");
+                    }
+                  }
+                  finally { setPasskeyLoading(false); }
+                }}
+                disabled={passkeyLoading}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                transition={spring}
+                className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl text-[16px] font-semibold cursor-pointer mb-3"
+                style={{ background: P.dark, color: P.white, opacity: passkeyLoading ? 0.6 : 1 }}
+              >
+                <FingerprintIcon />
+                {passkeyLoading ? "Waiting for device..." : "Sign in with fingerprint"}
+              </motion.button>
+              {passkeyError && (
+                <p className="text-[12px] text-center mb-3" style={{ color: P.loss }}>{passkeyError}</p>
+              )}
+
               {/* Google + Discord */}
               <div className="flex gap-4">
                 <motion.button
@@ -423,4 +457,14 @@ function DiscordIcon() {
   );
 }
 
+function FingerprintIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4" />
+      <path d="M5 19.5C5.5 18 6 15 6 12c0-3.5 2.5-6 6-6 3.5 0 6 2.5 6 6 0 1.5-.5 4-1.5 6" />
+      <path d="M8.5 22c.5-1.5 1-4 1-6.5 0-2 1-3.5 2.5-3.5s2.5 1.5 2.5 3.5c0 1.5-.5 3.5-1 5" />
+      <path d="M12 16v3" />
+    </svg>
+  );
+}
 
