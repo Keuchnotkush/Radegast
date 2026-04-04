@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Nav from "../landing/nav";
-import { useProofCheck, type ProofAttestation } from "@/lib/contracts/hooks";
 
 const P = {
   jade: "#38A88A",
@@ -17,143 +16,101 @@ const P = {
 
 const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-const STEPS = [
+const STEPS: { num: string; title: string; bg: string; desc: string; detail: string; confirms?: string[]; hides?: string[] }[] = [
   {
-    num: "1", title: "Pick a threshold", bg: "#2D8E74",
+    num: "1", title: "Pick a threshold", bg: "#2A2A2A",
     desc: "Choose the amount you want to prove — $10K, $50K, $100K.",
     detail: "The threshold is the only public input. It tells the circuit what to prove: that your total portfolio value exceeds this number. You never reveal the actual value.",
   },
   {
-    num: "2", title: "ZK proof runs locally", bg: "#257A63",
+    num: "2", title: "ZK proof runs locally", bg: "#4B0082",
     desc: "Noir.js generates a proof in your browser. Nothing leaves your device.",
     detail: "The Noir circuit takes your private inputs (balances, prices, a secret nonce), computes the total value, asserts it exceeds the threshold, and produces an UltraPlonk proof — all in WASM, entirely client-side.",
   },
   {
-    num: "3", title: "Verified on-chain", bg: "#1E6B55",
+    num: "3", title: "Verified on-chain", bg: "#CC5A3A",
     desc: "UltraVerifier on 0G Chain validates the proof and stores the attestation.",
     detail: "The proof is sent to the ProofOfSolvency smart contract. It calls the UltraVerifier with a staticcall. If valid, it stores an attestation: threshold, Poseidon commitment, timestamp, and a unique verifyId.",
+    confirms: ["Portfolio exceeds stated threshold", "Proof is mathematically valid", "Verified on-chain with timestamp"],
   },
   {
-    num: "4", title: "Get your ID", bg: "#175C48",
+    num: "4", title: "Get your ID", bg: "#B5506A",
     desc: "A unique verification ID is generated. Share it, print it, embed it.",
     detail: "The verifyId is a keccak256 hash of your address, threshold, commitment, and block number. It's embedded in a PDF certificate with a QR code pointing to radegast.app/verify/{id}.",
   },
   {
-    num: "5", title: "Anyone can check", bg: "#114D3C",
+    num: "5", title: "Anyone can check", bg: "#C8A415",
     desc: "Paste the ID here. They see the result — nothing else.",
     detail: "The verifier calls ProofOfSolvency.check(verifyId) on-chain. They get back: threshold, timestamp, and validity. No holdings, no wallet address, no transaction history. Pure zero-knowledge.",
+    hides: ["Which stocks are held", "Number of shares", "Total portfolio value", "Transaction history", "Wallet address"],
   },
 ];
 
 export default function Verify() {
   const [hash, setHash] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [expandedStep, setExpandedStep] = useState<number | null>(null);
-  const [result, setResult] = useState<ProofAttestation | null>(null);
-  const { check } = useProofCheck(undefined);
+  const [hoveredStep, setHoveredStep] = useState<number | null>(null);
+  const [threshold, setThreshold] = useState("");
+  const [verifiedAt, setVerifiedAt] = useState("");
 
-  function handleVerify() {
+  async function handleVerify() {
     if (!hash.trim()) return;
     setStatus("loading");
-    check(hash.trim() as `0x${string}`)
-      .then(() => {
-        // check updates its own state, but we need to read the attestation
-        // so we do a direct call here
-        import("@/lib/contracts/client").then(({ publicClient }) =>
-          import("@/lib/contracts/abis").then(({ proofOfSolvencyAbi }) =>
-            import("@/lib/contracts/addresses").then(({ OG_TESTNET }) =>
-              publicClient.readContract({
-                address: OG_TESTNET.proofOfSolvency,
-                abi: proofOfSolvencyAbi,
-                functionName: "check",
-                args: [hash.trim() as `0x${string}`],
-              }).then((r) => {
-                const att = r as { user: `0x${string}`; threshold: bigint; verifiedAt: number; commitment: `0x${string}`; verifyId: `0x${string}` };
-                setResult({
-                  user: att.user,
-                  threshold: Number(att.threshold),
-                  verifiedAt: att.verifiedAt,
-                  commitment: att.commitment,
-                  verifyId: att.verifyId,
-                });
-                setStatus("success");
-              }).catch(() => setStatus("error"))
-            )
-          )
-        );
-      })
-      .catch(() => setStatus("error"));
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/proof/${encodeURIComponent(hash.trim())}`);
+      if (res.ok) {
+        const data = await res.json();
+        setThreshold(data.threshold || "Unknown");
+        setVerifiedAt(data.verifiedAt || "");
+        setStatus("success");
+      } else {
+        setStatus("error");
+      }
+    } catch {
+      setStatus("error");
+    }
   }
 
   function reset() {
     setHash("");
     setStatus("idle");
-    setResult(null);
+    setThreshold("");
+    setVerifiedAt("");
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ background: P.jade, fontFamily: "Sora, sans-serif", color: P.white }}>
-      {/* ═══ Origami background shapes ═══ */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Top-right triangle */}
-        <div className="absolute -top-20 -right-20 w-[400px] h-[400px] opacity-[0.06]" style={{
-          background: P.cream,
-          clipPath: "polygon(100% 0%, 0% 0%, 100% 100%)",
-        }} />
-        {/* Left mid triangle */}
-        <div className="absolute top-[30%] -left-16 w-[300px] h-[300px] opacity-[0.05]" style={{
-          background: P.cream,
-          clipPath: "polygon(0% 0%, 100% 50%, 0% 100%)",
-        }} />
-        {/* Bottom-right diamond */}
-        <div className="absolute top-[55%] -right-10 w-[250px] h-[250px] opacity-[0.04]" style={{
-          background: P.cream,
-          clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
-        }} />
-        {/* Bottom-left large triangle */}
-        <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] opacity-[0.05]" style={{
-          background: P.cream,
-          clipPath: "polygon(0% 100%, 100% 100%, 0% 0%)",
-        }} />
-        {/* Small accent triangle center-right */}
-        <div className="absolute top-[80%] right-[20%] w-[120px] h-[120px] opacity-[0.07]" style={{
-          background: P.cream,
-          clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
-        }} />
-      </div>
+    <div className="min-h-screen relative overflow-hidden transition-colors duration-700" style={{ background: P.cream, fontFamily: "Sora, sans-serif", color: status === "loading" ? P.dark : P.white }}>
+      {/* ═══ Jade overlay — reveals on load, retracts on verify ═══ */}
+      <motion.div
+        className="absolute inset-0 z-0"
+        style={{ background: P.jade }}
+        initial={{ clipPath: "circle(0% at 50% 50%)" }}
+        animate={{ clipPath: status === "loading" ? "circle(0% at 50% 50%)" : "circle(150% at 50% 50%)" }}
+        transition={{ duration: status === "loading" ? 0.8 : 1.4, ease }}
+      />
 
+      {/* All content above the overlay */}
+      <div className="relative z-10">
       <Nav />
 
       {/* ═══ HERO — giant "Verify" with floating i dot ═══ */}
       <section className="flex flex-col items-center justify-center text-center px-5 md:px-8 pt-24 pb-12 md:pt-32 md:pb-16">
-        <motion.div className="w-full max-w-[900px] relative select-none flex justify-center">
-          {"Verify".split("").map((letter, i) => (
-            <motion.span
-              key={i}
-              className="inline-block text-[18vw] md:text-[140px] font-bold leading-none"
-              style={{ color: P.white }}
-              initial={{ opacity: 0, y: -300 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                delay: 0.15 + i * 0.08,
-                duration: 0.8,
-                type: "spring",
-                stiffness: 300,
-                damping: 12,
-                mass: 1.2,
-              }}
-            >
-              {letter}
-            </motion.span>
-          ))}
+        <motion.div
+          className="w-full max-w-[900px] relative select-none text-center text-[18vw] md:text-[140px] font-bold leading-none transition-colors duration-700"
+          style={{ color: status === "loading" ? P.jade : P.white }}
+          initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
+          animate={{ clipPath: "inset(0 0% 0 0)", opacity: 1 }}
+          transition={{ duration: 1.8, ease, delay: 0.2 }}
+        >
+          Verify
         </motion.div>
 
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.7, ease }}
-          className="text-base md:text-lg mt-6 max-w-xl leading-relaxed"
-          style={{ color: `${P.white}CC` }}
+          className="text-base md:text-lg mt-6 max-w-xl leading-relaxed transition-colors duration-700"
+          style={{ color: status === "loading" ? `${P.dark}AA` : `${P.white}CC` }}
         >
           Paste a verification ID to confirm a portfolio exceeds the stated threshold — no account needed, no data revealed.
         </motion.p>
@@ -188,12 +145,8 @@ export default function Verify() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleVerify}
-                    className="px-7 py-2.5 rounded-full text-[13px] font-bold cursor-pointer flex items-center gap-2 shrink-0"
-                    style={{
-                      background: P.white,
-                      color: P.jade,
-                      opacity: hash.trim() ? 1 : 0.5,
-                    }}
+                    className="get-started-btn px-7 py-2.5 rounded-full text-[13px] font-bold uppercase tracking-wider cursor-pointer flex items-center gap-2 shrink-0 text-white"
+                    style={{ opacity: hash.trim() ? 1 : 0.5 }}
                   >
                     {status === "loading" ? (
                       <motion.div
@@ -229,10 +182,10 @@ export default function Verify() {
                   <div>
                     <h2 className="text-2xl font-bold mb-1">Portfolio verified</h2>
                     <p className="text-lg font-semibold mb-1">
-                      Exceeds <span style={{ color: P.cream }}>${result ? result.threshold.toLocaleString() : "—"}</span>
+                      Exceeds <span style={{ color: P.cream }}>{threshold}</span>
                     </p>
                     <p className="text-[13px]" style={{ color: `${P.white}AA` }}>
-                      Verified on 0G Chain &middot; {result ? new Date(result.verifiedAt * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"} &middot; Mathematically valid
+                      Verified on 0G Chain &middot; {verifiedAt ? new Date(verifiedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"} &middot; Mathematically valid
                     </p>
                   </div>
                 </div>
@@ -240,7 +193,7 @@ export default function Verify() {
                 <div className="flex flex-wrap gap-8 py-5 mb-4" style={{ borderTop: `1px solid ${P.white}15`, borderBottom: `1px solid ${P.white}15` }}>
                   {[
                     { label: "Verification ID", value: hash.slice(0, 18) + "..." },
-                    { label: "Threshold", value: result ? `$${result.threshold.toLocaleString()}` : "—" },
+                    { label: "Threshold", value: threshold },
                     { label: "Circuit", value: "UltraPlonk" },
                     { label: "Chain", value: "0G Chain" },
                     { label: "Status", value: "Valid", accent: true },
@@ -310,62 +263,99 @@ export default function Verify() {
         </div>
       </section>
 
-      {/* ═══ HOW IT WORKS — 5 colored blocks with expand ═══ */}
-      <section className="px-5 md:px-8 pb-16 md:pb-24">
-        <div className="max-w-4xl mx-auto">
+      {/* ═══ HOW IT WORKS — 5 distinct colored blocks ═══ */}
+      <section className="px-5 md:px-8 pb-20 md:pb-32">
+        <div className="max-w-3xl mx-auto">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, ease }}
-            className="text-2xl font-bold mb-10"
+            className="text-2xl font-bold mb-10 text-center transition-colors duration-700"
+            style={{ color: status === "loading" ? P.jade : P.white }}
           >
             How it works
           </motion.h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="flex flex-col gap-3">
             {STEPS.map((s, i) => {
-              const isOpen = expandedStep === i;
-              const hasOpen = expandedStep !== null;
-              const isOther = hasOpen && !isOpen;
+              const isOpen = hoveredStep === i;
               return (
                 <motion.div
                   key={s.num}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.08, duration: 0.5, ease }}
-                  onClick={() => setExpandedStep(isOpen ? null : i)}
-                  layout
-                  className={`rounded-2xl p-5 flex flex-col cursor-pointer ${i === 4 ? "col-span-2 md:col-span-1" : ""} ${isOpen ? "col-span-2 md:col-span-3 row-span-2" : ""}`}
+                  transition={{ delay: i * 0.06, duration: 0.5, ease }}
+                  onMouseEnter={() => setHoveredStep(i)}
+                  onMouseLeave={() => setHoveredStep(null)}
+                  className="rounded-2xl cursor-default overflow-hidden"
                   style={{ background: s.bg }}
                   animate={{
-                    scale: isOther ? 0.97 : 1,
-                    opacity: isOther ? 0.7 : 1,
+                    scale: hoveredStep !== null && !isOpen ? 0.98 : 1,
+                    opacity: hoveredStep !== null && !isOpen ? 0.6 : 1,
                   }}
                 >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0"
-                      style={{ background: `${P.white}18`, color: P.white }}
-                    >
-                      {s.num}
-                    </div>
-                    <h3 className={`font-bold ${isOpen ? "text-[16px]" : "text-[14px]"}`} style={{ color: P.white }}>{s.title}</h3>
-                  </div>
-                  <p className="text-[12px] leading-relaxed mb-2" style={{ color: `${P.white}BB` }}>{s.desc}</p>
-                  <AnimatePresence>
-                    {isOpen && (
-                      <motion.p
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3, ease }}
-                        className="text-[13px] leading-relaxed overflow-hidden mt-2 pt-3"
-                        style={{ color: `${P.white}DD`, borderTop: `1px solid ${P.white}20` }}
+                  <div className="p-5">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0"
+                        style={{ background: `${P.white}20`, color: P.white }}
                       >
-                        {s.detail}
-                      </motion.p>
+                        {s.num}
+                      </div>
+                      <h3 className="text-[15px] font-bold flex-1" style={{ color: P.white }}>{s.title}</h3>
+                      <motion.svg
+                        width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={`${P.white}80`}
+                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                        animate={{ rotate: isOpen ? 180 : 0 }}
+                        transition={{ duration: 0.25 }}
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </motion.svg>
+                    </div>
+                    <p className="text-[13px] leading-relaxed" style={{ color: `${P.white}BB` }}>{s.desc}</p>
+                  </div>
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.35, ease }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-5 pb-5">
+                          <div className="pt-3 mb-3" style={{ borderTop: `1px solid ${P.white}20` }} />
+                          <p className="text-[13px] leading-relaxed" style={{ color: `${P.white}DD` }}>
+                            {s.detail}
+                          </p>
+                          {s.confirms && (
+                            <ul className="flex flex-col gap-2.5 mt-4">
+                              {s.confirms.map((t) => (
+                                <li key={t} className="text-[13px] flex items-center gap-2.5" style={{ color: `${P.white}EE` }}>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={P.cream} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                  {t}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          {s.hides && (
+                            <ul className="flex flex-col gap-2.5 mt-4">
+                              {s.hides.map((t) => (
+                                <li key={t} className="text-[13px] flex items-center gap-2.5" style={{ color: `${P.white}99` }}>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={`${P.white}60`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                  </svg>
+                                  {t}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </motion.div>
                     )}
                   </AnimatePresence>
                 </motion.div>
@@ -375,57 +365,11 @@ export default function Verify() {
         </div>
       </section>
 
-      {/* ═══ WHAT IT REVEALS — 2 colored blocks ═══ */}
-      <section className="px-5 md:px-8 pb-20 md:pb-32">
-        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-3">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, ease }}
-            className="rounded-2xl p-6"
-            style={{ background: "#2D8E74" }}
-          >
-            <div className="text-[13px] font-bold mb-5" style={{ color: P.cream }}>What the proof confirms</div>
-            <ul className="flex flex-col gap-3">
-              {["Portfolio exceeds stated threshold", "Proof is mathematically valid", "Verified on-chain with timestamp"].map((t) => (
-                <li key={t} className="text-[13px] flex items-center gap-2.5" style={{ color: `${P.white}EE` }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={P.cream} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  {t}
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1, duration: 0.6, ease }}
-            className="rounded-2xl p-6"
-            style={{ background: "#1E6B55" }}
-          >
-            <div className="text-[13px] font-bold mb-5" style={{ color: `${P.white}90` }}>What it never reveals</div>
-            <ul className="flex flex-col gap-3">
-              {["Which stocks are held", "Number of shares", "Total portfolio value", "Transaction history", "Wallet address"].map((t) => (
-                <li key={t} className="text-[13px] flex items-center gap-2.5" style={{ color: `${P.white}99` }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={`${P.white}60`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                  {t}
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-        </div>
-      </section>
-
       {/* FOOTER */}
       <footer className="py-8 text-center" style={{ borderTop: `1px solid ${P.white}10` }}>
         <span className="text-[13px]" style={{ color: `${P.white}60` }}>ETHGlobal Cannes 2026</span>
       </footer>
+      </div>
     </div>
   );
 }
