@@ -31,6 +31,7 @@ function AuthCard() {
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [name, setName] = useState("");
+  const [btnHover, setBtnHover] = useState(0);
 
   const isLoggedIn = useIsLoggedIn();
   const router = useRouter();
@@ -38,7 +39,7 @@ function AuthCard() {
   const { connectWithEmail, verifyOneTimePassword } = useConnectWithOtp();
 
   useEffect(() => {
-    if (isLoggedIn) router.push("/mockup-15");
+    if (isLoggedIn) router.push("/dashboard");
   }, [isLoggedIn, router]);
 
   const handleEmail = async (e: React.FormEvent) => {
@@ -64,9 +65,9 @@ function AuthCard() {
           className="text-[30px] font-bold tracking-tight leading-tight"
           style={{ color: P.dark, fontFamily: "Sora, sans-serif" }}
         >
-          Sign in.
+          The märkets never sleep.
           <br />
-          <span style={{ color: P.jade }}>Invest smarter.</span>
+          <span style={{ color: P.jade }}>Neither should your money.</span>
         </h1>
         <p className="text-[14px] mt-3 leading-relaxed" style={{ color: P.gray }}>
           US stocks from änywhere, 24/7. No bärriers, no järgon —
@@ -84,23 +85,39 @@ function AuthCard() {
       >
         <button
           onClick={() => { setMode("signin"); setOtpSent(false); }}
-          className="flex-1 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300"
+          className="flex-1 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300 overflow-hidden"
           style={{
             background: mode === "signin" ? P.dark : "transparent",
             color: mode === "signin" ? P.white : P.gray,
           }}
         >
-          Sign in
+          <motion.span
+            key={`signin-${mode}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease }}
+            className="block"
+          >
+            Sign in
+          </motion.span>
         </button>
         <button
           onClick={() => { setMode("signup"); setOtpSent(false); }}
-          className="flex-1 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300"
+          className="flex-1 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300 overflow-hidden"
           style={{
             background: mode === "signup" ? P.dark : "transparent",
             color: mode === "signup" ? P.white : P.gray,
           }}
         >
-          Create account
+          <motion.span
+            key={`signup-${mode}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease }}
+            className="block"
+          >
+            Create account
+          </motion.span>
         </button>
       </motion.div>
 
@@ -160,15 +177,16 @@ function AuthCard() {
             type="submit"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
+            onHoverStart={() => setBtnHover((h) => h + 1)}
             transition={spring}
-            className="auth-btn relative w-full py-3.5 rounded-xl text-[14px] font-semibold text-white mt-2 overflow-hidden"
+            className="relative w-full py-3.5 rounded-xl text-[14px] font-semibold text-white mt-2 overflow-hidden"
+            style={{ background: P.dark }}
           >
             <motion.span
-              key={buttonLabel}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.25, ease }}
+              key={`${buttonLabel}-${btnHover}`}
+              initial={{ opacity: 0, filter: "blur(8px)", scale: 0.9 }}
+              animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+              transition={{ duration: 0.4, ease }}
               className="block"
             >
               {buttonLabel}

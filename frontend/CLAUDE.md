@@ -92,6 +92,34 @@ Zero crypto knowledge. Investing in stocks. Must feel like a banking/fintech app
 3. All blockchain interactions happen behind the scenes
 4. Progressive disclosure: advanced features only when relevant
 
+## Design Decisions (current)
+
+### Landing page
+- MetaMask-style hero: giant logo (95vw) with clip-path reveal animation, no heading text
+- Logo uses `logo-no-dots.svg` (without trémas) — the 4 dots are overlaid as separate elements that float independently with different rhythms
+- Subtitle only: "Buy Tesla, NVIDIA, Apple as tokens..."
+- No badge pills (removed the uppercase tracking jade pills from all pages)
+- No logo in the nav corner on landing — the hero IS the logo
+- Below hero: 3 use cases (Invest 24/7, AI advisor, ZK proof) simple layout
+- Footer: just "ETHGlobal Cannes 2026"
+
+### Auth page (get-started)
+- Heading: "The märkets never sleep. Neither should your money." (jade)
+- Tabs (Sign in / Create account): dark bg when active, text transition effect on switch
+- Submit button: black (#2A2A2A), deblur effect on hover (text goes blur→sharp)
+- Labels (EMAIL, etc.): dark color, not gray
+- Social login: Google + Apple
+
+### Navigation
+- Floating pill, top-right, no logo in corner
+- Links: Home, How it works, Verify, Get Started (black pill)
+
+### Micro-interactions
+- Framer Motion everywhere: fade-up on scroll, spring hover, deblur on buttons
+- Tréma dots float with different durations (2.6s–3.2s) and delays for organic feel
+- Tab switch: text re-renders with fade-up transition
+- No neon/glow effects — keep it clean and flat
+
 ## Commands
 ```bash
 pnpm dev     # Start dev server
