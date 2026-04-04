@@ -7,10 +7,8 @@ const nextConfig: NextConfig = {
     "@dynamic-labs/ethers-v6",
   ],
   webpack: (config, { isServer }) => {
-    // bb.js and noir WASM support
     config.experiments = {
       ...config.experiments,
-      asyncWebAssembly: true,
       topLevelAwait: true,
       layers: true,
     };
@@ -22,10 +20,18 @@ const nextConfig: NextConfig = {
         crypto: false,
       };
     }
-    config.module.rules.push({
+    // wasm-bindgen .wasm files load themselves via fetch() + WebAssembly.instantiate()
+    // Prevent webpack from parsing them as WebAssembly modules (which fails on "wbg" imports)
+    config.module.rules.unshift({
       test: /\.wasm$/,
-      type: "webassembly/async",
+      type: "asset/resource",
+      generator: { filename: "static/wasm/[name].[hash][ext]" },
     });
+    // Remove any existing wasm rules that would conflict
+    config.module.rules = config.module.rules.filter(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (rule: any) => !(rule.test?.toString?.() === "/\\.wasm$/" && rule.type?.includes?.("webassembly"))
+    );
     return config;
   },
 };
