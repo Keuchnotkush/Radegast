@@ -3,16 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@aztec/bb.js": "3.0.0-nightly.20251104",
     "@dynamic-labs/ethereum": "^4.75.0",
     "@dynamic-labs/sdk-react-core": "^4.75.0",
-    "@noir-lang/backend_barretenberg": "^0.36.0",
-    "@noir-lang/noir_js": "0.36.0",
+    "@noir-lang/noir_js": "1.0.0-beta.15",
     "framer-motion": "^12.38.0",
     "jspdf": "^4.2.1",
     "next": "16.2.2",

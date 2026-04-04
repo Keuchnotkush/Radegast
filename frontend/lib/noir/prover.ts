@@ -1,5 +1,5 @@
 import { Noir } from "@noir-lang/noir_js";
-import { UltraHonkBackend } from "@noir-lang/backend_barretenberg";
+import { UltraHonkBackend } from "@aztec/bb.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _solvency: any = null;
@@ -45,8 +45,8 @@ export async function generateProof(
     commitment,
   });
 
-  // 3. proof
-  const backend = new UltraHonkBackend(circuit);
+  // 3. proof — UltraHonkBackend takes bytecode string directly
+  const backend = new UltraHonkBackend(circuit.bytecode);
   const proofData = await backend.generateProof(witness);
   await backend.destroy();
 

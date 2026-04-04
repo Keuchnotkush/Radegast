@@ -4,7 +4,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavAvatar, SectionTitle, TogglePill, P, ease, spring } from "../shared";
 import { useUser } from "../store";
-import { generateProof } from "@/lib/noir/prover";
+// Dynamic import — bb.js WASM can't load during SSR/build
+const loadProver = () => import("@/lib/noir/prover").then((m) => m.generateProof);
 
 const THRESHOLDS = ["$10,000", "$25,000", "$50,000", "$100,000"];
 
@@ -48,6 +49,7 @@ export default function SolvencyPage() {
       const secret = "12345678";
 
       // 1. Generate ZK proof client-side (private inputs never leave browser)
+      const generateProof = await loadProver();
       const { proof, publicInputs } = await generateProof(balances, prices, secret, thresholdNum);
 
       // 2. Send proof to backend for on-chain verification
