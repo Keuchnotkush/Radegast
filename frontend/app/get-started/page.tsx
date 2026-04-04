@@ -36,11 +36,16 @@ export default function GetStarted() {
         <div className="rounded-2xl p-8" style={{ background: P.surface, boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
           {/* LOGO */}
           <div className="flex justify-center mb-8">
-            <img src="/logo.svg" alt="Radegast" style={{ height: 28 }} />
+            <img src="/logo.svg" alt="Radegast" style={{ height: 42 }} />
           </div>
 
           {/* TABS */}
-          <div className="flex mb-8 rounded-full p-1" style={{ background: P.bg }}>
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+            className="flex mb-8 rounded-full p-1"
+            style={{ background: P.bg }}
+          >
             <button
               onClick={() => setMode("signin")}
               className="flex-1 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300"
@@ -61,7 +66,7 @@ export default function GetStarted() {
             >
               Create account
             </button>
-          </div>
+          </motion.div>
 
           {/* FORM */}
           <motion.div
@@ -107,11 +112,14 @@ export default function GetStarted() {
                 </div>
               )}
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
                 className="get-started-btn w-full py-3 rounded-xl text-[14px] font-semibold text-white mt-2"
               >
                 {mode === "signin" ? "Sign in" : "Create account"}
-              </button>
+              </motion.button>
             </div>
 
             {/* DIVIDER */}
@@ -123,14 +131,26 @@ export default function GetStarted() {
 
             {/* SOCIAL */}
             <div className="flex gap-3">
-              <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-medium transition-all duration-200 hover:opacity-70" style={{ background: P.bg, border: `1px solid ${P.border}`, color: P.dark }}>
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-medium"
+                style={{ background: P.bg, border: `1px solid ${P.border}`, color: P.dark }}
+              >
                 <GoogleIcon />
                 Google
-              </button>
-              <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-medium transition-all duration-200 hover:opacity-70" style={{ background: P.bg, border: `1px solid ${P.border}`, color: P.dark }}>
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-medium"
+                style={{ background: P.bg, border: `1px solid ${P.border}`, color: P.dark }}
+              >
                 <AppleIcon />
                 Apple
-              </button>
+              </motion.button>
             </div>
           </motion.div>
         </div>
