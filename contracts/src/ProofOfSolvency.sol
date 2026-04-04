@@ -41,8 +41,8 @@ contract ProofOfSolvency is OwnableRoles {
         uint64 t = uint64(uint256(pub[0]));
         bytes32 c = pub[1];
 
-        vid = keccak256(abi.encodePacked(msg.sender, t, c, id));
         id = attestations.length;
+        vid = keccak256(abi.encodePacked(msg.sender, t, c, id));
         attestations.push(Attestation(msg.sender, t, uint32(block.timestamp), c, vid));
         _bv[vid] = id + 1;
 
