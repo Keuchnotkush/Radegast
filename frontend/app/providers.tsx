@@ -1,6 +1,6 @@
 "use client";
 
-import { DynamicContextProvider, mergeNetworks } from "@dynamic-labs/sdk-react-core";
+import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 
 const ogTestnet = {
@@ -27,7 +27,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         environmentId: process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID!,
         walletConnectors: [EthereumWalletConnectors],
         overrides: {
-          evmNetworks: (networks) => mergeNetworks([ogTestnet], networks),
+          evmNetworks: [ogTestnet],
         },
         cssOverrides: `
           /* ─── Radegast theme for Dynamic modals ─── */
