@@ -18,12 +18,6 @@ interface Proof {
   qr: boolean;
 }
 
-/* ─── Mock history (will be cleared later) ─── */
-const MOCK_HISTORY: Proof[] = [
-  { hash: "0x7a3f...c82e", threshold: "$50,000", result: true, timestamp: "10:42", pdf: true, qr: false },
-  { hash: "0x1b9d...a47f", threshold: "$100,000", result: false, timestamp: "09:15", pdf: false, qr: true },
-  { hash: "0xe4c1...3d6b", threshold: "$25,000", result: true, timestamp: "Yesterday", pdf: true, qr: true },
-];
 
 export default function SolvencyPage() {
   const { initial } = useUser();
@@ -33,7 +27,7 @@ export default function SolvencyPage() {
   const [wantQr, setWantQr] = useState(false);
   const [state, setState] = useState<ProofState>("idle");
   const [proof, setProof] = useState<Proof | null>(null);
-  const [history, setHistory] = useState<Proof[]>(MOCK_HISTORY);
+  const [history, setHistory] = useState<Proof[]>([]);
   const [showPdf, setShowPdf] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [showShare, setShowShare] = useState(false);
@@ -63,18 +57,7 @@ export default function SolvencyPage() {
       setHistory((h) => [p, ...h]);
       setState("done");
     } catch {
-      // Mock fallback for demo
-      const p: Proof = {
-        hash: "0x7f2a8b4c9d1e6f3a5b8c2d7e4f9a1b3c5d8e2f6a9b4c7d0e3f1a5b8c2d9e3f",
-        threshold: activeThreshold,
-        result: true,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        pdf: wantPdf,
-        qr: wantQr,
-      };
-      setProof(p);
-      setHistory((h) => [p, ...h]);
-      setState("done");
+      setState("idle");
     }
   }
 
@@ -127,10 +110,8 @@ export default function SolvencyPage() {
           <SectionTitle>Threshold</SectionTitle>
 
           {/* Preset pills */}
-          <motion.div
-            whileHover={{ scale: 1.03 }}
-            transition={spring}
-            className="flex rounded-full p-1 mt-4 mb-6 origin-center transition-colors duration-700"
+          <div
+            className="flex rounded-full p-1 mt-4 mb-6"
             style={{ background: P.surface }}
           >
             {THRESHOLDS.map((t) => {
@@ -142,9 +123,9 @@ export default function SolvencyPage() {
                   animate={{
                     background: active ? P.dark : "transparent",
                     color: active ? P.white : P.gray,
-                    scale: active ? 1.05 : 1,
                   }}
-                  whileHover={{ scale: 1.1 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
                   transition={{ type: "spring", stiffness: 300, damping: 22 }}
                   className="flex-1 py-2.5 rounded-full text-[13px] font-semibold cursor-pointer whitespace-nowrap"
                 >
@@ -152,7 +133,7 @@ export default function SolvencyPage() {
                 </motion.button>
               );
             })}
-          </motion.div>
+          </div>
 
           {/* Custom input */}
           <div className="flex items-center rounded-xl overflow-hidden mb-8" style={{ border: `1.5px solid ${P.border}60` }}>
@@ -178,7 +159,7 @@ export default function SolvencyPage() {
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                className="mb-8 overflow-hidden"
+                className="mb-8"
               >
                 <SectionTitle>Export format</SectionTitle>
                 <div className="flex gap-3 mt-4">

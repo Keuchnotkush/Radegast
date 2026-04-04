@@ -4,18 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const P = {
-  dark: "#2A2A2A",
-  gray: "#6B6B6B",
-  white: "#FFFFFF",
-  jade: "#38A88A",
-  surface: "#F0EDE8",
-  border: "#C4C4C4",
-};
-
-const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
-const spring = { type: "spring" as const, stiffness: 400, damping: 20 };
+import { P, ease, spring } from "../lib/theme";
 
 const links = [
   { href: "/landing", label: "Home" },

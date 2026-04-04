@@ -3,20 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Nav from "../landing/nav";
-
-const P = {
-  bg: "#D8D2C8",
-  jade: "#38A88A",
-  dark: "#2A2A2A",
-  gray: "#6B6B6B",
-  indigo: "#4B0082",
-  terracotta: "#CC5A3A",
-  safran: "#C8A415",
-  roseAncien: "#B5506A",
-  gain: "#2E8B57",
-};
-
-const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
+import { P, ease, spring } from "../lib/theme";
 
 /* ─── PIPELINE STEPS ─── */
 const PIPELINE = [
@@ -83,8 +70,6 @@ const XSTOCKS = [
   { ticker: "NDXx", name: "Nasdaq", color: P.terracotta },
   { ticker: "MSTRx", name: "MicroStrategy", color: P.safran },
 ];
-
-const spring = { type: "spring" as const, stiffness: 400, damping: 20 };
 
 function PipelineSection() {
   const [openIdx, setOpenIdx] = useState<number | null>(null);

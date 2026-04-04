@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { usePortfolio, logoUrl } from "./store";
+import { P, ease, spring } from "../lib/theme";
 
 /* ─── Bottom Tab Bar (mobile, Revolut/Trade Republic style) ─── */
 export function BottomTabBar() {
@@ -93,26 +94,8 @@ export function BottomTabBar() {
   );
 }
 
-/* ─── Palette ─── */
-export const P = {
-  bg: "#D8D2C8",
-  surface: "#F0EDE8",
-  jade: "#38A88A",
-  jadeAccent: "#45BA9A",
-  indigo: "#4B0082",
-  terracotta: "#CC5A3A",
-  safran: "#C8A415",
-  roseAncien: "#B5506A",
-  dark: "#2A2A2A",
-  gray: "#6B6B6B",
-  border: "#C4C4C4",
-  gain: "#2E8B57",
-  loss: "#C62828",
-  white: "#FFFFFF",
-};
-
-export const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
-export const spring = { type: "spring" as const, stiffness: 400, damping: 20 };
+/* ─── Re-export theme tokens for backward compat ─── */
+export { P, ease, spring } from "../lib/theme";
 
 /* ─── Nav Avatar (shared across all dashboard pages) ─── */
 export function NavAvatar({ initial }: { initial: string }) {
@@ -265,8 +248,6 @@ export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () 
   const panelRef = useRef<HTMLDivElement>(null);
   const isUp = stock.change >= 0;
   const presets = [10, 50, 100, 500];
-
-  const bottomRef = useRef<HTMLDivElement>(null);
 
   const ticker = stock.symbol.replace("x", "");
   const { data: prices, loading } = usePriceHistory(ticker, period);
@@ -645,7 +626,6 @@ export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () 
               </motion.div>
             )}
           </AnimatePresence>
-          <div ref={bottomRef} />
         </div>
       </motion.div>
     </>

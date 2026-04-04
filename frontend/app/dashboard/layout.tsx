@@ -10,14 +10,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isLoggedIn = useIsLoggedIn();
   const router = useRouter();
 
-  // TODO: re-enable auth guard before production
-  // useEffect(() => {
-  //   if (isLoggedIn === false) {
-  //     router.replace("/get-started");
-  //   }
-  // }, [isLoggedIn, router]);
+  useEffect(() => {
+    if (isLoggedIn === false) {
+      router.replace("/get-started");
+    }
+  }, [isLoggedIn, router]);
 
-  // if (!isLoggedIn) return null;
+  if (!isLoggedIn) return null;
 
   return (
     <LivePriceProvider>

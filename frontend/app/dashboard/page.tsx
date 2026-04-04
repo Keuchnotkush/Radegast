@@ -81,26 +81,26 @@ export default function DashboardPage() {
         {/* WELCOME */}
         <div className="mb-14">
           <motion.h1
-            initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
-            animate={{ clipPath: "inset(0 0% 0 0)", opacity: 1 }}
-            transition={{ duration: 1.4, ease }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease }}
             className="text-3xl md:text-5xl font-bold leading-tight"
           >
             Good to see you,{" "}
             <motion.span
               style={{ color: P.jade }}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 1, duration: 0.5, type: "spring", stiffness: 400, damping: 15 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.4, ease }}
               className="inline-block"
             >
               {userName}
             </motion.span>.
           </motion.h1>
           <motion.p
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.6, ease }}
+            transition={{ delay: 0.2, duration: 0.4, ease }}
             className="text-lg mt-3" style={{ color: P.gray }}
           >
             Your money never sleeps — here&apos;s how it&apos;s doing today.
@@ -109,9 +109,9 @@ export default function DashboardPage() {
 
         {/* PORTFOLIO HERO */}
         <motion.section
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1, duration: 0.6, ease }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.4, ease }}
           className="mb-16"
         >
           <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
@@ -385,7 +385,7 @@ function AddFundsModal({ onClose, onAdd }: { onClose: () => void; onAdd: (amount
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl"
         style={{ background: P.surface }}
       >
-        <div className="w-full max-w-[1440px] mx-auto px-16 pt-6 pb-10">
+        <div className="w-full max-w-[1440px] mx-auto px-5 md:px-16 pt-6 pb-10">
           <div className="flex justify-center mb-5">
             <div className="w-10 h-1 rounded-full" style={{ background: P.border }} />
           </div>

@@ -4,18 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Nav from "../landing/nav";
 import Topography from "../components/topography";
-
-const P = {
-  jade: "#38A88A",
-  jadeDark: "#2D8E74",
-  jadeLight: "#45BA9A",
-  dark: "#2A2A2A",
-  white: "#FFFFFF",
-  cream: "#D8D2C8",
-  gain: "#2E8B57",
-};
-
-const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
+import { P, ease } from "../lib/theme";
 
 const STEPS: { num: string; title: string; bg: string; desc: string; detail: string; confirms?: string[]; hides?: string[] }[] = [
   {

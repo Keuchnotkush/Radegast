@@ -5,10 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
-import { NavAvatar, SectionTitle, P, ease } from "../shared";
+import { NavAvatar, SectionTitle, P } from "../shared";
 import { useSettings, useUser, AUTO_DURATIONS, type AutoDuration } from "../store";
-
-const spring = { type: "spring" as const, stiffness: 400, damping: 20 };
+import { ease, spring } from "../../lib/theme";
 const PROFILES = ["Conservative", "Moderate", "Growth", "Aggressive"];
 const LIMITS = [100, 250, 500, 1000, 2500];
 

@@ -120,6 +120,7 @@ export default function AdvisorPage() {
               <div className="flex items-center gap-3 mb-6">
                 <SectionTitle>Model consensus</SectionTitle>
               </div>
+              {/* Model name buttons row */}
               <div className="flex flex-row gap-4">
                 {MODELS.map((m, i) => {
                   const isOpen = openModel === i;
@@ -130,9 +131,8 @@ export default function AdvisorPage() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true, margin: "-40px" }}
                       transition={{ duration: 0.5, ease, delay: i * 0.08 }}
-                      className="overflow-hidden flex-1"
+                      className="flex-1"
                     >
-                      {/* Clickable header */}
                       <motion.button
                         onClick={() => setOpenModel(isOpen ? null : i)}
                         className="flex flex-col items-center cursor-pointer w-full group"
@@ -155,85 +155,93 @@ export default function AdvisorPage() {
                           <p className="text-sm text-center" style={{ color: P.gray }}>{m.desc}</p>
                         </motion.div>
                       </motion.button>
-
-                      {/* Expanded block */}
-                      <AnimatePresence initial={false}>
-                        {isOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0, borderRadius: 40 }}
-                            animate={{ height: "auto", opacity: 1, borderRadius: 20 }}
-                            exit={{ height: 0, opacity: 0, borderRadius: 40 }}
-                            transition={{ duration: 0.55, ease }}
-                            className="overflow-hidden mt-3"
-                            style={{ background: m.color }}
-                          >
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.4, ease, delay: 0.15 }}
-                              className="p-6 md:p-10 text-center"
-                            >
-                              <h3 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: "#FFFFFF" }}>{m.name}</h3>
-                              <p className="text-[14px] leading-relaxed max-w-2xl mx-auto mb-8" style={{ color: "rgba(255,255,255,0.75)" }}>
-                                {m.desc}
-                              </p>
-
-                              {/* Stats */}
-                              <div className="flex flex-wrap justify-center gap-6 md:gap-10 mb-8">
-                                {m.stats.map((s, si) => (
-                                  <motion.div
-                                    key={s.label}
-                                    initial={{ opacity: 0, y: 15 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.4, ease, delay: 0.25 + si * 0.08 }}
-                                  >
-                                    <div className="w-8 h-[3px] rounded-full mb-2" style={{ background: "rgba(255,255,255,0.4)" }} />
-                                    <div className="text-2xl font-bold" style={{ color: "#FFFFFF" }}>{s.val}</div>
-                                    <div className="text-[12px] mt-0.5" style={{ color: "rgba(255,255,255,0.6)" }}>{s.label}</div>
-                                  </motion.div>
-                                ))}
-                              </div>
-
-                              {/* Detail cards */}
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                {m.details.map((d, di) => (
-                                  <motion.div
-                                    key={di}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.4, ease, delay: 0.35 + di * 0.08 }}
-                                    whileHover={{ scale: 1.03, y: -3 }}
-                                    className="py-5 px-5 rounded-xl text-left"
-                                    style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)" }}
-                                  >
-                                    <div className="w-6 h-[2px] rounded-full mb-3" style={{ background: "rgba(255,255,255,0.5)" }} />
-                                    <p className="text-[13px] leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>{d}</p>
-                                  </motion.div>
-                                ))}
-                              </div>
-
-                              {/* Status badge */}
-                              <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.6 }}
-                                className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full"
-                                style={{ background: "rgba(255,255,255,0.15)" }}
-                              >
-                                <div className="w-2 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.5)" }} />
-                                <span className="text-[11px] font-semibold uppercase" style={{ color: "rgba(255,255,255,0.7)" }}>
-                                  Waiting for backend
-                                </span>
-                              </motion.div>
-                            </motion.div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
                     </motion.div>
                   );
                 })}
               </div>
+
+              {/* Expanded block — full width below the row */}
+              <AnimatePresence initial={false}>
+                {openModel !== null && (() => {
+                  const m = MODELS[openModel];
+                  return (
+                    <motion.div
+                      key={m.name}
+                      initial={{ height: 0, opacity: 0, borderRadius: 40 }}
+                      animate={{ height: "auto", opacity: 1, borderRadius: 20 }}
+                      exit={{ height: 0, opacity: 0, borderRadius: 40 }}
+                      transition={{ duration: 0.55, ease }}
+                      className="overflow-hidden mt-5 w-full"
+                      style={{ background: m.color }}
+                    >
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.4, ease, delay: 0.15 }}
+                        className="p-6 md:p-10 md:py-8 text-center"
+                      >
+                        {/* Header + Stats centered */}
+                        <div className="flex flex-col items-center gap-6 mb-8">
+                          <div>
+                            <h3 className="text-2xl md:text-3xl font-bold mb-1" style={{ color: "#FFFFFF" }}>{m.name}</h3>
+                            <p className="text-[14px] leading-relaxed" style={{ color: "rgba(255,255,255,0.75)" }}>
+                              {m.desc}
+                            </p>
+                          </div>
+                          {/* Stats — inline row */}
+                          <div className="flex justify-center gap-8 md:gap-12">
+                            {m.stats.map((s, si) => (
+                              <motion.div
+                                key={s.label}
+                                initial={{ opacity: 0, y: 15 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.4, ease, delay: 0.25 + si * 0.08 }}
+                              >
+                                <div className="w-8 h-[3px] rounded-full mb-2" style={{ background: "rgba(255,255,255,0.4)" }} />
+                                <div className="text-2xl font-bold" style={{ color: "#FFFFFF" }}>{s.val}</div>
+                                <div className="text-[12px] mt-0.5" style={{ color: "rgba(255,255,255,0.6)" }}>{s.label}</div>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Detail cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          {m.details.map((d, di) => (
+                            <motion.div
+                              key={di}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.4, ease, delay: 0.35 + di * 0.08 }}
+                              whileHover={{ scale: 1.03, y: -3 }}
+                              className="py-5 px-5 rounded-xl text-left"
+                              style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)" }}
+                            >
+                              <div className="w-6 h-[2px] rounded-full mb-3" style={{ background: "rgba(255,255,255,0.5)" }} />
+                              <p className="text-[13px] leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>{d}</p>
+                            </motion.div>
+                          ))}
+                        </div>
+
+                        {/* Status badge */}
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.6 }}
+                          className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full"
+                          style={{ background: "rgba(255,255,255,0.15)" }}
+                        >
+                          <div className="w-2 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.5)" }} />
+                          <span className="text-[11px] font-semibold uppercase" style={{ color: "rgba(255,255,255,0.7)" }}>
+                            Waiting for backend
+                          </span>
+                        </motion.div>
+                      </motion.div>
+                    </motion.div>
+                  );
+                })()}
+              </AnimatePresence>
             </motion.section>
         )}
 

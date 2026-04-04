@@ -10,7 +10,7 @@ const SECTORS = ["All", ...Array.from(new Set(MARKET.map((s) => s.sector)))];
 
 
 export default function InvestPage() {
-  const { firstName: userName, initial } = useUser();
+  const { initial } = useUser();
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState("All");
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);

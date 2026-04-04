@@ -10,19 +10,7 @@ const ProviderEnum = { Google: "google" as any, Apple: "apple" as any };
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-
-const P = {
-  bg: "#D8D2C8",
-  jade: "#38A88A",
-  dark: "#2A2A2A",
-  gray: "#6B6B6B",
-  border: "#C4C4C4",
-  surface: "#F0EDE8",
-  white: "#FFFFFF",
-};
-
-const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
-const spring = { type: "spring" as const, stiffness: 400, damping: 20 };
+import { P, ease, spring } from "../lib/theme";
 
 /* ─── OTP 6-digit boxes ─── */
 function OtpBoxes({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -108,9 +96,9 @@ function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, firstName, lastName }),
         }).catch(() => {});
-        setTimeout(() => router.push("/dashboard/onboarding"), 1200);
+        setTimeout(() => router.push("/dashboard/onboarding"), 600);
       } else {
-        setTimeout(() => router.push("/dashboard"), 1200);
+        setTimeout(() => router.push("/dashboard"), 600);
       }
     }
   }, [isLoggedIn, router, mode, name, email, onLoggedIn]);
@@ -309,7 +297,7 @@ export default function GetStarted() {
         style={{ background: P.jade }}
         initial={{ clipPath: "circle(0% at 50% 50%)" }}
         animate={{ clipPath: transitioning ? "circle(150% at 50% 50%)" : "circle(0% at 50% 50%)" }}
-        transition={{ duration: 1.2, ease }}
+        transition={{ duration: 0.6, ease }}
       />
       {/* Back arrow */}
       <Link href="/landing" className="fixed top-6 left-6 z-40">
@@ -336,7 +324,7 @@ export default function GetStarted() {
             className="text-[72px] lg:text-[110px] font-bold leading-[0.95] tracking-tighter overflow-visible pt-4"
             style={{ color: P.dark }}
           >
-            The <span style={{ color: P.jade }}>m<Trema color={P.jade} />rkets</span> never sleep.
+            The <span style={{ color: P.jade }}>märkets</span> never sleep.
           </motion.h1>
           <div className="h-4 lg:h-6" />
           <motion.p
@@ -380,7 +368,7 @@ export default function GetStarted() {
             className="md:hidden text-center mb-12 mt-8"
           >
             <h1 className="text-3xl font-bold leading-tight" style={{ color: P.dark }}>
-              The m<Trema color={P.dark} />rkets never sleep.
+              The märkets never sleep.
               <br />
               <span style={{ color: P.jade }}>Neither should your money.</span>
             </h1>
@@ -403,21 +391,6 @@ export default function GetStarted() {
   );
 }
 
-function Trema({ color }: { color: string }) {
-  return (
-    <span className="relative inline-block" style={{ overflow: "visible" }}>
-      a
-      <span
-        className="absolute left-1/2 -translate-x-1/2 flex gap-[0.12em] pointer-events-none"
-        style={{ top: "-0.22em" }}
-      >
-        <span className="block rounded-full" style={{ width: "0.13em", height: "0.13em", background: color }} />
-        <span className="block rounded-full" style={{ width: "0.13em", height: "0.13em", background: color }} />
-      </span>
-    </span>
-  );
-}
-
 function GoogleIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24">
@@ -429,10 +402,3 @@ function GoogleIcon() {
   );
 }
 
-function AppleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-    </svg>
-  );
-}
