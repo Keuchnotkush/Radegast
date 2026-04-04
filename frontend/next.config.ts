@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     "@dynamic-labs/ethereum",
     "@dynamic-labs/ethers-v6",
   ],
+  turbopack: {},
 };
 
 export default nextConfig;
