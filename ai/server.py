@@ -1,4 +1,7 @@
 """Radegast AI Server — FastAPI with consensus pipeline + autonomous agent."""
+from dotenv import load_dotenv
+load_dotenv()
+
 import asyncio
 import json
 import os
@@ -263,6 +266,25 @@ async def get_profile_endpoint(user_id: str):
     profile = get_profile(user_id)
     if not profile:
         raise HTTPException(404, f"Profile not found for {user_id}")
+    return asdict(profile)
+
+
+class SetModeBody(BaseModel):
+    user_id: str
+    mode: str  # "conseil" or "trade"
+
+@app.post("/api/profile/mode")
+async def set_mode_endpoint(body: SetModeBody):
+    """Switch user mode between conseil and trade."""
+    if not set_mode:
+        raise HTTPException(503, "Profile module not available yet")
+    # Auto-create profile if it doesn't exist
+    if get_profile and not get_profile(body.user_id):
+        if create_or_update_profile:
+            create_or_update_profile(user_id=body.user_id)
+    profile = set_mode(body.user_id, Mode(body.mode))
+    if not profile:
+        raise HTTPException(404, f"Profile not found for {body.user_id}")
     return asdict(profile)
 
 

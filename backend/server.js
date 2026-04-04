@@ -398,6 +398,54 @@ app.get("/api/holdings/:address", async (req, res) => {
   }
 });
 
+// ── POST consensus — proxy to AI service ──
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:8000";
+
+app.post("/api/consensus", async (req, res) => {
+  const { user, positions, strategy, mode } = req.body;
+  try {
+    const aiRes = await fetch(`${AI_SERVICE_URL}/api/consensus`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user: user || "0x0000000000000000000000000000000000000000",
+        positions: positions || {},
+        strategy: strategy || "balanced",
+        mode: mode || "conseil",
+      }),
+    });
+    if (!aiRes.ok) {
+      const err = await aiRes.text();
+      return res.status(aiRes.status).json({ error: err });
+    }
+    const data = await aiRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error("AI consensus proxy error:", err.message);
+    res.status(502).json({ error: "AI service unavailable" });
+  }
+});
+
+// ── Set user trade mode — proxy to AI service ──
+app.post("/api/profile/mode", async (req, res) => {
+  const { user_id, mode } = req.body;
+  try {
+    const aiRes = await fetch(`${AI_SERVICE_URL}/api/profile/mode`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: user_id || "default", mode: mode || "conseil" }),
+    });
+    if (!aiRes.ok) {
+      const err = await aiRes.text();
+      return res.status(aiRes.status).json({ error: err });
+    }
+    res.json(await aiRes.json());
+  } catch (err) {
+    console.error("AI profile/mode proxy error:", err.message);
+    res.status(502).json({ error: "AI service unavailable" });
+  }
+});
+
 // ── Get latest AI consensus for a user ──
 app.get("/api/consensus/:address", async (req, res) => {
   const addr = req.params.address;

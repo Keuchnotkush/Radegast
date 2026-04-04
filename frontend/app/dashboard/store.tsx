@@ -281,10 +281,22 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       expiresAt: now + dur.ms,
       notifications: true,
     });
+    // Register user for autonomous trading in AI service
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/profile/mode`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: "default", mode: "trade" }),
+    }).catch(() => {});
   }, []);
 
   const revokeAuto = useCallback(() => {
     setAutoSession((prev) => ({ ...EMPTY_SESSION, notifications: prev.notifications }));
+    // Switch back to conseil mode in AI service
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/profile/mode`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: "default", mode: "conseil" }),
+    }).catch(() => {});
   }, []);
 
   const setAutoNotifications = useCallback((v: boolean) => {
