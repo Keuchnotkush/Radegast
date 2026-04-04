@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavAvatar, SectionTitle, TradeModal, P, ease, spring } from "../shared";
 import type { TradeStock } from "../shared";
-import { usePortfolio, MARKET, STOCK_COLORS, logoUrl, useLiveMarket } from "../store";
+import { usePortfolio, MARKET, STOCK_COLORS, logoUrl, useLiveMarket, useUser } from "../store";
 
 const SECTORS = ["All", ...Array.from(new Set(MARKET.map((s) => s.sector)))];
 
@@ -17,7 +17,7 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 ];
 
 export default function InvestPage() {
-  const userName = "Kassim"; // TODO: from Dynamic auth
+  const { firstName: userName, initial } = useUser();
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState("All");
   const [sort, setSort] = useState<SortKey>("default");
@@ -63,7 +63,7 @@ export default function InvestPage() {
 
   return (
     <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
-      <NavAvatar initial={userName.charAt(0).toUpperCase()} />
+      <NavAvatar initial={initial} />
 
       <div className="w-full max-w-[1440px] mx-auto px-5 md:px-16 pt-20 pb-16">
 

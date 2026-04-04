@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavAvatar, SectionTitle, TogglePill, P, ease, spring } from "../shared";
+import { useUser } from "../store";
 
 const THRESHOLDS = ["$10,000", "$25,000", "$50,000", "$100,000"];
 
@@ -18,7 +19,7 @@ interface Proof {
 }
 
 export default function SolvencyPage() {
-  const userName = "Kassim"; // TODO: from Dynamic auth
+  const { initial } = useUser();
   const [threshold, setThreshold] = useState("");
   const [custom, setCustom] = useState("");
   const [wantPdf, setWantPdf] = useState(false);
@@ -30,13 +31,19 @@ export default function SolvencyPage() {
   const activeThreshold = custom || threshold;
   const hasThreshold = activeThreshold.length > 0;
 
-  function generate() {
+  async function generate() {
     setState("generating");
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/proof/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ threshold: activeThreshold }),
+      });
+      const data = await res.json();
       const p: Proof = {
-        hash: `0x${Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`,
+        hash: data.hash || data.verifyId || "0x—",
         threshold: activeThreshold,
-        result: true,
+        result: data.result !== false,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         pdf: wantPdf,
         qr: wantQr,
@@ -44,7 +51,9 @@ export default function SolvencyPage() {
       setProof(p);
       setHistory((h) => [p, ...h]);
       setState("done");
-    }, 2800);
+    } catch {
+      setState("idle");
+    }
   }
 
   function reset() {
@@ -58,7 +67,7 @@ export default function SolvencyPage() {
 
   return (
     <div className="min-h-screen" style={{ background: P.bg, fontFamily: "Sora, sans-serif", color: P.dark }}>
-      <NavAvatar initial={userName.charAt(0).toUpperCase()} />
+      <NavAvatar initial={initial} />
 
       <div className="w-full max-w-[1440px] mx-auto px-16 pt-20 pb-16">
 
@@ -180,11 +189,10 @@ export default function SolvencyPage() {
                 transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                 onClick={generate}
                 disabled={!hasThreshold}
-                className="w-full py-5 rounded-xl text-[16px] font-bold cursor-pointer"
+                className="get-started-btn w-full py-5 rounded-xl text-[16px] font-bold cursor-pointer text-white"
                 style={{
-                  background: hasThreshold ? P.dark : `${P.dark}30`,
-                  color: P.white,
                   cursor: hasThreshold ? "pointer" : "not-allowed",
+                  opacity: hasThreshold ? 1 : 0.3,
                 }}
               >
                 Generate Proof

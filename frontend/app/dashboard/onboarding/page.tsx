@@ -63,6 +63,7 @@ export default function OnboardingPage() {
   const handleFund = useCallback(() => {
     if (usd <= 0) return;
     setFundStep("processing");
+    // TODO: replace with Dynamic onramp (Coinbase)
     setTimeout(() => {
       addFunds(usd);
       setFundStep("done");

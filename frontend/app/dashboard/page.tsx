@@ -6,7 +6,7 @@ import { NavAvatar, SectionTitle, TradeModal, P, ease, spring } from "./shared";
 import type { TradeStock } from "./shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { usePortfolio, MARKET, STOCK_COLORS, logoUrl, useSettings, useLiveMarket } from "./store";
+import { usePortfolio, MARKET, STOCK_COLORS, logoUrl, useSettings, useLiveMarket, useUser } from "./store";
 
 /* ─── Stock logo with fallback ─── */
 function StockLogo({ ticker, name, color, size = 48 }: { ticker: string; name: string; color: string; size?: number }) {
@@ -24,30 +24,6 @@ function StockLogo({ ticker, name, color, size = 48 }: { ticker: string; name: s
   );
 }
 
-/* ─── AI notification feed ─── */
-interface AiNotif {
-  id: number;
-  type: "buy" | "sell" | "hold";
-  ticker: string;
-  name: string;
-  amount?: number;
-  reason: string;
-  confidence: number;
-  time: string;
-}
-
-const ADVISOR_NOTIFS: AiNotif[] = [
-  { id: 1, type: "buy", ticker: "NVDA", name: "NVIDIA", amount: 100, reason: "Earnings beat +12%, 3/3 models bullish", confidence: 87, time: "2m" },
-  { id: 2, type: "sell", ticker: "TSLA", name: "Tesla", amount: 200, reason: "RSI overbought at 74, MACD divergence", confidence: 71, time: "18m" },
-  { id: 3, type: "hold", ticker: "AAPL", name: "Apple", reason: "Consolidating at $255, no catalyst", confidence: 68, time: "1h" },
-  { id: 4, type: "buy", ticker: "AMZN", name: "Amazon", amount: 50, reason: "Dip below fair value, AWS accelerating", confidence: 79, time: "3h" },
-];
-
-const AUTONOMOUS_NOTIFS: AiNotif[] = [
-  { id: 1, type: "buy", ticker: "NVDA", name: "NVIDIA", amount: 150, reason: "Earnings beat — auto-executed", confidence: 87, time: "2m" },
-  { id: 2, type: "sell", ticker: "TSLA", name: "Tesla", amount: 300, reason: "RSI overbought — profit locked", confidence: 71, time: "18m" },
-  { id: 3, type: "buy", ticker: "AMZN", name: "Amazon", amount: 75, reason: "Dip below fair value — position added", confidence: 79, time: "1h" },
-];
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -60,13 +36,11 @@ export default function DashboardPage() {
     }
   }, [router]);
 
-  const userName = "Kassim";
-  const initial = userName.charAt(0).toUpperCase();
+  const { firstName: userName, initial } = useUser();
   const { holdings, cash, totalValue, totalWithCash, addFunds } = usePortfolio();
   const { aiSuggestions, autoSession } = useSettings();
   const liveMarket = useLiveMarket();
   const isAutonomous = autoSession.active;
-  const notifs = isAutonomous ? AUTONOMOUS_NOTIFS : ADVISOR_NOTIFS;
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const [showAddFunds, setShowAddFunds] = useState(false);
 
@@ -135,10 +109,10 @@ export default function DashboardPage() {
             {/* Metrics + legend */}
             <div className="flex-1 flex flex-col gap-6 md:gap-8 w-full">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-                <MetricCard label="24h Return" value="+$312.18" sub="+1.27%" color={P.gain} />
+                <MetricCard label="24h Return" value="—" sub="Coming soon" color={P.gray} />
                 <MetricCard label="Invested" value={`$${invested.toLocaleString("en-US", { maximumFractionDigits: 0 })}`} sub={`${portfolioStocks.length} stocks`} color={P.dark} />
                 <MetricCard label="Available" value={`$${cash.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} sub="Ready to invest" color={P.jade} />
-                <MetricCard label="All-time P&L" value="+$842.30" sub="+3.5%" color={P.gain} />
+                <MetricCard label="All-time P&L" value="—" sub="Coming soon" color={P.gray} />
               </div>
 
               {/* Add Funds button */}
@@ -199,72 +173,22 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <SectionTitle>AI Activity</SectionTitle>
-              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: isAutonomous ? P.safran : P.jade }} />
             </div>
             <Link href="/dashboard/advisor" className="text-[12px] font-semibold" style={{ color: P.jade }}>
-              See all
+              Configure
             </Link>
           </div>
 
-          <div className="flex flex-col">
-            {notifs.map((n, i) => {
-              const color = n.type === "buy" ? P.gain : n.type === "sell" ? P.loss : P.gray;
-              return (
-                <Link
-                  key={n.id}
-                  href={`/dashboard/advisor?ticker=${n.ticker}`}
-                >
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.28 + i * 0.06, duration: 0.35, ease }}
-                    whileHover={{ x: 4 }}
-                    className="flex items-center gap-4 py-3.5 w-full text-left cursor-pointer"
-                    style={{ borderBottom: `1px solid ${P.border}20` }}
-                  >
-                    {/* Icon */}
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${color}12` }}>
-                      {n.type === "buy" ? (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" />
-                        </svg>
-                      ) : n.type === "sell" ? (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" />
-                        </svg>
-                      ) : (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                      )}
-                    </div>
-
-                    {/* Text */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[14px] font-semibold">{n.name}</span>
-                        <span className="text-[13px] font-semibold" style={{ color }}>
-                          {isAutonomous
-                            ? `${n.type === "buy" ? "Bought" : n.type === "sell" ? "Sold" : "Held"}${n.amount ? ` $${n.amount}` : ""}`
-                            : `${n.type === "buy" ? "Buy" : n.type === "sell" ? "Sell" : "Hold"}${n.amount ? ` $${n.amount}` : ""}`
-                          }
-                        </span>
-                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded" style={{ background: `${color}12`, color }}>{n.confidence}%</span>
-                      </div>
-                      <p className="text-[12px] mt-0.5 truncate" style={{ color: P.gray }}>{n.reason}</p>
-                    </div>
-
-                    {/* Time */}
-                    <span className="text-[11px] shrink-0" style={{ color: P.gray }}>{n.time}</span>
-
-                    {/* Chevron */}
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={P.border} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  </motion.div>
-                </Link>
-              );
-            })}
+          <div className="flex flex-col items-center text-center py-10">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ background: `${P.jade}15` }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <p className="text-[14px] font-medium" style={{ color: P.dark }}>No AI activity yet</p>
+            <p className="text-[12px] mt-1" style={{ color: P.gray }}>
+              {isAutonomous ? "Autonomous trading is active — trades will appear here." : "Enable the AI advisor to see recommendations."}
+            </p>
           </div>
         </motion.section>}
 
@@ -275,11 +199,35 @@ export default function DashboardPage() {
           transition={{ delay: 0.35, duration: 0.5, ease }}
         >
           <SectionTitle>Your stocks</SectionTitle>
-          <div className="mt-6 flex flex-col">
-            {totalAllocations.map((s, i) => (
-              <StockRow key={s.ticker} stock={s} index={i} onSelect={() => setSelectedTicker(s.ticker)} />
-            ))}
-          </div>
+          {totalAllocations.length > 0 ? (
+            <div className="mt-6 flex flex-col">
+              {totalAllocations.map((s, i) => (
+                <StockRow key={s.ticker} stock={s} index={i} onSelect={() => setSelectedTicker(s.ticker)} />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-6 flex flex-col items-center text-center py-12">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ background: `${P.jade}15` }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                  <polyline points="16 7 22 7 22 13" />
+                </svg>
+              </div>
+              <p className="text-[14px] font-medium" style={{ color: P.dark }}>No stocks yet</p>
+              <p className="text-[12px] mt-1 mb-5" style={{ color: P.gray }}>Add funds and start investing to see your portfolio here.</p>
+              <Link href="/dashboard/invest">
+                <motion.span
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={spring}
+                  className="inline-flex items-center gap-2 py-3 px-7 rounded-full text-[14px] font-semibold cursor-pointer"
+                  style={{ background: P.jade, color: P.white }}
+                >
+                  Browse stocks
+                </motion.span>
+              </Link>
+            </div>
+          )}
         </motion.section>
       </div>
 
@@ -359,7 +307,7 @@ function AddFundsModal({ onClose, onAdd }: { onClose: () => void; onAdd: (amount
   const handleAdd = useCallback(() => {
     if (usd <= 0) return;
     setStep("processing");
-    // Simulate onramp (Dynamic Coinbase under the hood)
+    // TODO: replace with Dynamic onramp (Coinbase)
     setTimeout(() => {
       onAdd(usd);
       setStep("done");

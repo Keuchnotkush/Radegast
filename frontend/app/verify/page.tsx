@@ -49,19 +49,24 @@ const STEPS: { num: string; title: string; bg: string; desc: string; detail: str
 export default function Verify() {
   const [hash, setHash] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [threshold, setThreshold] = useState("");
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
 
-  function handleVerify() {
+  async function handleVerify() {
     if (!hash.trim()) return;
     setStatus("loading");
-    // Simulate on-chain lookup (replace with real ProofOfSolvency.check() call)
-    setTimeout(() => {
-      if (hash.trim().startsWith("0x") && hash.trim().length >= 10) {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/proof/${encodeURIComponent(hash.trim())}`);
+      if (res.ok) {
+        const data = await res.json();
+        setThreshold(data.threshold || "Unknown");
         setStatus("success");
       } else {
         setStatus("error");
       }
-    }, 2000);
+    } catch {
+      setStatus("error");
+    }
   }
 
   function reset() {
@@ -136,7 +141,7 @@ export default function Verify() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleVerify}
-                    className="get-started-btn px-7 py-2.5 rounded-full text-[13px] font-bold uppercase tracking-wider cursor-pointer flex items-center gap-2 shrink-0 text-white"
+                    className="get-started-btn px-[8px] py-2.5 rounded-full text-[13px] font-bold uppercase tracking-wider cursor-pointer flex items-center gap-2 shrink-0 text-white whitespace-nowrap"
                     style={{ opacity: hash.trim() ? 1 : 0.5 }}
                   >
                     {status === "loading" ? (
@@ -173,7 +178,7 @@ export default function Verify() {
                   <div>
                     <h2 className="text-2xl font-bold mb-1">Portfolio verified</h2>
                     <p className="text-lg font-semibold mb-1">
-                      Exceeds <span style={{ color: P.cream }}>$50,000</span>
+                      Exceeds <span style={{ color: P.cream }}>{threshold}</span>
                     </p>
                     <p className="text-[13px]" style={{ color: `${P.white}AA` }}>
                       Verified on 0G Chain &middot; {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} &middot; Mathematically valid
@@ -184,7 +189,7 @@ export default function Verify() {
                 <div className="flex flex-wrap gap-8 py-5 mb-4" style={{ borderTop: `1px solid ${P.white}15`, borderBottom: `1px solid ${P.white}15` }}>
                   {[
                     { label: "Verification ID", value: hash.slice(0, 18) + "..." },
-                    { label: "Threshold", value: "$50,000" },
+                    { label: "Threshold", value: threshold },
                     { label: "Circuit", value: "UltraPlonk" },
                     { label: "Chain", value: "0G Chain" },
                     { label: "Status", value: "Valid", accent: true },

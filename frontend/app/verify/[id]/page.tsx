@@ -19,17 +19,27 @@ export default function VerifyById() {
   const id = params.id as string;
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const [threshold, setThreshold] = useState("");
 
   useEffect(() => {
-    // Auto-verify on mount — simulate on-chain lookup (replace with ProofOfSolvency.check())
-    const timer = setTimeout(() => {
-      if (id && id.startsWith("0x") && id.length >= 10) {
-        setStatus("success");
-      } else {
-        setStatus("error");
+    let cancelled = false;
+    async function verify() {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/proof/${encodeURIComponent(id)}`);
+        if (cancelled) return;
+        if (res.ok) {
+          const data = await res.json();
+          setThreshold(data.threshold || "Unknown");
+          setStatus("success");
+        } else {
+          setStatus("error");
+        }
+      } catch {
+        if (!cancelled) setStatus("error");
       }
-    }, 2000);
-    return () => clearTimeout(timer);
+    }
+    verify();
+    return () => { cancelled = true; };
   }, [id]);
 
   return (
@@ -38,26 +48,14 @@ export default function VerifyById() {
 
       {/* ═══ HERO ═══ */}
       <section className="flex flex-col items-center justify-center text-center px-5 md:px-8 pt-24 pb-8 md:pt-32 md:pb-12">
-        <motion.div className="w-full max-w-[900px] relative select-none flex justify-center">
-          {"Verify".split("").map((letter, i) => (
-            <motion.span
-              key={i}
-              className="inline-block text-[18vw] md:text-[140px] font-bold leading-none"
-              style={{ color: P.white }}
-              initial={{ opacity: 0, y: -300 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                delay: 0.15 + i * 0.08,
-                duration: 0.8,
-                type: "spring",
-                stiffness: 300,
-                damping: 12,
-                mass: 1.2,
-              }}
-            >
-              {letter}
-            </motion.span>
-          ))}
+        <motion.div
+          className="w-full max-w-[900px] relative select-none text-center text-[18vw] md:text-[140px] font-bold leading-none"
+          style={{ color: P.white }}
+          initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
+          animate={{ clipPath: "inset(0 0% 0 0)", opacity: 1 }}
+          transition={{ duration: 1.8, ease, delay: 0.2 }}
+        >
+          Verify
         </motion.div>
       </section>
 
@@ -124,7 +122,7 @@ export default function VerifyById() {
                   <div>
                     <h2 className="text-2xl font-bold mb-1">Portfolio verified</h2>
                     <p className="text-lg font-semibold mb-1">
-                      Exceeds <span style={{ color: P.cream }}>$50,000</span>
+                      Exceeds <span style={{ color: P.cream }}>{threshold}</span>
                     </p>
                     <p className="text-[13px]" style={{ color: `${P.white}AA` }}>
                       Verified on 0G Chain &middot; {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} &middot; Mathematically valid
@@ -135,7 +133,7 @@ export default function VerifyById() {
                 <div className="flex flex-wrap gap-8 py-5 mb-4" style={{ borderTop: `1px solid ${P.white}15`, borderBottom: `1px solid ${P.white}15` }}>
                   {[
                     { label: "Verification ID", value: id.slice(0, 18) + "..." },
-                    { label: "Threshold", value: "$50,000" },
+                    { label: "Threshold", value: threshold },
                     { label: "Circuit", value: "UltraPlonk" },
                     { label: "Chain", value: "0G Chain" },
                     { label: "Status", value: "Valid", accent: true },

@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from "react";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 
 /* ─── Stock logo helper ─── */
 const LOGO_TOKEN = "pk_PCBX5rd6QsqwX0zT-1bPCg";
@@ -126,17 +127,11 @@ interface PortfolioCtx {
 
 const PortfolioContext = createContext<PortfolioCtx | null>(null);
 
-const INITIAL_HOLDINGS: Holding[] = [
-  { ticker: "TSLA", shares: 10.12 },
-  { ticker: "NVDA", shares: 3.36 },
-  { ticker: "AAPL", shares: 10.05 },
-  { ticker: "META", shares: 2.93 },
-  { ticker: "AMZN", shares: 5.32 },
-];
+const INITIAL_HOLDINGS: Holding[] = [];
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [holdings, setHoldings] = useState<Holding[]>(INITIAL_HOLDINGS);
-  const [cash, setCash] = useState(1250); // "Available to invest" — actually USDC, user sees $
+  const [cash, setCash] = useState(0);
 
   const buy = useCallback((ticker: string, usdAmount: number) => {
     const stock = MARKET.find((s) => s.ticker === ticker);
@@ -275,4 +270,25 @@ export function useSettings() {
   const ctx = useContext(SettingsContext);
   if (!ctx) throw new Error("useSettings must be inside SettingsProvider");
   return ctx;
+}
+
+/* ─── User hook (Dynamic → localStorage → default) ─── */
+export function useUser() {
+  const { user } = useDynamicContext();
+  const [storedName, setStoredName] = useState("");
+
+  useEffect(() => {
+    const name = localStorage.getItem("radegast_firstName");
+    if (name) setStoredName(name);
+  }, []);
+
+  return useMemo(() => {
+    const firstName = user?.firstName || storedName || "Investor";
+    return {
+      firstName,
+      lastName: user?.lastName || "",
+      email: user?.email || "",
+      initial: firstName.charAt(0).toUpperCase(),
+    };
+  }, [user, storedName]);
 }
