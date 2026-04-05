@@ -11,17 +11,9 @@ Kamil (AI + 0G Integration) + Kassim (Frontend)
 ## Architecture
 ```
 backend/
-  server.js           # Express app, mounts routes
-  routes/
-    user.js           # POST /api/user/register, GET/PATCH /api/user/:key
-    email.js          # POST /api/email/send, POST /api/email/welcome
-    proof.js          # GET /api/proof/:id, POST /api/proof/generate
-    consensus.js      # POST /api/consensus (proxy to AI service)
-  services/
-    ai.js             # Fetch from AI FastAPI (http://localhost:8000)
-    chain.js          # Read from 0G Chain (ProofOfSolvency, XStockMock, ConsensusSettlement)
-  middleware/
-    auth.js           # Validate Dynamic JWT (future)
+  server.js           # Express app — all routes, chain reads, AI proxy (single file)
+  package.json
+  .env
 ```
 
 ## Commands
@@ -106,8 +98,7 @@ Response: {
   ]
 }
 ```
-Status: **NEEDS IMPLEMENTATION** — AI service currently returns mock data.
-AI endpoint: `POST http://localhost:8000/api/consensus`
+Status: **IMPLEMENTED** — proxies raw to AI service at `AI_SERVICE_URL/api/consensus`
 
 ---
 
@@ -129,7 +120,7 @@ Response: {
 }
 Error:    { error: string }
 ```
-Status: **NEEDS IMPLEMENTATION**
+Status: **IMPLEMENTED** — stores attestation on-chain via ProofRegistry, with demo fallback when no ZK proof provided
 
 #### `GET /api/proof/:id`
 Called from `verify/page.tsx` and `verify/[id]/page.tsx` to check a proof.
@@ -145,7 +136,7 @@ Response: {
 }
 404:      { error: "Proof not found" }
 ```
-Status: **NEEDS IMPLEMENTATION**
+Status: **IMPLEMENTED** — reads from ProofRegistry, falls back to ProofOfSolvency
 
 ---
 
@@ -179,6 +170,79 @@ Status: **IMPLEMENTED**
 
 ---
 
+---
+
+### 6. Holdings & Prices
+
+#### `GET /api/holdings/:address`
+Read all xStock balances for a wallet.
+```
+Response: { holdings: [{ symbol, shares, priceUsd, valueUsd }] }
+```
+Status: **IMPLEMENTED** (reads on-chain)
+
+#### `GET /api/prices`
+Read on-chain prices for all 15 xStocks.
+```
+Response: { prices: [{ symbol, priceUsd }] }
+```
+Status: **IMPLEMENTED** (reads on-chain)
+
+#### `GET /api/consensus/:address`
+Read latest on-chain consensus record for a wallet.
+```
+Response: { id, score, confidence, label, agreed, total, daHash }
+```
+Status: **IMPLEMENTED** (reads ConsensusSettlement on-chain)
+
+---
+
+### 7. Trading & USDC
+
+#### `POST /api/trade`
+Buy or sell xStocks. Burns USDC → mints xStock (buy) or reverse (sell).
+```
+Request:  { action: "buy"|"sell", ticker: string, usdAmount: number, walletAddress: string }
+Response: { success, txHashes, action, ticker, xSymbol, shares, usdAmount, priceUsd }
+```
+Status: **IMPLEMENTED** (requires MockUSDC deployed for USDC legs)
+
+#### `POST /api/faucet`
+Mint demo USDC to a wallet.
+```
+Request:  { walletAddress: string, amount?: number }
+Response: { success, txHash, amount }
+```
+Status: **IMPLEMENTED** (requires MockUSDC deployed)
+
+#### `GET /api/usdc/:address`
+Read USDC balance for a wallet.
+```
+Response: { balance, formatted, symbol }
+```
+Status: **IMPLEMENTED** (requires MockUSDC deployed)
+
+---
+
+### 8. AI Agent
+
+#### `GET /api/agent/latest/:userId`
+Poll latest autonomous agent results. Proxied to AI service.
+```
+Response: (raw from AI service)
+```
+Status: **IMPLEMENTED**
+
+#### `POST /api/profile/mode`
+Set user trade mode. Proxied to AI service.
+```
+Request:  { user_id: string, mode: "conseil"|"trade" }
+Response: (raw from AI service)
+```
+Status: **IMPLEMENTED**
+
+---
+
 ## Smart Contracts on 0G Chain
 
 The backend reads/writes these contracts. Addresses TBD after deployment.
@@ -207,5 +271,5 @@ The backend reads/writes these contracts. Addresses TBD after deployment.
 1. **Frontend never calls AI or chain directly** — everything goes through this backend
 2. **CORS** is set to `FRONTEND_URL` (default `http://localhost:3000`)
 3. **Frontend env var**: `NEXT_PUBLIC_API_URL` points to this backend (default `http://localhost:4000`)
-4. **Docker**: backend needs to be added to `docker/docker-compose.yml` as a service on port 4000
+4. **Docker**: backend is included in `docker/docker-compose.yml`
 5. **Auth**: currently no JWT validation. Future: validate Dynamic JWT in middleware/auth.js

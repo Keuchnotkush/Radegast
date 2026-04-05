@@ -48,6 +48,7 @@ app/
 │   ├── settings/page.tsx      # Account, investor profile, autonomous trading, MFA modal
 │   ├── onboarding/page.tsx    # Post-signup onboarding flow
 │   └── edit/page.tsx          # Portfolio edit page
+│   └── chat/page.tsx          # AI chat interface
 │
 └── api/
     ├── chart/route.ts         # GET — Yahoo Finance price data proxy
@@ -287,11 +288,12 @@ Every animation follows these conventions. **Do not deviate.**
 ### Done
 - Auth (Dynamic SDK): Google + Email OTP via `useSocialAccounts` + `useConnectWithOtp`
 - DynamicContextProvider wrapping all pages
-- Auth guard (commented out — re-enable before production)
+- Auth guard (active — redirects to /get-started if not logged in)
 - All 12 pages listed above, fully functional with mock data
 - Real stock prices via Yahoo Finance (`/api/chart`)
 - PDF certificate generation (`/api/proof-pdf`)
 - Backend API calls wired (register, consensus, proof/generate, proof/:id)
+- Trade execution via `/api/trade` endpoint (buy/sell xStocks on-chain)
 
 ### Needs Backend
 - `POST /api/consensus` — advisor page will call when backend serves AI votes
@@ -300,7 +302,6 @@ Every animation follows these conventions. **Do not deviate.**
 
 ### Needs Dynamic SDK Wiring
 - **Add Funds onramp** — replace `setTimeout` in `AddFundsModal` with Coinbase onramp
-- **Trade execution** — replace `setTimeout` in `TradeModal` with embedded wallet signature
 - **Wallet balance** — replace `cash` state with `primaryWallet.getBalance()`
 - **Gasless txs** — ZeroDev/Pimlico smart account config
 - **On-chain holdings** — read xStock ERC-20 balances via wallet
@@ -308,7 +309,6 @@ Every animation follows these conventions. **Do not deviate.**
 ### TODOs in Code
 | File | What |
 |---|---|
-| `dashboard/shared.tsx` | Replace trade `setTimeout` with embedded wallet signature + contract call |
 | `dashboard/page.tsx` | Replace AddFundsModal `setTimeout` with Dynamic Coinbase onramp |
 
 ## Dynamic SDK Reference

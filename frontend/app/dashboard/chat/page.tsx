@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavAvatar, P, ease, spring } from "../shared";
-import { useUser, usePortfolio, MARKET, useLiveMarket } from "../store";
+import { useUser, usePortfolio, useWallet, MARKET, useLiveMarket } from "../store";
 import { useAI } from "@/lib/hooks/useAI";
 
 /* ─── Ticker → xStock symbol mapping ─── */
@@ -31,6 +31,7 @@ const SUGGESTIONS = [
 
 export default function ChatPage() {
   const { firstName, initial } = useUser();
+  const { address: walletAddress } = useWallet();
   const { holdings, totalValue } = usePortfolio();
   const liveMarket = useLiveMarket();
   const { chat, loading } = useAI();
@@ -77,7 +78,7 @@ export default function ChatPage() {
     setInput("");
 
     const positions = buildPositions();
-    const result = await chat("frontend_user", text.trim(), Object.keys(positions).length > 0 ? positions : undefined);
+    const result = await chat(walletAddress || "frontend_user", text.trim(), Object.keys(positions).length > 0 ? positions : undefined);
 
     const aiMsg: Message = {
       id: `a-${Date.now()}`,

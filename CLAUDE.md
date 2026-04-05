@@ -21,7 +21,6 @@ Radegast/
   ai/             # Python FastAPI, XGBoost ONNX, 0G Compute — Kamil
   contracts/      # Solidity 0.8.24, Foundry, Solady — Manny
   docker/         # Docker compose + Caddy
-  scripts/        # Deployment scripts
   .github/        # CI/CD
 ```
 Each subdirectory has its own CLAUDE.md with domain-specific context.
@@ -57,9 +56,17 @@ Frontend NEVER calls AI or chain directly. Backend is the single gateway.
 | `/api/user/register` | POST | Kassim | Done (in-memory) |
 | `/api/user/:key` | GET | Kassim | Done (in-memory) |
 | `/api/user/:key` | PATCH | Kassim | Done (in-memory) |
-| `/api/consensus` | POST | Kamil | Needs impl — proxy to AI |
-| `/api/proof/generate` | POST | Kamil | Needs impl — on-chain or store |
-| `/api/proof/:id` | GET | Kamil | Needs impl — ProofOfSolvency.check() |
+| `/api/consensus` | POST | Kamil | Done — proxy to AI service |
+| `/api/consensus/:address` | GET | Kamil | Done — reads ConsensusSettlement on-chain |
+| `/api/proof/generate` | POST | Keuch | Done — stores attestation via ProofRegistry on-chain |
+| `/api/proof/:id` | GET | Keuch | Done — reads ProofRegistry/ProofOfSolvency on-chain |
+| `/api/holdings/:address` | GET | Kamil | Done — reads xStock balances on-chain |
+| `/api/prices` | GET | Kamil | Done — reads xStock prices on-chain |
+| `/api/trade` | POST | Kassim | Done — buy/sell via mint/burn on-chain |
+| `/api/faucet` | POST | Kassim | Done — mints demo USDC (needs MockUSDC deployed) |
+| `/api/usdc/:address` | GET | Kassim | Done — reads USDC balance (needs MockUSDC deployed) |
+| `/api/profile/mode` | POST | Kamil | Done — proxy to AI service |
+| `/api/agent/latest/:userId` | GET | Kamil | Done — proxy to AI service |
 | `/api/email/send` | POST | Kassim | Done |
 | `/api/email/welcome` | POST | Kassim | Done |
 | `/api/chart` | GET | Frontend | Done (Yahoo Finance, Next.js API route) |
@@ -76,7 +83,7 @@ Full API contract with request/response shapes: **`backend/CLAUDE.md`**
 | `ConsensusSettlement` | On-chain AI consensus record | `submit`, `latestOf`, `verifyDA` |
 | `ProofOfSolvency` | ZK proof attestation | `verify`, `check`, `setVerifier` |
 
-**Not yet deployed.** Run `make deploy-og` after setting `PRIVATE_KEY` in `.env`.
+**Deployed on 0G Testnet (Chain 16602).** See `contracts/DEPLOYMENTS.md` for addresses and roles.
 
 ## Commands
 ```bash

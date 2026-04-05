@@ -639,6 +639,7 @@ function MetricCard({ label, value, sub, color, index = 0 }: { label: string; va
 
 /* ─── Agent Activity ─── */
 function AgentActivity({ isAutonomous }: { isAutonomous: boolean }) {
+  const { address: walletAddress } = useWallet();
   const [data, setData] = useState<{
     consensus_label: string;
     consensus_score: number;
@@ -649,8 +650,9 @@ function AgentActivity({ isAutonomous }: { isAutonomous: boolean }) {
   } | null>(null);
 
   useEffect(() => {
+    const userId = walletAddress || "default";
     const poll = () => {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/agent/latest/default`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/agent/latest/${userId}`)
         .then((r) => r.ok ? r.json() : null)
         .then((d) => { if (d) setData(d); })
         .catch(() => {});
@@ -658,7 +660,7 @@ function AgentActivity({ isAutonomous }: { isAutonomous: boolean }) {
     poll();
     const id = setInterval(poll, 15000);
     return () => clearInterval(id);
-  }, []);
+  }, [walletAddress]);
 
   if (!data) {
     return (

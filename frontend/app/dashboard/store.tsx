@@ -267,6 +267,7 @@ const SettingsContext = createContext<SettingsCtx | null>(null);
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [aiSuggestions, setAiSuggestions] = useState(true);
   const [autoSession, setAutoSession] = useState<AutoSession>(EMPTY_SESSION);
+  const { address: walletAddress } = useWallet();
 
   const activateAuto = useCallback((duration: AutoDuration, dailyLimit: number) => {
     const dur = AUTO_DURATIONS.find((d) => d.key === duration)!;
@@ -285,9 +286,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/profile/mode`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: "default", mode: "trade" }),
+      body: JSON.stringify({ user_id: walletAddress || "default", mode: "trade" }),
     }).catch(() => {});
-  }, []);
+  }, [walletAddress]);
 
   const revokeAuto = useCallback(() => {
     setAutoSession((prev) => ({ ...EMPTY_SESSION, notifications: prev.notifications }));
@@ -295,9 +296,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/profile/mode`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: "default", mode: "conseil" }),
+      body: JSON.stringify({ user_id: walletAddress || "default", mode: "conseil" }),
     }).catch(() => {});
-  }, []);
+  }, [walletAddress]);
 
   const setAutoNotifications = useCallback((v: boolean) => {
     setAutoSession((prev) => ({ ...prev, notifications: v }));

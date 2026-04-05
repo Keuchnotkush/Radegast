@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavAvatar, SectionTitle, TogglePill, P, ease, spring } from "../shared";
-import { useSettings, useUser, usePortfolio, MARKET } from "../store";
+import { useSettings, useUser, usePortfolio, useWallet, MARKET } from "../store";
 import { useAI } from "@/lib/hooks/useAI";
 import type { ConsensusResult } from "@/lib/hooks/useAI";
 
@@ -31,6 +31,7 @@ function labelColor(label: string) {
 
 export default function AdvisorPage() {
   const { initial } = useUser();
+  const { address: walletAddress } = useWallet();
   const { aiSuggestions, setAiSuggestions, autoSession } = useSettings();
   const { holdings, totalValue } = usePortfolio();
   const { runConsensus, loading, error } = useAI();
@@ -58,7 +59,7 @@ export default function AdvisorPage() {
     if (Object.keys(positions).length === 0) return;
     const mode = tradingOn ? "trade" : "conseil";
     const consensus = await runConsensus({
-      user: "frontend_user",
+      user: walletAddress || "frontend_user",
       positions,
       strategy: "balanced",
       mode,
