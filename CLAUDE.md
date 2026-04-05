@@ -1,6 +1,6 @@
 # RADEGAST
 
-AI-powered tokenized stock portfolio on 0G & Dynamic. ETHGlobal Cannes 2026.
+AI-powered tokenized stock portfolio on 0G & Privy. ETHGlobal Cannes 2026.
 
 ## Vision
 Allow anyone — especially people who know nothing about crypto — to invest in US stocks (tokenized as xStocks ERC-20) from anywhere, 24/7, with AI portfolio management and ZK proof-of-solvency for banks.
@@ -16,7 +16,7 @@ The user must NEVER know they're using crypto. Zero wallet jargon, zero gas, zer
 ## Project Structure
 ```
 Radegast/
-  frontend/       # Next.js 16, React 19, Tailwind 4, Dynamic SDK — Kassim
+  frontend/       # Next.js 16, React 19, Tailwind 4, Privy SDK — Kassim
   backend/        # Express.js, API gateway, proxies to AI service — Kassim + Kamil
   ai/             # Python FastAPI, XGBoost ONNX, 0G Compute — Kamil
   contracts/      # Solidity 0.8.24, Foundry, Solady — Manny
@@ -26,7 +26,7 @@ Radegast/
 Each subdirectory has its own CLAUDE.md with domain-specific context.
 
 ## Team
-- Kassim (@0x11semprez) — Frontend + Dynamic SDK
+- Kassim (@0x11semprez) — Frontend + Privy SDK
 - Kamil — AI + 0G Integration + Backend endpoints
 - Manny — Smart Contracts
 - Keuch — ZK (Noir)
@@ -34,9 +34,9 @@ Each subdirectory has its own CLAUDE.md with domain-specific context.
 ## Stack
 | Layer | Tech |
 |---|---|
-| Frontend | Next.js 16, React 19, Tailwind 4, Dynamic JS SDK |
+| Frontend | Next.js 16, React 19, Tailwind 4, Privy SDK |
 | Backend | Express.js (port 4000) — API gateway between frontend and services |
-| Auth/Wallet | Dynamic (social login, embedded wallet, onramp, gasless) |
+| Auth/Wallet | Privy (social login, embedded wallet, onramp, gasless) |
 | Contracts | Solidity 0.8.24, Foundry, Solady — on 0G Chain |
 | AI | XGBoost, ONNX, FastAPI (port 8000), 0G Compute |
 | ZK | Noir, UltraPlonk, Noir.js (WASM) |
@@ -102,7 +102,7 @@ PORT=4000                                       # Backend port
 FRONTEND_URL=http://localhost:3000              # For CORS + email links
 AI_SERVICE_URL=http://localhost:8000            # AI FastAPI
 NEXT_PUBLIC_API_URL=http://localhost:4000       # Frontend → backend
-NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID=             # Dynamic SDK env ID
+NEXT_PUBLIC_PRIVY_APP_ID=                       # Privy App ID
 SMTP_HOST=smtp.gmail.com                       # Email
 SMTP_PORT=587
 SMTP_USER=

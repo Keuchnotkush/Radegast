@@ -279,7 +279,7 @@ export async function POST(req: NextRequest) {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(GRAY);
     doc.setFontSize(7);
-    doc.text("\u00b7  0G Network  \u00b7  Dynamic SDK  \u00b7  Noir ZK", mx + doc.getTextWidth("RÄDEGÄST") + 3, footY);
+    doc.text("\u00b7  0G Network  \u00b7  Privy  \u00b7  Noir ZK", mx + doc.getTextWidth("RÄDEGÄST") + 3, footY);
     doc.text("ETHGlobal Cannes 2026", w - mx, footY, { align: "right" });
 
     // Output

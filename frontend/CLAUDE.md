@@ -5,7 +5,7 @@
 ## Stack
 - Next.js 16, React 19, Tailwind 4, TypeScript 5, pnpm
 - Framer Motion 12 (all animations)
-- Dynamic SDK v4 (auth, wallets, onramp)
+- Privy SDK v3 (auth, embedded wallets, onramp)
 
 ## Target User
 Zero crypto knowledge. Investing in stocks. Must feel like Revolut/Trade Republic — a banking/fintech app, NOT a dApp.
@@ -18,7 +18,7 @@ app/
 │   └── theme.ts              # P (palette), ease, spring — SINGLE SOURCE OF TRUTH
 ├── components/
 │   └── topography.tsx         # Animated canvas background (verify page)
-├── providers.tsx              # DynamicContextProvider wrapper
+├── providers.tsx              # PrivyProvider wrapper
 ├── layout.tsx                 # Root layout: Google Fonts (Sora, Lexend, Cinzel), metadata
 ├── globals.css                # Tailwind 4, CSS vars, scrollbar, .get-started-btn
 ├── page.tsx                   # Redirect / → /landing
@@ -200,7 +200,7 @@ Every animation follows these conventions. **Do not deviate.**
 | `usePortfolio()` | hook | Access portfolio state + actions |
 | `SettingsProvider` | Context | AI suggestions + autonomous trading session |
 | `useSettings()` | hook | Toggle AI, manage auto session |
-| `useUser()` | hook | Dynamic SDK → localStorage → "Investor" fallback |
+| `useUser()` | hook | Privy user → localStorage → "Investor" fallback |
 
 ### Navigation Pattern
 - **Public pages** (landing, how-it-works, verify, get-started): `<Nav />` from `landing/nav.tsx`
@@ -286,39 +286,28 @@ Every animation follows these conventions. **Do not deviate.**
 ## Implementation Status
 
 ### Done
-- Auth (Dynamic SDK): Google + Email OTP via `useSocialAccounts` + `useConnectWithOtp`
-- DynamicContextProvider wrapping all pages
+- Auth (Privy SDK): Google + Email OTP via `useLoginWithOAuth` + `useLoginWithEmail`
+- PrivyProvider wrapping all pages with 0G Newton Testnet as default chain
 - Auth guard (active — redirects to /get-started if not logged in)
 - All 12 pages listed above, fully functional with mock data
 - Real stock prices via Yahoo Finance (`/api/chart`)
 - PDF certificate generation (`/api/proof-pdf`)
 - Backend API calls wired (register, consensus, proof/generate, proof/:id)
 - Trade execution via `/api/trade` endpoint (buy/sell xStocks on-chain)
+- USDC balance polling via `/api/usdc/:address` (30s interval)
+- Onramp via `useFundWallet()` from Privy
 
 ### Needs Backend
 - `POST /api/consensus` — advisor page will call when backend serves AI votes
 - `POST /api/proof/generate` — works but falls back to mock on error
 - `GET /api/proof/:id` — verify page calls, needs real proofs stored
 
-### Needs Dynamic SDK Wiring
-- **Add Funds onramp** — replace `setTimeout` in `AddFundsModal` with Coinbase onramp
-- **Wallet balance** — replace `cash` state with `primaryWallet.getBalance()`
-- **Gasless txs** — ZeroDev/Pimlico smart account config
-- **On-chain holdings** — read xStock ERC-20 balances via wallet
-
-### TODOs in Code
-| File | What |
-|---|---|
-| `dashboard/page.tsx` | Replace AddFundsModal `setTimeout` with Dynamic Coinbase onramp |
-
-## Dynamic SDK Reference
-- Docs: https://www.dynamic.xyz/docs/javascript
-- Full docs: https://www.dynamic.xyz/docs/llms.txt
-- Packages: `@dynamic-labs/sdk-react-core`, `@dynamic-labs/ethereum`
-- Hooks: `useDynamicContext`, `useSocialAccounts`, `useConnectWithOtp`, `useIsLoggedIn`, `useUserWallets`
-- Events: `onAuthSuccess`, `onAuthFailure`, `onWalletAdded`, `onEmbeddedWalletCreated`
-- Gasless: ZeroDev, Alchemy, Biconomy, Pimlico, Safe, Gelato
-- Onramp: Coinbase (Apple Pay no KYC), Crypto.com, Kraken, Iron (SEPA)
+## Privy SDK Reference
+- Docs: https://docs.privy.io
+- Package: `@privy-io/react-auth`
+- Hooks: `usePrivy`, `useWallets`, `useLoginWithEmail`, `useLoginWithOAuth`, `useFundWallet`
+- Embedded wallets: auto-created on login for all users (EVM)
+- App ID env var: `NEXT_PUBLIC_PRIVY_APP_ID`
 
 ## UX Rules (NON-NEGOTIABLE)
 1. User must NEVER see: wallets, gas, chains, signing, seed phrases, blockchain, tokens, minting

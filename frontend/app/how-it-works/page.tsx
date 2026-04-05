@@ -10,8 +10,8 @@ const PIPELINE = [
   {
     num: "01",
     title: "Sign in with Google",
-    desc: "One click. Dynamic SDK creates an embedded MPC wallet behind the scenes — split-key architecture, no single point of failure. No seed phrase, no browser extension, no crypto jargon. The user sees a stock investing app, period.",
-    detail: "Dynamic handles social login, session management, and wallet lifecycle. The wallet is non-custodial from day one — Radegast never has access to user funds.",
+    desc: "One click. Privy creates an embedded wallet behind the scenes — no single point of failure. No seed phrase, no browser extension, no crypto järgon. The user sees a stock investing app, period.",
+    detail: "Privy handles social login, session management, and wallet lifecycle. The wallet is non-custodial from day one — Radegast never has access to user funds.",
     color: P.jade,
   },
   {
@@ -586,9 +586,9 @@ export default function HowItWorks() {
             transition={{ duration: 0.7, ease }}
             className="mb-10"
           >
-            <h2 className="text-3xl font-bold mb-4">Dynämic — the invisible wället</h2>
+            <h2 className="text-3xl font-bold mb-4">Privy — the invisible wället</h2>
             <p className="text-[15px] leading-relaxed" style={{ color: P.gray }}>
-              Dynamic SDK is the glue that makes all of this feel like a normal fintech app. The user never knows they have a crypto wallet. They never sign a transaction. They never pay gas. <strong style={{ color: P.dark }}>They just invest.</strong>
+              Privy is the glue that makes all of this feel like a normal fintech app. The user never knows they have a crypto wallet. They never sign a transaction. They never pay gas. <strong style={{ color: P.dark }}>They just invest.</strong>
             </p>
           </motion.div>
 
@@ -605,7 +605,7 @@ export default function HowItWorks() {
               { feature: "Gasless transactions", desc: "ZeroDev paymaster sponsors all gas. The user never pays a wei. Every trade feels like tapping a button.", color: P.terracotta },
               { feature: "Session management", desc: "JWT-based persistent auth. Come back tomorrow, you're still logged in. Just like any banking app.", color: P.safran },
               { feature: "Event system", desc: "onAuthSuccess, onWalletAdded, onEmbeddedWalletCreated — full lifecycle hooks for seamless UX flows.", color: P.roseAncien },
-              { feature: "Non-custodial", desc: "Dynamic never holds keys. Radegast never holds keys. The user owns their assets from day one. Always.", color: P.jade },
+              { feature: "Non-custodial", desc: "Privy never holds keys. Radegast never holds keys. The user owns their assets from day one. Always.", color: P.jade },
             ].map((f) => (
               <div key={f.feature} className="py-4 px-5 rounded-xl" style={{ background: `${f.color}06`, border: `1px solid ${f.color}12` }}>
                 <div className="text-[13px] font-bold mb-1" style={{ color: f.color }}>{f.feature}</div>

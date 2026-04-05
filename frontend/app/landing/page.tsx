@@ -12,7 +12,7 @@ const USE_CASES = [
     title: "Invest 24/7 from änywhere",
     desc: "Sign in with Google. Pick a strategy. Buy fractional US stocks from $1. No brokerage account, no crypto knowledge, no minimum balance.",
     highlights: [
-      { label: "One-click onboärding", detail: "Google login creates an invisible embedded wallet via Dynamic SDK. No seed phrase, no extension, no jargon.", color: P.jade },
+      { label: "One-click onboärding", detail: "Google login creates an invisible embedded wallet. No seed phrase, no extension, no järgon.", color: P.jade },
       { label: "Fräctional from $1", detail: "Own 0.003 shares of NVIDIA. A student in Lagos can build a US portfolio from their phone.", color: P.indigo },
       { label: "Fiat onrämp", detail: "Apple Pay, card, or bank transfer. Coinbase converts to USDC — the user never sees a single crypto term.", color: P.terracotta },
     ],
