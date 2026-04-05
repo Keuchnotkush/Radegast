@@ -372,6 +372,17 @@ app.post("/api/proof/generate", async (req, res) => {
   }
 });
 
+// ── Get latest agent result — proxy to AI service ──
+app.get("/api/agent/latest/:userId", async (req, res) => {
+  try {
+    const aiRes = await fetch(`${AI_SERVICE_URL}/api/agent/latest/${req.params.userId}`);
+    if (!aiRes.ok) return res.status(aiRes.status).json({ error: "No results" });
+    res.json(await aiRes.json());
+  } catch {
+    res.status(502).json({ error: "AI service unavailable" });
+  }
+});
+
 // ── Get xStock balances for a wallet address ──
 app.get("/api/holdings/:address", async (req, res) => {
   const addr = req.params.address;

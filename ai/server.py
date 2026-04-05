@@ -86,6 +86,8 @@ async def load_model():
     else:
         logger.warning(f"ONNX model not found at {MODEL_PATH} — /v1/chat/completions will fail")
 
+# In-memory store for latest agent results per user
+_agent_results: dict = {}
 
 # ============================================================
 # BACKGROUND TASK — Autonomous Agent (Trade mode only)
@@ -122,7 +124,26 @@ async def autonomous_agent():
             for profile in trade_users:
                 logger.info(f"[AGENT] Scanning user {profile.user_id}")
                 try:
-                    positions = recommend_allocation(profile) if recommend_allocation else {}
+                    # Fetch actual on-chain holdings from backend
+                    positions = {}
+                    try:
+                        # Use wallet address if available, otherwise use signer address from backend
+                        wallet = profile.user_id if profile.user_id.startswith("0x") else os.getenv("DEMO_WALLET", "0x5FB77900D139f2Eee6F312F3BF98fc8ad700C174")
+                        async with aiohttp.ClientSession() as session:
+                            async with session.get(f"http://localhost:4000/api/holdings/{wallet}") as resp:
+                                if resp.status == 200:
+                                    data = await resp.json()
+                                    total_val = sum(h.get("valueUsd", 0) for h in data.get("holdings", []))
+                                    if total_val > 0:
+                                        for h in data["holdings"]:
+                                            positions[h["symbol"]] = round(h["valueUsd"] / total_val * 100, 1)
+                    except Exception as e:
+                        logger.warning(f"[AGENT] Could not fetch holdings: {e}")
+
+                    # Fallback to recommended allocation if no on-chain holdings
+                    if not positions and recommend_allocation:
+                        positions = recommend_allocation(profile)
+
                     request = ConsensusRequest(
                         user=profile.user_id,
                         positions=positions,
@@ -130,6 +151,14 @@ async def autonomous_agent():
                         mode=Mode.TRADE,
                     )
                     result = await run_consensus(request)
+
+                    # Store latest result for frontend polling
+                    import time
+                    _agent_results[profile.user_id] = {
+                        **asdict(result),
+                        "timestamp": time.time(),
+                        "positions": positions,
+                    }
 
                     if result.consensus_label != RiskLabel.LOW:
                         logger.info(
@@ -186,6 +215,15 @@ class OpenAIChatRequest(BaseModel):
 # ============================================================
 # ENDPOINTS
 # ============================================================
+
+@app.get("/api/agent/latest/{user_id}")
+async def agent_latest(user_id: str):
+    """Get the latest autonomous agent result for a user."""
+    result = _agent_results.get(user_id)
+    if not result:
+        raise HTTPException(404, "No agent results yet")
+    return result
+
 
 @app.get("/health")
 async def health():
