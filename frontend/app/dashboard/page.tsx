@@ -10,6 +10,16 @@ import { usePortfolio, MARKET, STOCK_COLORS, useSettings, useLiveMarket, useUser
 import { useFundWallet } from "@privy-io/react-auth";
 
 
+/* ─── Compact number formatter ─── */
+function formatCompact(n: number): string {
+  const abs = Math.abs(n);
+  if (abs >= 1e12) return `$${(n / 1e12).toFixed(1)}T`;
+  if (abs >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  if (abs >= 1e5) return `$${(n / 1e3).toFixed(0)}K`;
+  return `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
 
@@ -104,18 +114,16 @@ export default function DashboardPage() {
           transition={{ delay: 0.15, duration: 0.4, ease }}
           className="mb-16"
         >
-          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
+          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 overflow-hidden">
             {/* Donut */}
-            <div className="flex-shrink-0">
-              <DonutChart stocks={totalAllocations} cashPct={cashAllocation} total={total} />
-            </div>
+            <DonutChart stocks={totalAllocations} cashPct={cashAllocation} total={total} />
 
             {/* Metrics + legend */}
-            <div className="flex-1 flex flex-col gap-6 md:gap-8 w-full">
+            <div className="flex-1 flex flex-col gap-6 md:gap-8 w-full min-w-0">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                 <MetricCard label="24h Return" value="—" sub="Coming soon" color={P.gray} index={0} />
-                <MetricCard label="Invested" value={`$${invested.toLocaleString("en-US", { maximumFractionDigits: 0 })}`} sub={`${portfolioStocks.length} stocks`} color={P.dark} index={1} />
-                <MetricCard label="Available" value={`$${availableCash.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} sub="Ready to invest" color={P.jade} index={2} />
+                <MetricCard label="Invested" value={formatCompact(invested)} sub={`${portfolioStocks.length} stocks`} color={P.dark} index={1} />
+                <MetricCard label="Available" value={formatCompact(availableCash)} sub="Ready to invest" color={P.jade} index={2} />
                 <MetricCard label="All-time P&L" value="—" sub="Coming soon" color={P.gray} index={3} />
               </div>
 
@@ -273,14 +281,68 @@ function DonutChart({ stocks, cashPct, total }: { stocks: { ticker: string; allo
   const c = 2 * Math.PI * r;
   let cum = 0;
 
+  // All stock colors for the animated rainbow ring
+  const allColors = Object.values(STOCK_COLORS);
+  const colorStops = allColors.map((color, i) => {
+    const pct = (i / allColors.length) * 100;
+    const nextPct = ((i + 1) / allColors.length) * 100;
+    return `${color} ${pct}%, ${color} ${nextPct}%`;
+  }).join(", ");
+
   return (
-    <div className="relative w-52 h-52 md:w-80 md:h-80">
-      <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
-        <circle cx="100" cy="100" r={r} fill="none" stroke={`${P.border}30`} strokeWidth="14" />
+    <div className="relative w-48 h-48 md:w-72 md:h-72 flex-shrink-0">
+      {/* Animated outer glow ring — all stock colors spinning */}
+      <motion.div
+        className="absolute inset-[-10px] rounded-full blur-[8px]"
+        style={{
+          background: `conic-gradient(${colorStops})`,
+          mask: "radial-gradient(transparent 54%, black 58%, black 70%, transparent 74%)",
+          WebkitMask: "radial-gradient(transparent 54%, black 58%, black 70%, transparent 74%)",
+          opacity: 0.45,
+        }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+      />
+      {/* Inner crisp rainbow ring (subtle, behind allocation) */}
+      <motion.div
+        className="absolute inset-0 rounded-full"
+        style={{
+          background: `conic-gradient(${colorStops})`,
+          mask: "radial-gradient(transparent 60%, black 62%, black 70%, transparent 72%)",
+          WebkitMask: "radial-gradient(transparent 60%, black 62%, black 70%, transparent 72%)",
+          opacity: 0.18,
+        }}
+        animate={{ rotate: -360 }}
+        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+      />
+
+      {/* SVG donut — actual allocation segments */}
+      <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90 relative z-10">
+        {/* Faint per-color base ring so all colors peek through */}
+        {allColors.map((color, i) => {
+          const segLen = c / allColors.length;
+          const off = (i / allColors.length) * c;
+          return (
+            <motion.circle
+              key={`bg-${i}`}
+              cx="100" cy="100" r={r}
+              fill="none"
+              stroke={color}
+              strokeWidth="14"
+              strokeDasharray={`${segLen - 1} ${c - segLen + 1}`}
+              strokeDashoffset={-off}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.12 }}
+              transition={{ duration: 0.6, delay: 0.05 * i }}
+            />
+          );
+        })}
+        {/* Actual allocation segments */}
         {stocks.map((s, i) => {
           const off = (cum / 100) * c;
           const len = (s.allocation / 100) * c;
           cum += s.allocation;
+          if (len < 0.5) return null;
           return (
             <motion.circle
               key={s.ticker}
@@ -312,16 +374,48 @@ function DonutChart({ stocks, cashPct, total }: { stocks: { ticker: string; allo
           );
         })()}
       </svg>
+
+      {/* Animated color dots orbiting the ring */}
+      {allColors.slice(0, 6).map((color, i) => (
+        <motion.div
+          key={`dot-${i}`}
+          className="absolute w-2.5 h-2.5 rounded-full z-20"
+          style={{
+            background: color,
+            boxShadow: `0 0 8px ${color}80`,
+            top: "50%",
+            left: "50%",
+          }}
+          animate={{
+            x: [
+              Math.cos(((i * 60) * Math.PI) / 180) * (r + 8) - 5,
+              Math.cos(((i * 60 + 360) * Math.PI) / 180) * (r + 8) - 5,
+            ],
+            y: [
+              Math.sin(((i * 60) * Math.PI) / 180) * (r + 8) - 5,
+              Math.sin(((i * 60 + 360) * Math.PI) / 180) * (r + 8) - 5,
+            ],
+            scale: [1, 1.4, 1],
+          }}
+          transition={{
+            x: { duration: 12 + i * 2, repeat: Infinity, ease: "linear" },
+            y: { duration: 12 + i * 2, repeat: Infinity, ease: "linear" },
+            scale: { duration: 2, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 },
+          }}
+        />
+      ))}
+
+      {/* Center text */}
       <motion.div
-        className="absolute inset-0 flex flex-col items-center justify-center"
+        className="absolute inset-0 flex flex-col items-center justify-center z-20"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
       >
-        <span className="text-4xl font-bold" style={{ color: P.dark }}>
-          ${total.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+        <span className="text-xl md:text-3xl font-bold" style={{ color: P.dark }}>
+          {formatCompact(total)}
         </span>
-        <span className="text-[13px] font-medium mt-1.5" style={{ color: P.gray }}>Total balance</span>
+        <span className="text-[11px] md:text-[13px] font-medium mt-1" style={{ color: P.gray }}>Total balance</span>
       </motion.div>
     </div>
   );
@@ -604,7 +698,7 @@ function MiniChart({ color, trend }: { color: string; trend: "up" | "down" }) {
 function MetricCard({ label, value, sub, color, index = 0 }: { label: string; value: string; sub: string; color: string; index?: number }) {
   return (
     <motion.div
-      className="py-4"
+      className="py-4 min-w-0 overflow-hidden"
       initial={{ opacity: 0, y: 30, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.5, delay: 0.2 + index * 0.12, type: "spring", stiffness: 300, damping: 20 }}
@@ -619,7 +713,7 @@ function MetricCard({ label, value, sub, color, index = 0 }: { label: string; va
       />
       <div className="text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ fontFamily: "Lexend", color: P.gray }}>{label}</div>
       <motion.div
-        className="text-2xl font-bold"
+        className="text-lg md:text-2xl font-bold truncate"
         style={{ color }}
         initial={{ opacity: 0, filter: "blur(8px)" }}
         animate={{ opacity: 1, filter: "blur(0px)" }}
@@ -627,7 +721,7 @@ function MetricCard({ label, value, sub, color, index = 0 }: { label: string; va
       >
         {value}
       </motion.div>
-      <div className="text-[13px] font-medium mt-1" style={{ color: P.gray }}>{sub}</div>
+      <div className="text-[12px] md:text-[13px] font-medium mt-1 truncate" style={{ color: P.gray }}>{sub}</div>
     </motion.div>
   );
 }
