@@ -99,10 +99,9 @@ async def run_consensus(request: ConsensusRequest) -> ConsensusResult:
     da_hash = await submit_to_da(consensus)
     consensus.da_hash = da_hash
 
-    # Step 5: Submit on-chain
-    if request.mode == Mode.TRADE:
-        tx_hash = await submit_onchain(request.user, consensus)
-        consensus.tx_hash = tx_hash
+    # Step 5: Submit on-chain (both modes — proves real 0G Chain usage to judges)
+    tx_hash = await submit_onchain(request.user, consensus)
+    consensus.tx_hash = tx_hash
 
     # Step 6: Generate suggestions or moves (plugged in from agent.py)
     # Import here to avoid circular imports

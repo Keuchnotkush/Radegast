@@ -80,6 +80,29 @@ onnx_session: Optional[ort.InferenceSession] = None
 @app.on_event("startup")
 async def load_model():
     global onnx_session
+
+    # If model not on disk, pull it from 0G Storage
+    if not MODEL_PATH.exists():
+        root_hash = os.getenv("OG_MODEL_ROOT_HASH", "")
+        if root_hash:
+            logger.info(f"ONNX model not found locally — downloading from 0G Storage ({root_hash[:18]}...)")
+            import subprocess
+            script = Path(__file__).parent / "scripts" / "og_storage_download.mjs"
+            try:
+                proc = subprocess.run(
+                    ["node", str(script), root_hash, str(MODEL_PATH)],
+                    capture_output=True, text=True, timeout=120,
+                    env={**os.environ},
+                )
+                if proc.returncode == 0:
+                    logger.info(f"ONNX model downloaded from 0G Storage to {MODEL_PATH}")
+                else:
+                    logger.error(f"0G Storage download failed: {proc.stderr.strip()}")
+            except Exception as e:
+                logger.error(f"0G Storage download error: {e}")
+        else:
+            logger.warning("OG_MODEL_ROOT_HASH not set — cannot pull model from 0G Storage")
+
     if MODEL_PATH.exists():
         onnx_session = ort.InferenceSession(str(MODEL_PATH))
         logger.info(f"ONNX model loaded from {MODEL_PATH}")

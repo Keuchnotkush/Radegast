@@ -270,6 +270,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const { address: walletAddress } = useWallet();
 
   const activateAuto = useCallback((duration: AutoDuration, dailyLimit: number) => {
+    if (!walletAddress) return; // No wallet = can't activate autonomous trading
     const dur = AUTO_DURATIONS.find((d) => d.key === duration)!;
     const now = Date.now();
     setAutoSession({
@@ -286,7 +287,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/profile/mode`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: walletAddress || "default", mode: "trade" }),
+      body: JSON.stringify({ user_id: walletAddress!, mode: "trade" }),
     }).catch(() => {});
   }, [walletAddress]);
 
@@ -296,7 +297,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/profile/mode`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: walletAddress || "default", mode: "conseil" }),
+      body: JSON.stringify({ user_id: walletAddress!, mode: "conseil" }),
     }).catch(() => {});
   }, [walletAddress]);
 
