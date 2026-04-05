@@ -116,7 +116,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                 <MetricCard label="24h Return" value="—" sub="Coming soon" color={P.gray} index={0} />
                 <MetricCard label="Invested" value={`$${invested.toLocaleString("en-US", { maximumFractionDigits: 0 })}`} sub={`${portfolioStocks.length} stocks`} color={P.dark} index={1} />
-                <MetricCard label="Available" value={`$${availableCash.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} sub={wallet.address ? "USDC balance" : "Ready to invest"} color={P.jade} index={2} />
+                <MetricCard label="Available" value={`$${availableCash.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} sub="Ready to invest" color={P.jade} index={2} />
                 <MetricCard label="All-time P&L" value="—" sub="Coming soon" color={P.gray} index={3} />
               </div>
 

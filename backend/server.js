@@ -226,17 +226,37 @@ app.post("/api/email/welcome", async (req, res) => {
 // ── In-memory user store ──
 const users = new Map();
 
+// ── Track wallets that already got faucet ──
+const faucetClaimed = new Set();
+
 // ── Register user (called on signup) ──
-app.post("/api/user/register", (req, res) => {
-  const { email, firstName, lastName } = req.body;
+app.post("/api/user/register", async (req, res) => {
+  const { email, firstName, lastName, walletAddress } = req.body;
   if (!email || !firstName) {
     return res.status(400).json({ error: "email and firstName are required" });
   }
   const id = Buffer.from(email).toString("base64url");
-  const user = { id, email, firstName, lastName: lastName || "", strategy: null, aiMode: "Advisory", createdAt: Date.now() };
+  const user = { id, email, firstName, lastName: lastName || "", strategy: null, aiMode: "Advisory", walletAddress: walletAddress || null, createdAt: Date.now() };
   users.set(id, user);
   users.set(email, user); // index by email too
-  res.json({ success: true, user });
+
+  // Auto-faucet: mint $10,000 demo credits on first signup
+  let faucetTx = null;
+  if (walletAddress && walletClient && USDC_ADDRESS !== "0x0000000000000000000000000000000000000000" && !faucetClaimed.has(walletAddress.toLowerCase())) {
+    try {
+      const weiAmount = BigInt(FAUCET_AMOUNT) * BigInt(10 ** USDC_DECIMALS);
+      faucetTx = await walletClient.writeContract({
+        address: USDC_ADDRESS, abi: usdcAbi, functionName: "mint",
+        args: [walletAddress, weiAmount],
+      });
+      faucetClaimed.add(walletAddress.toLowerCase());
+      console.log(`[Faucet] Auto-credited $${FAUCET_AMOUNT} to ${walletAddress} — tx: ${faucetTx}`);
+    } catch (err) {
+      console.error("[Faucet] Auto-credit failed:", err.message);
+    }
+  }
+
+  res.json({ success: true, user, faucetTx, credited: faucetTx ? FAUCET_AMOUNT : 0 });
 });
 
 // ── Get user by id or email ──
@@ -533,7 +553,8 @@ app.post("/api/faucet", async (req, res) => {
       address: USDC_ADDRESS, abi: usdcAbi, functionName: "mint",
       args: [walletAddress, weiAmount],
     });
-    res.json({ success: true, txHash, amount: usdAmount, symbol: "USDC" });
+    faucetClaimed.add(walletAddress.toLowerCase());
+    res.json({ success: true, txHash, amount: usdAmount });
   } catch (err) {
     console.error("Faucet error:", err.message);
     res.status(500).json({ error: "Faucet failed: " + err.message });

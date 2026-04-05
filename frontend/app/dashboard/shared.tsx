@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { usePortfolio, logoUrl } from "./store";
+import { usePortfolio, useWallet, logoUrl } from "./store";
 import { P, ease, spring } from "../lib/theme";
 
 /* ─── Bottom Tab Bar (mobile, Revolut/Trade Republic style) ─── */
@@ -268,10 +268,12 @@ export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () 
   const [amount, setAmount] = useState(stock.prefillAmount ? stock.prefillAmount.toString() : "");
   const [period, setPeriod] = useState<Period>("1M");
   const [step, setStep] = useState<"input" | "confirm" | "processing" | "done">("input");
+  const [txHashes, setTxHashes] = useState<{ step: string; txHash: string }[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
   const isUp = stock.change >= 0;
   const presets = [10, 50, 100, 500];
 
+  const { address: walletAddress } = useWallet();
   const ticker = stock.symbol.replace("x", "");
   const { data: prices, loading } = usePriceHistory(ticker, period);
   const portfolio = usePortfolio();
@@ -305,20 +307,19 @@ export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () 
           action: tab,
           ticker,
           usdAmount,
-          walletAddress: "0x5FB77900D139f2Eee6F312F3BF98fc8ad700C174", // deployer for demo
+          walletAddress: walletAddress || "0x0000000000000000000000000000000000000000",
         }),
       });
       if (!res.ok) throw new Error("Trade failed");
+      const data = await res.json();
+      if (data.txHashes) setTxHashes(data.txHashes);
       if (tab === "buy") portfolio.buy(ticker, usdAmount);
       else portfolio.sell(ticker, usdAmount);
       setStep("done");
-      setTimeout(() => onClose(), 1500);
     } catch {
-      // Fallback: update local state even if on-chain fails
       if (tab === "buy") portfolio.buy(ticker, usdAmount);
       else portfolio.sell(ticker, usdAmount);
       setStep("done");
-      setTimeout(() => onClose(), 1500);
     }
   }, [onClose, usdAmount, tab, ticker, portfolio]);
 
@@ -659,15 +660,148 @@ export function TradeModal({ stock, onClose }: { stock: TradeStock; onClose: () 
                 <p className="text-[18px] font-bold">
                   {tab === "buy" ? "Purchase" : "Sale"} complete
                 </p>
-                <p className="text-[13px] mt-1" style={{ color: P.gray }}>
+                <p className="text-[13px] mt-1 mb-5" style={{ color: P.gray }}>
                   {tab === "buy" ? "Bought" : "Sold"} {"\u2248"}{shares.toFixed(4)} shares of {stock.name}
                 </p>
+
+                {txHashes.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15, duration: 0.35, ease }}
+                    className="w-full rounded-xl p-4 mb-5"
+                    style={{ background: P.bg }}
+                  >
+                    <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ fontFamily: "Lexend", color: P.gray }}>
+                      On-chain settlement
+                    </div>
+                    {txHashes.map((tx, i) => (
+                      <motion.div
+                        key={tx.txHash}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.25 + i * 0.1, duration: 0.3, ease }}
+                        className="flex items-center justify-between py-2"
+                        style={{ borderBottom: i < txHashes.length - 1 ? `1px solid ${P.border}25` : "none" }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full" style={{ background: P.jade }} />
+                          <span className="text-[12px]" style={{ color: P.gray }}>
+                            {tx.step === "burn_usdc" ? "Payment" : tx.step === "mint_xstock" ? "Settlement" : tx.step === "burn_xstock" ? "Settlement" : tx.step === "mint_usdc" ? "Proceeds" : tx.step}
+                          </span>
+                        </div>
+                        <a
+                          href={`https://chainscan-newton.0g.ai/tx/${tx.txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-[12px] font-medium"
+                          style={{ color: P.jade }}
+                        >
+                          {tx.txHash.slice(0, 6)}...{tx.txHash.slice(-4)}
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
+                        </a>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={spring}
+                  onClick={onClose}
+                  className="w-full py-4 rounded-xl text-[14px] font-semibold cursor-pointer"
+                  style={{ background: `${P.border}25`, color: P.dark }}
+                >
+                  Done
+                </motion.button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </motion.div>
     </>
+  );
+}
+
+/* ─── Credit Toast (faucet welcome notification) ─── */
+export function CreditToast({ amount, visible, onDone }: { amount: number; visible: boolean; onDone: () => void }) {
+  useEffect(() => {
+    if (visible) {
+      const t = setTimeout(onDone, 4500);
+      return () => clearTimeout(t);
+    }
+  }, [visible, onDone]);
+
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ y: -80, opacity: 0, scale: 0.9 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          exit={{ y: -40, opacity: 0, scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 py-3.5 px-6 rounded-2xl shadow-lg"
+          style={{
+            background: P.surface,
+            border: `1.5px solid ${P.jade}30`,
+            boxShadow: `0 8px 32px ${P.dark}18, 0 0 0 1px ${P.jade}10`,
+            fontFamily: "Sora, sans-serif",
+          }}
+        >
+          {/* Animated checkmark circle */}
+          <motion.div
+            initial={{ scale: 0, rotate: -90 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.15, type: "spring", stiffness: 500, damping: 15 }}
+            className="flex items-center justify-center w-9 h-9 rounded-full flex-shrink-0"
+            style={{ background: `${P.jade}18` }}
+          >
+            <motion.svg
+              width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </motion.svg>
+          </motion.div>
+
+          {/* Text */}
+          <div className="flex flex-col">
+            <motion.span
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.3, ease }}
+              className="text-[14px] font-semibold"
+              style={{ color: P.dark }}
+            >
+              ${amount.toLocaleString()} added to your account
+            </motion.span>
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.35, duration: 0.3 }}
+              className="text-[12px]"
+              style={{ color: P.gray }}
+            >
+              Demo credits — start investing now
+            </motion.span>
+          </div>
+
+          {/* Progress bar */}
+          <motion.div
+            className="absolute bottom-0 left-6 right-6 h-[2px] rounded-full origin-left"
+            style={{ background: P.jade }}
+            initial={{ scaleX: 1 }}
+            animate={{ scaleX: 0 }}
+            transition={{ duration: 4.5, ease: "linear" }}
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

@@ -1,7 +1,9 @@
 "use client";
 
-import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
+import { DynamicContextProvider, useDynamicContext, useUserWallets } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { CreditToast } from "./dashboard/shared";
 
 const ogTestnet = {
   blockExplorerUrls: ["https://chainscan-newton.0g.ai"],
@@ -18,6 +20,55 @@ const ogTestnet = {
   rpcUrls: ["https://evmrpc-testnet.0g.ai"],
   vanityName: "0G Testnet",
 };
+
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
+// Auto-credit $10,000 demo dollars when wallet becomes available
+function AutoFaucet({ children }: { children: React.ReactNode }) {
+  const { user } = useDynamicContext();
+  const userWallets = useUserWallets();
+  const wallet = userWallets?.[0];
+  const claimed = useRef(false);
+  const [showToast, setShowToast] = useState(false);
+  const [creditedAmount, setCreditedAmount] = useState(0);
+  const hideToast = useCallback(() => setShowToast(false), []);
+
+  useEffect(() => {
+    if (!wallet?.address || !user?.email || claimed.current) return;
+    const key = `radegast_faucet_${wallet.address.toLowerCase()}`;
+    if (localStorage.getItem(key)) return;
+
+    claimed.current = true;
+    // Re-register with wallet to trigger auto-faucet
+    fetch(`${API}/api/user/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: user.email,
+        firstName: user.firstName || localStorage.getItem("radegast_firstName") || "",
+        lastName: user.lastName || "",
+        walletAddress: wallet.address,
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.credited > 0) {
+          localStorage.setItem(key, String(Date.now()));
+          setCreditedAmount(data.credited);
+          setShowToast(true);
+          console.log(`[Radegast] $${data.credited.toLocaleString()} demo credits added`);
+        }
+      })
+      .catch(() => {});
+  }, [wallet?.address, user?.email, user?.firstName, user?.lastName]);
+
+  return (
+    <>
+      <CreditToast amount={creditedAmount} visible={showToast} onDone={hideToast} />
+      {children}
+    </>
+  );
+}
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -120,7 +171,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      {children}
+      <AutoFaucet>{children}</AutoFaucet>
     </DynamicContextProvider>
   );
 }

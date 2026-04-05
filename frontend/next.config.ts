@@ -4,7 +4,16 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/(.*)",
+        // COEP/COOP only on ZK proof pages — needed for SharedArrayBuffer (Noir.js WASM).
+        // Applying globally breaks Dynamic SDK's embedded wallet iframe.
+        source: "/dashboard/solvency/:path*",
+        headers: [
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+        ],
+      },
+      {
+        source: "/verify/:path*",
         headers: [
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
           { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
