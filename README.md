@@ -23,27 +23,27 @@
   <img src="https://img.shields.io/badge/Noir-ZK_Proofs-black?style=flat-square" />
 </p>
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                           TL;DR                                */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
+
+## TL;DR
 
 Radegast lets anyone invest in tokenized US stocks (TSLA, AAPL, NVDA...) 24/7 from anywhere with Google login. Three AI models vote on risk — 2 LLMs via **0G Compute** broker + 1 XGBoost ONNX model — consensus results are stored on **0G Storage (DA)**, and settled on **0G Chain**. An autonomous agent rebalances portfolios automatically. Users can generate **zero-knowledge proofs** of solvency (Noir/UltraPlonk) to prove portfolio value to banks without revealing holdings.
 
 **The user never sees a wallet, gas fee, or blockchain term. It's a stock investing app.**
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                        THE PROBLEM                             */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
+
+## The Problem
 
 A 28-year-old in Lisbon wants to invest in Tesla, Apple, NVIDIA. Today she needs a US brokerage (hard from Portugal), can only trade during Wall Street hours, pays advisor fees, and when she wants a mortgage, her crypto holdings are invisible to the bank.
 
 Radegast solves this in three ways.
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                       HOW IT WORKS                             */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
 
-## 1. Invest in US Stocks 24/7
+## How It Works
+
+### 1. Invest in US Stocks 24/7
 
 Sign in with Google. Pick a strategy. Your money buys tokenized US equities (xStocks) as ERC-20 tokens on 0G Chain. Trade 24/7, fractional from $1, no brokerage needed.
 
@@ -56,7 +56,7 @@ User clicks "Buy $100 of Tesla"
   → Frontend updates portfolio from on-chain balances
 ```
 
-## 2. AI Consensus Protocol (3-Model Voting)
+### 2. AI Consensus Protocol (3-Model Voting)
 
 Three independent AI models analyze your portfolio. They vote. Majority wins. Every decision is settled on-chain and auditable.
 
@@ -78,7 +78,7 @@ Portfolio data (61 features: RSI, volatility, returns, correlation)
 - **Advisory** — AI analyzes and recommends, user decides
 - **Trade** — AI analyzes and auto-executes rebalances (autonomous agent, every 60s)
 
-## 3. ZK Proof of Solvency
+### 3. ZK Proof of Solvency
 
 Generate a zero-knowledge proof that your portfolio exceeds a threshold (e.g. $50,000) without revealing which stocks you hold.
 
@@ -98,9 +98,9 @@ fn main(
 
 Proof generated entirely client-side (Noir.js WASM in `lib/noir/prover.ts`), attestation stored on-chain via `ProofRegistry` on 0G Chain. Anyone verifies at `radegast.app/verify/{id}`.
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*               0G FULL STACK INTEGRATION (4/4)                  */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
+
+## 0G Full Stack Integration (4/4)
 
 We use **every layer** of the 0G stack.
 
@@ -108,63 +108,63 @@ We use **every layer** of the 0G stack.
 
 | Component | Implementation | File |
 |-----------|---------------|------|
-| **XGBoost Provider** | ONNX model served via OpenAI-compatible `/v1/chat/completions` endpoint on FastAPI | `ai/server.py:344` |
-| **LLM Broker** | `@0glabs/0g-serving-broker` — calls LLM providers via 0G Compute, generates single-use auth headers, verifies responses | `ai/scripts/og_compute_call.mjs` |
-| **Service Discovery** | `broker.inference.listService()` — lists available LLM providers on 0G Compute network | `ai/scripts/og_compute_call.mjs:38` |
-| **Response Verification** | `broker.inference.processResponse()` — verifies provider response authenticity after each call | `ai/scripts/og_compute_call.mjs:118` |
-| **Ledger Management** | `broker.ledger.addLedger()` — deposits A0GI funds for inference payments | `ai/scripts/og_compute_call.mjs:55` |
+| XGBoost Provider | ONNX model served via OpenAI-compatible `/v1/chat/completions` endpoint on FastAPI | `ai/server.py:344` |
+| LLM Broker | `@0glabs/0g-serving-broker` — calls LLM providers via 0G Compute, generates single-use auth headers, verifies responses | `ai/scripts/og_compute_call.mjs` |
+| Service Discovery | `broker.inference.listService()` — lists available LLM providers on 0G Compute network | `ai/scripts/og_compute_call.mjs:38` |
+| Response Verification | `broker.inference.processResponse()` — verifies provider response authenticity after each call | `ai/scripts/og_compute_call.mjs:118` |
+| Ledger Management | `broker.ledger.addLedger()` — deposits A0GI funds for inference payments | `ai/scripts/og_compute_call.mjs:55` |
 
-**SDK:** `@0glabs/0g-serving-broker` v0.7.4
+SDK: `@0glabs/0g-serving-broker` v0.7.4
 
 ### 0G Storage — Data Availability
 
 | Component | Implementation | File |
 |-----------|---------------|------|
-| **Consensus Blob Upload** | AI consensus results serialized to JSON, uploaded to 0G Storage via `@0gfoundation/0g-ts-sdk` (`MOCK_DA=false`) or hashed locally for dev (`MOCK_DA=true`) | `ai/scripts/og_storage_upload.mjs` |
-| **Merkle Tree** | `MemData.merkleTree()` → `rootHash` used as `daHash` for on-chain cross-reference | `ai/scripts/og_storage_upload.mjs:60` |
-| **Download/Verify** | `og_storage_download.mjs` — retrieve stored data by rootHash from 0G Storage indexer | `ai/scripts/og_storage_download.mjs` |
+| Consensus Blob Upload | AI consensus results serialized to JSON, uploaded to 0G Storage via `@0gfoundation/0g-ts-sdk` | `ai/scripts/og_storage_upload.mjs` |
+| Merkle Tree | `MemData.merkleTree()` → `rootHash` used as `daHash` for on-chain cross-reference | `ai/scripts/og_storage_upload.mjs:60` |
+| Download/Verify | Retrieve stored data by rootHash from 0G Storage indexer | `ai/scripts/og_storage_download.mjs` |
 
-**SDK:** `@0gfoundation/0g-ts-sdk` v1.2.1 (Indexer, MemData)
+SDK: `@0gfoundation/0g-ts-sdk` v1.2.1 (Indexer, MemData)
 
 ### 0G Chain — Settlement (Chain 16602)
 
 | Contract | Purpose | Address |
 |----------|---------|---------|
-| `XStockMock` (x15) | ERC-20 tokenized stocks with on-chain price oracle, role-based mint/burn | See [Deployed Contracts](#deployed-contracts) |
-| `ConsensusSettlement` | Records AI consensus votes (score, confidence, label, provider agreement, daHash) | `0x3dBCdad5Da3a7f345353d8387c7BE6EBe5F6524f` |
-| `ProofOfSolvency` | ZK attestation with on-chain Noir proof verification via HonkVerifier | `0x9ad38b9e70a23BE95186C5935930C6Ab05C49dD9` |
-| `ProofRegistry` | Attestation store (submit/check) for proof results | `0x2a768566eF8C8a44129B0b04fD8a2AD240620255` |
-| `HonkVerifier` | Noir-generated UltraPlonk verifier (Sumcheck + Shplemini pairing) | `0x71E560eC76Ac0CBA7F44D6ba557f0706257deFa1` |
-| `MockUSDC` | Demo stablecoin for trading (6 decimals, auto-faucet $10k on signup) | `0x0cd4BADcDA55B01d312d4AF9E163090Ab301e694` |
+| XStockMock (x15) | ERC-20 tokenized stocks with on-chain price oracle, role-based mint/burn | See [Deployed Contracts](#deployed-contracts) |
+| ConsensusSettlement | Records AI consensus votes (score, confidence, label, provider agreement, daHash) | `0x3dBCdad5Da3a7f345353d8387c7BE6EBe5F6524f` |
+| ProofOfSolvency | ZK attestation with on-chain Noir proof verification via HonkVerifier | `0x9ad38b9e70a23BE95186C5935930C6Ab05C49dD9` |
+| ProofRegistry | Attestation store (submit/check) for proof results | `0x2a768566eF8C8a44129B0b04fD8a2AD240620255` |
+| HonkVerifier | Noir-generated UltraPlonk verifier (Sumcheck + Shplemini pairing) | `0x71E560eC76Ac0CBA7F44D6ba557f0706257deFa1` |
+| MockUSDC | Demo stablecoin for trading (6 decimals, auto-faucet $10k on signup) | `0x0cd4BADcDA55B01d312d4AF9E163090Ab301e694` |
 
-**Stack:** Solidity 0.8.24, Foundry, [Solady](https://github.com/Vectorized/solady) (OwnableRoles, ERC20)
+Stack: Solidity 0.8.24, Foundry, [Solady](https://github.com/Vectorized/solady) (OwnableRoles, ERC20)
 
 ### 0G DA — Audit Trail
 
-Every AI consensus decision produces a `daHash` — either from a real 0G Storage upload (`rootHash` via `og_storage_upload.mjs`) or a deterministic SHA-256 hash in dev mode. This hash is submitted on-chain as `daHash` in `ConsensusSettlement.submit()`, creating a **cross-reference** between the on-chain record and the full audit data. Anyone can call `ConsensusSettlement.verifyDA(id, expectedHash)` to verify the link.
+Every AI consensus decision produces a `daHash` — either from a real 0G Storage upload (`rootHash` via `og_storage_upload.mjs`) or a deterministic SHA-256 hash in dev mode. This hash is submitted on-chain as `daHash` in `ConsensusSettlement.submit()`, creating a cross-reference between the on-chain record and the full audit data.
 
 ```
 ConsensusResult JSON → 0G Storage upload → rootHash
                                               │
 ConsensusSettlement.submit(..., daHash) ◄─────┘
                                               │
-ConsensusSettlement.verifyDA(id, rootHash) → true ✓
+ConsensusSettlement.verifyDA(id, rootHash) → true
 ```
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                    AI-NATIVE DeFi CRITERIA                     */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
+
+## AI-Native DeFi Criteria
 
 | Criteria | Implementation |
 |----------|---------------|
-| **Autonomous** | Background agent scans every 60s, runs consensus automatically, executes rebalance trades without user intervention (`ai/server.py:100`) |
-| **Verifiable** | Every AI decision recorded on 0G Chain + full audit blob on 0G DA with cross-reference hash verification |
-| **Economically self-sustaining** | LLM providers on 0G Compute earn inference fees; XGBoost ONNX model served locally with OpenAI-compatible API (ready for 0G Compute provider registration) |
-| **Multi-agent** | 3 independent AI models (XGBoost quantitative + LLM sentiment + LLM macro) coordinate via consensus voting protocol |
+| Autonomous | Background agent scans every 60s, runs consensus automatically, executes rebalance trades without user intervention |
+| Verifiable | Every AI decision recorded on 0G Chain + full audit blob on 0G DA with cross-reference hash verification |
+| Economically self-sustaining | LLM providers on 0G Compute earn inference fees; XGBoost ONNX model served locally with OpenAI-compatible API |
+| Multi-agent | 3 independent AI models (XGBoost quantitative + LLM sentiment + LLM macro) coordinate via consensus voting protocol |
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                        ARCHITECTURE                            */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
+
+## Architecture
 
 ```
 User ──► Next.js (:3000) ──► Express.js (:4000) ──► FastAPI (:8000)
@@ -181,16 +181,13 @@ User ──► Next.js (:3000) ──► Express.js (:4000) ──► FastAPI (:
               └── Noir.js ← ZK proof generation (WASM, client-side)
 ```
 
-Frontend **never** calls AI or chain directly. Backend is the single gateway.
+Frontend never calls AI or chain directly. Backend is the single gateway.
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                     DEPLOYED CONTRACTS                         */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
 
-**Network:** 0G Newton Testnet (Chain ID: `16602`)
-**RPC:** `https://evmrpc-testnet.0g.ai`
-**Explorer:** `https://chainscan-newton.0g.ai`
-**Deployer:** `0x5FB77900D139f2Eee6F312F3BF98fc8ad700C174`
+## Deployed Contracts
+
+**Network:** 0G Newton Testnet (Chain ID: `16602`) | **RPC:** `https://evmrpc-testnet.0g.ai` | **Explorer:** `https://chainscan-newton.0g.ai`
 
 ### xStock Tokens (15 ERC-20)
 
@@ -222,22 +219,22 @@ Frontend **never** calls AI or chain directly. Backend is the single gateway.
 | HonkVerifier | `0x71E560eC76Ac0CBA7F44D6ba557f0706257deFa1` | Noir UltraPlonk verifier (Sumcheck + Shplemini) |
 | MockUSDC | `0x0cd4BADcDA55B01d312d4AF9E163090Ab301e694` | Demo stablecoin (6 decimals, MINTER_ROLE mint/burn) |
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                   PROTOCOL FEATURES & SDKs                     */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
+
+## SDKs & Protocols
 
 | 0G Component | SDK / Tool | What We Built |
 |-------------|-----------|---------------|
-| **0G Compute** | `@0glabs/0g-serving-broker` v0.7.4 | 3-model AI consensus: XGBoost ONNX (local), 2 LLMs via 0G Compute broker with request signing + response verification |
-| **0G Storage** | `@0gfoundation/0g-ts-sdk` v1.2.1 (Indexer, MemData) | Upload consensus blobs to 0G Storage, get rootHash for DA cross-reference |
-| **0G Chain** | Solidity + Foundry + Solady | 20 deployed contracts: 15 xStock ERC-20 instances, ConsensusSettlement, ProofOfSolvency, ProofRegistry, HonkVerifier, MockUSDC |
-| **0G DA** | 0G Storage rootHash as daHash | Every AI decision has a verifiable audit trail: `ConsensusSettlement.verifyDA(id, hash)` |
-| **Privy** | `@privy-io/react-auth` v3.19.0 | Google/Discord/Email auth, embedded EVM wallets (auto-created), onramp via `useFundWallet`, 0G Newton Testnet as default chain |
-| **Noir** | `@noir-lang/noir_js` v1.0.0-beta.15, `@aztec/bb.js` v3.0.0-nightly | Client-side ZK proof of solvency (Poseidon commitment, UltraHonk backend) |
+| 0G Compute | `@0glabs/0g-serving-broker` v0.7.4 | 3-model AI consensus: XGBoost ONNX (local), 2 LLMs via 0G Compute broker with request signing + response verification |
+| 0G Storage | `@0gfoundation/0g-ts-sdk` v1.2.1 (Indexer, MemData) | Upload consensus blobs to 0G Storage, get rootHash for DA cross-reference |
+| 0G Chain | Solidity + Foundry + Solady | 20 deployed contracts: 15 xStock ERC-20, ConsensusSettlement, ProofOfSolvency, ProofRegistry, HonkVerifier, MockUSDC |
+| 0G DA | 0G Storage rootHash as daHash | Every AI decision has a verifiable audit trail: `ConsensusSettlement.verifyDA(id, hash)` |
+| Privy | `@privy-io/react-auth` v3.19.0 | Google/Discord/Email auth, embedded EVM wallets, onramp, 0G Newton Testnet as default chain |
+| Noir | `@noir-lang/noir_js` v1.0.0-beta.15, `@aztec/bb.js` v3.0.0-nightly | Client-side ZK proof of solvency (Poseidon commitment, UltraHonk backend) |
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                     PRIVY SDK INTEGRATION                      */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
+
+## Privy SDK Integration
 
 | Feature | Hook / Config | File | Status |
 |---------|--------------|------|--------|
@@ -254,9 +251,9 @@ Frontend **never** calls AI or chain directly. Backend is the single gateway.
 | Logout | `usePrivy()` → `logout()` | `dashboard/settings/page.tsx` | Live |
 | Theme | `appearance: { theme: "light", accentColor: "#38A88A" }` | `providers.tsx` | Live |
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                         TECH STACK                             */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
+
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -268,9 +265,9 @@ Frontend **never** calls AI or chain directly. Backend is the single gateway.
 | ZK | Noir, UltraPlonk, Noir.js (WASM), @aztec/bb.js, Poseidon BN254 |
 | Infra | Docker, Caddy, GitHub Actions, 0G Newton Testnet |
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                     PROJECT STRUCTURE                          */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
+
+## Project Structure
 
 ```
 Radegast/
@@ -290,7 +287,7 @@ Radegast/
 │   │   └── api/
 │   │       ├── chart/        Yahoo Finance price proxy
 │   │       └── proof-pdf/    PDF certificate generator (jsPDF)
-│   ├── lib/
+��   ├── lib/
 │   │   ├── theme.ts          Design system: palette, ease, spring
 │   │   └── noir/prover.ts    ZK proof engine (Noir.js + bb.js WASM)
 │   └── providers.tsx         PrivyProvider + 0G Chain config + AutoFaucet
@@ -328,7 +325,7 @@ Radegast/
 │   ├── script/
 │   │   ├── Deploy.s.sol            Full deployment (15 tokens + protocol)
 │   │   ├── DeployUSDC.s.sol        MockUSDC deployment
-│   │   ├── DeployVerifier.s.sol    HonkVerifier + wire to ProofOfSolvency
+│   │   ��── DeployVerifier.s.sol    HonkVerifier + wire to ProofOfSolvency
 │   │   └── RedeployPoS.s.sol       Redeploy ProofOfSolvency with verifier
 │   └── test/                       Forge tests
 │
@@ -341,14 +338,11 @@ Radegast/
 └── .github/                  CI/CD workflows
 ```
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                        SETUP & RUN                             */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
 
-### Prerequisites
-- Node.js 20+, pnpm, Python 3.11+, Foundry, Docker (optional)
+## Setup & Run
 
-### Quick Start
+**Prerequisites:** Node.js 20+, pnpm, Python 3.11+, Foundry, Docker (optional)
 
 ```bash
 git clone https://github.com/0x11semprez/radegast.git
@@ -358,7 +352,7 @@ make install                # Install all dependencies
 make dev                    # Start full stack (AI :8000, Backend :4000, Frontend :3000)
 ```
 
-### Individual Services
+Individual services:
 
 ```bash
 make front                  # Frontend only (Next.js :3000)
@@ -366,7 +360,7 @@ make backend                # Backend only (Express :4000)
 cd ai && uvicorn server:app --reload --port 8000   # AI service
 ```
 
-### Smart Contracts
+Smart contracts:
 
 ```bash
 make build                  # forge build
@@ -374,14 +368,16 @@ make test                   # forge test -vvv
 make deploy-og              # Deploy to 0G testnet
 ```
 
-### Docker (Production)
+Docker (production):
 
 ```bash
 make up                     # docker compose up (AI + Frontend + Caddy)
 make down                   # stop
 ```
 
-### Environment Variables
+---
+
+## Environment Variables
 
 ```env
 # Required
@@ -409,9 +405,9 @@ SMTP_USER=
 SMTP_PASS=
 ```
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                       API ENDPOINTS                            */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
+
+## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -429,30 +425,20 @@ SMTP_PASS=
 | `GET` | `/api/agent/latest/:userId` | Latest autonomous agent result |
 | `GET` | `/health` | Health check (both :4000 and :8000) |
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                            TEAM                                */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
+
+## Team
 
 | Name | Role | X | Telegram | Discord |
 |------|------|---|----------|---------|
-| **Kassim** | Frontend + Privy SDK | [@0x11semprez](https://x.com/0x11semprez) | @pupp3tm4st3r | 0x11semprez |
+| **Kassim** | DevOps, Frontend Engineer, Privy SDK | [@0x11semprez](https://x.com/0x11semprez) | @pupp3tm4st3r | 0x11semprez |
 | **Kamil** | AI + 0G Integration + Backend | | | |
 | **Manny** | Smart Contracts (Solidity/Foundry) | [@mvnny0_0](https://x.com/mvnny0_0) | @mvnny_28 | 0x7mvnny |
 | **Keuch** | ZK Circuits (Noir) | [@0xFA2L](https://x.com/0xFA2L) | @BKRTZR | @metallicbat |
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                     LINKS & RESOURCES                          */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-- [0G Documentation](https://docs.0g.ai/)
-- [0G Builder Hub](https://build.0g.ai/)
-- [Privy SDK Docs](https://docs.privy.io)
-- [Noir Language](https://noir-lang.org/)
-- [Solady](https://github.com/Vectorized/solady)
-
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+---
 
 <p align="center">
-  <strong>ETHGlobal Cannes 2026 &bull; 3 days &bull; 4 builders</strong><br/>
+  <strong>ETHGlobal Cannes 2026</strong><br/>
   <em>Radogost (slavic: "the one who welcomes with joy") — a joyful guardian of your investments.</em>
 </p>
