@@ -214,17 +214,7 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          <div className="flex flex-col items-center text-center py-10">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ background: `${P.jade}15` }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
-            </div>
-            <p className="text-[14px] font-medium" style={{ color: P.dark }}>No AI activity yet</p>
-            <p className="text-[12px] mt-1" style={{ color: P.gray }}>
-              {isAutonomous ? "Autonomous trading is active — trades will appear here." : "Enable the AI advisor to see recommendations."}
-            </p>
-          </div>
+          <AgentActivity isAutonomous={isAutonomous} />
         </motion.section>}
 
         {/* STOCKS LIST */}
@@ -644,5 +634,88 @@ function MetricCard({ label, value, sub, color, index = 0 }: { label: string; va
       </motion.div>
       <div className="text-[13px] font-medium mt-1" style={{ color: P.gray }}>{sub}</div>
     </motion.div>
+  );
+}
+
+/* ─── Agent Activity ─── */
+function AgentActivity({ isAutonomous }: { isAutonomous: boolean }) {
+  const [data, setData] = useState<{
+    consensus_label: string;
+    consensus_score: number;
+    suggestions: string[];
+    moves: { token: string; action: string; pct: number }[];
+    trade_results: { token: string; action: string; pct: number; tx_hash: string; success: boolean }[];
+    timestamp: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const poll = () => {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/agent/latest/default`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((d) => { if (d) setData(d); })
+        .catch(() => {});
+    };
+    poll();
+    const id = setInterval(poll, 15000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!data) {
+    return (
+      <div className="flex flex-col items-center text-center py-10">
+        <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ background: `${P.jade}15` }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={P.jade} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        </div>
+        <p className="text-[14px] font-medium" style={{ color: P.dark }}>No AI activity yet</p>
+        <p className="text-[12px] mt-1" style={{ color: P.gray }}>
+          {isAutonomous ? "Autonomous trading is active — trades will appear here." : "Enable the AI advisor to see recommendations."}
+        </p>
+      </div>
+    );
+  }
+
+  const riskColor = data.consensus_label === "HIGH" ? P.loss : data.consensus_label === "LOW" ? P.gain : "#C8A415";
+  const items = data.trade_results.length > 0 ? data.trade_results : data.moves;
+  const ago = Math.round((Date.now() / 1000 - data.timestamp) / 60);
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase"
+          style={{ background: `${riskColor}18`, color: riskColor }}>
+          {data.consensus_label} — {data.consensus_score.toFixed(0)}
+        </span>
+        <span className="text-[11px]" style={{ color: P.gray }}>{ago < 1 ? "just now" : `${ago}m ago`}</span>
+      </div>
+      {items.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          {items.map((m, i) => (
+            <div key={i} className="flex items-center gap-3 py-2.5 px-4 rounded-xl" style={{ background: P.surface, border: `1px solid ${P.border}30` }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold"
+                style={{ background: m.action === "buy" ? `${P.gain}15` : `${P.loss}15`, color: m.action === "buy" ? P.gain : P.loss }}>
+                {m.action === "buy" ? "+" : "−"}
+              </div>
+              <span className="text-[13px] font-semibold">{m.token}</span>
+              <span className="text-[12px]" style={{ color: P.gray }}>{m.action.toUpperCase()} {m.pct.toFixed(1)}%</span>
+              {"tx_hash" in m && (
+                <span className="ml-auto text-[10px] font-mono" style={{ color: P.gray }}>
+                  {(m as { tx_hash: string }).tx_hash?.slice(0, 12)}...
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : data.suggestions.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          {data.suggestions.slice(0, 3).map((s, i) => (
+            <p key={i} className="text-[13px] py-2 px-4 rounded-xl" style={{ background: P.surface, color: P.dark }}>{s}</p>
+          ))}
+        </div>
+      ) : (
+        <p className="text-[13px]" style={{ color: P.gray }}>Portfolio is balanced — no action needed.</p>
+      )}
+    </div>
   );
 }
