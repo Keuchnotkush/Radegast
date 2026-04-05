@@ -281,63 +281,18 @@ function DonutChart({ stocks, cashPct, total }: { stocks: { ticker: string; allo
   const c = 2 * Math.PI * r;
   let cum = 0;
 
-  // All stock colors for the animated rainbow ring
-  const allColors = Object.values(STOCK_COLORS);
-  const colorStops = allColors.map((color, i) => {
-    const pct = (i / allColors.length) * 100;
-    const nextPct = ((i + 1) / allColors.length) * 100;
-    return `${color} ${pct}%, ${color} ${nextPct}%`;
-  }).join(", ");
-
   return (
     <div className="relative w-48 h-48 md:w-72 md:h-72 flex-shrink-0">
-      {/* Animated outer glow ring — all stock colors spinning */}
-      <motion.div
-        className="absolute inset-[-10px] rounded-full blur-[8px]"
-        style={{
-          background: `conic-gradient(${colorStops})`,
-          mask: "radial-gradient(transparent 54%, black 58%, black 70%, transparent 74%)",
-          WebkitMask: "radial-gradient(transparent 54%, black 58%, black 70%, transparent 74%)",
-          opacity: 0.45,
-        }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-      />
-      {/* Inner crisp rainbow ring (subtle, behind allocation) */}
-      <motion.div
-        className="absolute inset-0 rounded-full"
-        style={{
-          background: `conic-gradient(${colorStops})`,
-          mask: "radial-gradient(transparent 60%, black 62%, black 70%, transparent 72%)",
-          WebkitMask: "radial-gradient(transparent 60%, black 62%, black 70%, transparent 72%)",
-          opacity: 0.18,
-        }}
-        animate={{ rotate: -360 }}
-        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-      />
-
-      {/* SVG donut — actual allocation segments */}
-      <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90 relative z-10">
-        {/* Faint per-color base ring so all colors peek through */}
-        {allColors.map((color, i) => {
-          const segLen = c / allColors.length;
-          const off = (i / allColors.length) * c;
-          return (
-            <motion.circle
-              key={`bg-${i}`}
-              cx="100" cy="100" r={r}
-              fill="none"
-              stroke={color}
-              strokeWidth="14"
-              strokeDasharray={`${segLen - 1} ${c - segLen + 1}`}
-              strokeDashoffset={-off}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.12 }}
-              transition={{ duration: 0.6, delay: 0.05 * i }}
-            />
-          );
-        })}
-        {/* Actual allocation segments */}
+      {/* SVG donut — allocation segments with distinct colors */}
+      <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
+        {/* Background ring */}
+        <circle
+          cx="100" cy="100" r={r}
+          fill="none"
+          stroke={`${P.border}30`}
+          strokeWidth="14"
+        />
+        {/* Stock segments */}
         {stocks.map((s, i) => {
           const off = (cum / 100) * c;
           const len = (s.allocation / 100) * c;
@@ -375,39 +330,9 @@ function DonutChart({ stocks, cashPct, total }: { stocks: { ticker: string; allo
         })()}
       </svg>
 
-      {/* Animated color dots orbiting the ring */}
-      {allColors.slice(0, 6).map((color, i) => (
-        <motion.div
-          key={`dot-${i}`}
-          className="absolute w-2.5 h-2.5 rounded-full z-20"
-          style={{
-            background: color,
-            boxShadow: `0 0 8px ${color}80`,
-            top: "50%",
-            left: "50%",
-          }}
-          animate={{
-            x: [
-              Math.cos(((i * 60) * Math.PI) / 180) * (r + 8) - 5,
-              Math.cos(((i * 60 + 360) * Math.PI) / 180) * (r + 8) - 5,
-            ],
-            y: [
-              Math.sin(((i * 60) * Math.PI) / 180) * (r + 8) - 5,
-              Math.sin(((i * 60 + 360) * Math.PI) / 180) * (r + 8) - 5,
-            ],
-            scale: [1, 1.4, 1],
-          }}
-          transition={{
-            x: { duration: 12 + i * 2, repeat: Infinity, ease: "linear" },
-            y: { duration: 12 + i * 2, repeat: Infinity, ease: "linear" },
-            scale: { duration: 2, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 },
-          }}
-        />
-      ))}
-
       {/* Center text */}
       <motion.div
-        className="absolute inset-0 flex flex-col items-center justify-center z-20"
+        className="absolute inset-0 flex flex-col items-center justify-center"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
