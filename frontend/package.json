@@ -3,19 +3,28 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@aztec/bb.js": "3.0.0-nightly.20251104",
+    "@noir-lang/noir_js": "1.0.0-beta.15",
+    "@privy-io/react-auth": "^3.19.0",
+    "framer-motion": "^12.38.0",
+    "jspdf": "^4.2.1",
     "next": "16.2.2",
+    "onnxruntime-web": "^1.24.3",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "viem": "^2.47.10"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

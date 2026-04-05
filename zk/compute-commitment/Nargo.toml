@@ -1,0 +1,7 @@
+[package]
+name = "compute_commitment"
+type = "bin"
+authors = [""]
+
+[dependencies]
+poseidon = { tag = "v0.2.6", git = "https://github.com/noir-lang/poseidon" }
