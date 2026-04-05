@@ -2,7 +2,7 @@ import { RiskOutput, PortfolioPositions } from "./types";
 import { loadModel, runInference, isModelLoaded } from "./onnx_inference";
 import { evaluateRules } from "./rules";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 /**
  * Try to get risk analysis from the best available source.
