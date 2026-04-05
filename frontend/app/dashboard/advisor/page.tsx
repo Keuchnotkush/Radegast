@@ -16,10 +16,31 @@ const TICKER_TO_XSTOCK: Record<string, string> = {
 };
 
 /* ─── AI Models (structure only — votes come from backend) ─── */
-const MODELS: { name: string; desc: string; key: string }[] = [
-  { name: "XGBoost", desc: "Technical — RSI, MACD, volume, price patterns", key: "xgboost" },
-  { name: "Sentiment", desc: "NLP — news, social, earnings call analysis", key: "llm_a" },
-  { name: "Macro", desc: "Economics — Fed rates, CPI, sector rotation", key: "llm_b" },
+const MODELS: { name: string; num: string; desc: string; key: string; color: string; highlights: { label: string; detail: string }[] }[] = [
+  {
+    name: "XGBoost", num: "01", desc: "Technical analysis engine — 37 statistical features including RSI, MACD, Bollinger bands, volume patterns, and cross-asset correlation matrices. Pure math, no opinion.", key: "xgboost", color: P.jade,
+    highlights: [
+      { label: "37 features", detail: "Momentum, volatility, trend, and volume indicators computed in real-time." },
+      { label: "ONNX runtime", detail: "Model runs on 0G Compute for verifiable, decentralized inference." },
+      { label: "Sub-second", detail: "Inference completes in under 200ms per portfolio scan." },
+    ],
+  },
+  {
+    name: "Sentiment", num: "02", desc: "NLP-powered sentiment engine — analyzes breaking news, social media trends, earnings call transcripts, and SEC filings. Detects market mood before it hits the price.", key: "llm_a", color: P.indigo,
+    highlights: [
+      { label: "News & social", detail: "Scans thousands of sources for sentiment shifts and emerging narratives." },
+      { label: "Earnings analysis", detail: "Parses earnings calls for tone, guidance changes, and red flags." },
+      { label: "Independent", detail: "Different architecture from Macro model to avoid single-model bias." },
+    ],
+  },
+  {
+    name: "Macro", num: "03", desc: "Macroeconomic model — tracks Fed rates, CPI, employment data, yield curves, and sector rotation signals. Sees the forest, not just the trees.", key: "llm_b", color: P.roseAncien,
+    highlights: [
+      { label: "Fed & rates", detail: "Monitors central bank policy, rate expectations, and bond market signals." },
+      { label: "Sector rotation", detail: "Detects capital flows between sectors based on economic cycle positioning." },
+      { label: "Global macro", detail: "Incorporates cross-border flows, currency moves, and commodity signals." },
+    ],
+  },
 ];
 
 /* ─── Label color helper ─── */
@@ -36,6 +57,7 @@ export default function AdvisorPage() {
   const { holdings, totalValue } = usePortfolio();
   const { runConsensus, loading, error } = useAI();
   const [result, setResult] = useState<ConsensusResult | null>(null);
+  const [openModel, setOpenModel] = useState<number | null>(null);
   const advisorOn = aiSuggestions;
   const tradingOn = autoSession.active;
 
@@ -123,18 +145,20 @@ export default function AdvisorPage() {
             transition={{ duration: 0.5, ease }}
             className="mb-10"
           >
-            <button
+            <motion.button
               onClick={handleAnalyze}
               disabled={loading}
-              className="px-6 py-3 rounded-xl text-[14px] font-semibold transition-all"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={spring}
+              className="get-started-btn px-8 py-3.5 rounded-full text-[14px] font-bold uppercase tracking-wider text-white cursor-pointer"
               style={{
-                background: loading ? P.border : P.jade,
-                color: "#fff",
+                opacity: loading ? 0.5 : 1,
                 cursor: loading ? "wait" : "pointer",
               }}
             >
               {loading ? "Analyzing portfolio…" : "Analyze my portfolio"}
-            </button>
+            </motion.button>
             {error && (
               <p className="text-[13px] mt-3" style={{ color: P.loss }}>
                 AI service unavailable: {error}
@@ -194,7 +218,7 @@ export default function AdvisorPage() {
           </motion.section>
         )}
 
-        {/* ═══ MODEL CONSENSUS ═══ */}
+        {/* ═══ MODEL CONSENSUS — accordion style ═══ */}
         {(advisorOn || tradingOn) && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
@@ -205,44 +229,116 @@ export default function AdvisorPage() {
               <div className="flex items-center gap-3 mb-6">
                 <SectionTitle>Model consensus</SectionTitle>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+              {/* Numbers row — horizontal */}
+              <div className="grid grid-cols-3 gap-3 md:gap-5">
                 {MODELS.map((m, i) => {
+                  const isOpen = openModel === i;
                   const hasResult = !!result;
                   return (
-                    <motion.div
+                    <motion.button
                       key={m.name}
-                      initial={{ opacity: 0, y: 12 }}
+                      onClick={() => setOpenModel(isOpen ? null : i)}
+                      initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      whileHover={{ scale: 1.03, y: -2 }}
-                      transition={{ delay: 0.2 + i * 0.08, duration: 0.4, ease }}
-                      className="flex items-start gap-4 p-5 rounded-2xl cursor-default"
-                      style={{ background: P.surface, border: `1px solid ${P.border}30` }}
+                      transition={{ duration: 0.5, ease, delay: i * 0.08 }}
+                      className="flex flex-col items-center cursor-pointer group"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.97 }}
                     >
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-[13px] font-bold"
-                        style={{
-                          background: hasResult ? `${labelColor(result.consensus_label)}15` : `${P.border}15`,
-                          color: hasResult ? labelColor(result.consensus_label) : P.gray,
-                        }}
+                      <motion.span
+                        className="text-6xl md:text-[100px] font-bold leading-none select-none"
+                        animate={{ color: isOpen ? m.color : `${m.color}30` }}
+                        transition={{ duration: 0.4, ease }}
                       >
-                        {hasResult ? result.consensus_score.toFixed(0) : "—"}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[14px] font-semibold">{m.name}</span>
-                          <span
-                            className="text-[11px] font-semibold uppercase"
-                            style={{ color: hasResult ? labelColor(result.consensus_label) : P.gray }}
-                          >
-                            {hasResult ? result.consensus_label : "waiting"}
-                          </span>
-                        </div>
-                        <p className="text-[12px] mt-1 leading-relaxed" style={{ color: P.gray }}>{m.desc}</p>
-                      </div>
-                    </motion.div>
+                        {m.num}
+                      </motion.span>
+                      <motion.div
+                        animate={{ opacity: isOpen ? 0 : 1, y: isOpen ? -5 : 0 }}
+                        transition={{ duration: 0.3, ease }}
+                        className="mt-1"
+                      >
+                        <h3 className="text-sm md:text-lg font-bold text-center" style={{ color: P.dark }}>
+                          {m.name}
+                          {hasResult && (
+                            <span className="ml-1.5 text-[11px] font-semibold uppercase" style={{ color: labelColor(result.consensus_label) }}>
+                              {result.consensus_label}
+                            </span>
+                          )}
+                        </h3>
+                      </motion.div>
+                    </motion.button>
                   );
                 })}
               </div>
+
+              {/* Colored block — opens below the row */}
+              <AnimatePresence initial={false}>
+                {openModel !== null && (
+                  <motion.div
+                    key={openModel}
+                    initial={{ height: 0, opacity: 0, borderRadius: 40 }}
+                    animate={{ height: "auto", opacity: 1, borderRadius: 20 }}
+                    exit={{ height: 0, opacity: 0, borderRadius: 40 }}
+                    transition={{ duration: 0.55, ease }}
+                    className="overflow-hidden mt-4"
+                    style={{ background: MODELS[openModel].color }}
+                  >
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.4, ease, delay: 0.15 }}
+                      className="p-6 md:p-10 text-center"
+                    >
+                      <h3 className="text-2xl md:text-4xl font-bold mb-3" style={{ color: "#FFFFFF" }}>{MODELS[openModel].name}</h3>
+                      <p className="text-[15px] leading-relaxed max-w-2xl mx-auto mb-8" style={{ color: "rgba(255,255,255,0.75)" }}>
+                        {MODELS[openModel].desc}
+                      </p>
+
+                      {/* Stats */}
+                      {result && (
+                        <div className="flex flex-wrap justify-center gap-6 md:gap-10 mb-8">
+                          {[
+                            { val: result.consensus_score.toFixed(1), label: "risk score" },
+                            { val: result.consensus_label, label: "risk level" },
+                            { val: `${(result.confidence * 100).toFixed(0)}%`, label: "confidence" },
+                          ].map((s, si) => (
+                            <motion.div
+                              key={s.label}
+                              initial={{ opacity: 0, y: 15 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.4, ease, delay: 0.25 + si * 0.08 }}
+                            >
+                              <div className="w-8 h-[3px] rounded-full mb-2" style={{ background: "rgba(255,255,255,0.4)" }} />
+                              <div className="text-2xl font-bold" style={{ color: "#FFFFFF" }}>{s.val}</div>
+                              <div className="text-[12px] mt-0.5" style={{ color: "rgba(255,255,255,0.6)" }}>{s.label}</div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Highlight cards */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {MODELS[openModel].highlights.map((h, hi) => (
+                          <motion.div
+                            key={h.label}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, ease, delay: 0.35 + hi * 0.08 }}
+                            whileHover={{ scale: 1.03, y: -3 }}
+                            className="py-5 px-5 rounded-xl"
+                            style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)" }}
+                          >
+                            <div className="w-6 h-[2px] rounded-full mb-3" style={{ background: "rgba(255,255,255,0.5)" }} />
+                            <div className="text-[13px] font-bold mb-2" style={{ color: "#FFFFFF" }}>{h.label}</div>
+                            <p className="text-[13px] leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }}>{h.detail}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.section>
         )}
 

@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { StockLogo, P, ease, spring } from "../shared";
 import { usePortfolio, MARKET, STOCK_COLORS, PROFILES, useWallet } from "../store";
-import { useFundWallet } from "@privy-io/react-auth";
 
 type Step = "welcome" | "discover" | "profile" | "fund" | "pick" | "done";
 
@@ -15,7 +14,6 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { addFunds, buy } = usePortfolio();
   const wallet = useWallet();
-  const { fundWallet } = useFundWallet();
   const [step, setStep] = useState<Step>("welcome");
   const [profile, setProfile] = useState<string | null>(null);
   const [fundAmount, setFundAmount] = useState("");
@@ -43,10 +41,20 @@ export default function OnboardingPage() {
 
   const handleFund = useCallback(async () => {
     if (usd <= 0) return;
+    setFundStep("processing");
 
     if (wallet.address) {
       try {
-        await fundWallet({ address: wallet.address });
+        // Mint demo USDC via backend faucet
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/faucet`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ walletAddress: wallet.address, amount: usd }),
+        });
+        const data = await res.json();
+        if (data.txHash) {
+          console.log(`[Fund] Minted $${usd} USDC — tx: ${data.txHash}`);
+        }
         addFunds(usd);
         setFundStep("done");
         setTimeout(() => setStep("pick"), 1200);
@@ -59,14 +67,13 @@ export default function OnboardingPage() {
       }
     } else {
       // Fallback: mock flow (no wallet connected)
-      setFundStep("processing");
       setTimeout(() => {
         addFunds(usd);
         setFundStep("done");
         setTimeout(() => setStep("pick"), 1200);
       }, 1800);
     }
-  }, [usd, addFunds, fundWallet, wallet]);
+  }, [usd, addFunds, wallet]);
 
   const handleFinish = useCallback(() => {
     if (selectedStocks.size > 0 && usd > 0) {

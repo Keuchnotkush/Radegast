@@ -15,7 +15,7 @@ async function loadCommitmentCircuit() {
 }
 
 export async function computeCommitment(balances: string[], secret: string) {
-  const { Noir } = await Function('return import("@noir-lang/noir_js")')();
+  const { Noir } = await import("@noir-lang/noir_js");
   const circuit = await loadCommitmentCircuit();
   const noir = new Noir(circuit);
   await noir.init();
@@ -33,7 +33,7 @@ export async function generateProof(
   const commitment = await computeCommitment(balances, secret);
 
   // 2. witness
-  const { Noir } = await Function('return import("@noir-lang/noir_js")')();
+  const { Noir } = await import("@noir-lang/noir_js");
   const circuit = await loadSolvencyCircuit();
   const noir = new Noir(circuit);
   await noir.init();
@@ -46,7 +46,7 @@ export async function generateProof(
   });
 
   // 3. proof — UltraHonkBackend takes bytecode string directly
-  const { UltraHonkBackend } = await Function('return import("@aztec/bb.js")')();
+  const { UltraHonkBackend } = await import("@aztec/bb.js");
   const backend = new UltraHonkBackend(circuit.bytecode);
   const proofData = await backend.generateProof(witness);
   await backend.destroy();

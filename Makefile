@@ -6,7 +6,7 @@ dev: .installed
 	@echo "  ⚡ radegast — anvil:8545 api:8000 backend:4000 app:3000"
 	@trap 'kill 0' INT; \
 		anvil --chain-id 31337 --silent & \
-		cd ai && .venv/bin/uvicorn v3.fastapi.server:app --host 0.0.0.0 --port 8000 --reload & \
+		cd ai && .venv/bin/uvicorn server:app --host 0.0.0.0 --port 8000 --reload & \
 		cd backend && node --watch server.js & \
 		(test -f frontend/package.json && cd frontend && pnpm dev || sleep infinity) & \
 		wait
@@ -31,7 +31,7 @@ deploy-local:
 deploy: up
 	@echo "  ✓ deploy: containers up"
 ai-train:
-	@cd ai && .venv/bin/python shared/model/train.py
+	@cd ai && .venv/bin/python -m shared.model.train
 up:
 	@docker compose -f docker/docker-compose.yml up -d --build
 down:
