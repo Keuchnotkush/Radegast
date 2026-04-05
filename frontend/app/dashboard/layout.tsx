@@ -2,21 +2,21 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
+import { usePrivy } from "@privy-io/react-auth";
 import { PortfolioProvider, SettingsProvider, LivePriceProvider, WalletProvider } from "./store";
 import { BottomTabBar } from "./shared";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const isLoggedIn = useIsLoggedIn();
+  const { authenticated, ready } = usePrivy();
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoggedIn === false) {
+    if (ready && !authenticated) {
       router.replace("/get-started");
     }
-  }, [isLoggedIn, router]);
+  }, [ready, authenticated, router]);
 
-  if (!isLoggedIn) return null;
+  if (!ready || !authenticated) return null;
 
   return (
     <LivePriceProvider>

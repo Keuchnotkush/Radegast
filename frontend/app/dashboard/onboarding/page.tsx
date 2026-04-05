@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { StockLogo, P, ease, spring } from "../shared";
 import { usePortfolio, MARKET, STOCK_COLORS, PROFILES, useWallet } from "../store";
-import { useOpenFundingOptions } from "@dynamic-labs/sdk-react-core";
+import { useFundWallet } from "@privy-io/react-auth";
 
 type Step = "welcome" | "discover" | "profile" | "fund" | "pick" | "done";
 
@@ -15,7 +15,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { addFunds, buy } = usePortfolio();
   const wallet = useWallet();
-  const { openFundingOptions } = useOpenFundingOptions();
+  const { fundWallet } = useFundWallet();
   const [step, setStep] = useState<Step>("welcome");
   const [profile, setProfile] = useState<string | null>(null);
   const [fundAmount, setFundAmount] = useState("");
@@ -44,16 +44,15 @@ export default function OnboardingPage() {
   const handleFund = useCallback(async () => {
     if (usd <= 0) return;
 
-    // If Dynamic onramp is available and wallet is connected, open funding UI
     if (wallet.address) {
       try {
-        openFundingOptions();
+        await fundWallet({ address: wallet.address });
         addFunds(usd);
         setFundStep("done");
         setTimeout(() => setStep("pick"), 1200);
         wallet.refreshBalance().catch(() => {});
       } catch (err) {
-        console.error("[Onramp] Error:", err);
+        console.error("[Fund] Error:", err);
         addFunds(usd);
         setFundStep("done");
         setTimeout(() => setStep("pick"), 1200);
@@ -67,7 +66,7 @@ export default function OnboardingPage() {
         setTimeout(() => setStep("pick"), 1200);
       }, 1800);
     }
-  }, [usd, addFunds, openFundingOptions, wallet]);
+  }, [usd, addFunds, fundWallet, wallet]);
 
   const handleFinish = useCallback(() => {
     if (selectedStocks.size > 0 && usd > 0) {

@@ -90,8 +90,8 @@ export default function SolvencyContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           threshold: activeThreshold,
-          proof: "0x" + Array.from(proof).map((b: number) => b.toString(16).padStart(2, "0")).join(""),
-          publicInputs: publicInputs.map((pi: string) => pi),
+          proof: "0x" + Array.from(proof as Uint8Array).map((b) => b.toString(16).padStart(2, "0")).join(""),
+          publicInputs: (publicInputs as string[]).map((pi) => pi),
         }),
       });
       const data = await res.json();

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
-import { useDynamicContext, useUserWallets, useTokenBalances } from "@dynamic-labs/sdk-react-core";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 
 /* ─── Stock logo helper ─── */
 const LOGO_TOKEN = "pk_PCBX5rd6QsqwX0zT-1bPCg";
@@ -138,7 +138,8 @@ const XSTOCK_TO_TICKER: Record<string, string> = {
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [cash, setCash] = useState(0);
-  const { primaryWallet } = useDynamicContext();
+  const { wallets } = useWallets();
+  const primaryWallet = wallets?.[0];
   const fetchedRef = useRef(false);
 
   // Fetch on-chain holdings when wallet is available
@@ -328,9 +329,9 @@ export const PROFILES = [
 
 export const PROFILE_LABELS = PROFILES.map((p) => p.label);
 
-/* ─── User hook (Dynamic → localStorage → default) ─── */
+/* ─── User hook (Privy → localStorage → default) ─── */
 export function useUser() {
-  const { user } = useDynamicContext();
+  const { user } = usePrivy();
   const [storedName, setStoredName] = useState("");
 
   useEffect(() => {
@@ -339,23 +340,24 @@ export function useUser() {
   }, []);
 
   return useMemo(() => {
-    const firstName = user?.firstName || storedName || "Investor";
+    const firstName = storedName || user?.google?.name?.split(" ")[0] || "Investor";
     return {
       firstName,
-      lastName: user?.lastName || "",
-      email: user?.email || "",
+      lastName: "",
+      email: user?.email?.address || "",
       initial: firstName.charAt(0).toUpperCase(),
     };
   }, [user, storedName]);
 }
 
-/* ─── Wallet hook (Dynamic embedded wallet + token balances) ─── */
+/* ─── Wallet hook (Privy embedded wallet + USDC balance) ─── */
 interface WalletCtx {
   address: string | undefined;
   usdcBalance: number;
   isLoadingBalance: boolean;
   refreshBalance: () => Promise<void>;
-  primaryWallet: ReturnType<typeof useUserWallets>[number] | undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  primaryWallet: any;
 }
 
 const WalletContext = createContext<WalletCtx>({
@@ -367,34 +369,35 @@ const WalletContext = createContext<WalletCtx>({
 });
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const userWallets = useUserWallets();
-  const primaryWallet = userWallets?.[0];
+  const { wallets } = useWallets();
+  const primaryWallet = wallets?.[0];
   const address = primaryWallet?.address;
+  const [usdcBalance, setUsdcBalance] = useState(0);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
 
-  const { tokenBalances, isLoading: isLoadingBalance, fetchAccountBalances } = useTokenBalances({
-    accountAddress: address,
-    includeFiat: true,
-    includeNativeBalance: true,
-  });
+  const fetchBalance = useCallback(async () => {
+    if (!address) return;
+    setIsLoadingBalance(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/usdc/${address}`);
+      const data = await res.json();
+      setUsdcBalance(data.balance ?? 0);
+    } catch {
+      // keep stale balance
+    } finally {
+      setIsLoadingBalance(false);
+    }
+  }, [address]);
 
-  // Extract USDC balance (or native balance as fallback for testnet)
-  const usdcBalance = useMemo(() => {
-    if (!tokenBalances || tokenBalances.length === 0) return 0;
-    // Look for USDC first
-    const usdc = tokenBalances.find(
-      (t) => t.symbol?.toUpperCase() === "USDC" || t.name?.toUpperCase() === "USDC"
-    );
-    if (usdc?.balance != null) return Number(usdc.balance);
-    // Fallback: sum all balances
-    const total = tokenBalances.reduce((sum, t) => {
-      return sum + (t.balance != null ? Number(t.balance) : 0);
-    }, 0);
-    return total;
-  }, [tokenBalances]);
+  useEffect(() => {
+    fetchBalance();
+    const interval = setInterval(fetchBalance, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchBalance]);
 
   const refreshBalance = useCallback(async () => {
-    await fetchAccountBalances(true);
-  }, [fetchAccountBalances]);
+    await fetchBalance();
+  }, [fetchBalance]);
 
   const value = useMemo(
     () => ({ address, usdcBalance, isLoadingBalance, refreshBalance, primaryWallet }),

@@ -7,7 +7,7 @@ import type { TradeStock } from "./shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePortfolio, MARKET, STOCK_COLORS, useSettings, useLiveMarket, useUser, useWallet } from "./store";
-import { useOnramp, useOpenFundingOptions } from "@dynamic-labs/sdk-react-core";
+import { useFundWallet } from "@privy-io/react-auth";
 
 
 export default function DashboardPage() {
@@ -26,8 +26,7 @@ export default function DashboardPage() {
   const { aiSuggestions, autoSession } = useSettings();
   const liveMarket = useLiveMarket();
   const wallet = useWallet();
-  const onramp = useOnramp();
-  const { openFundingOptions } = useOpenFundingOptions();
+  const { fundWallet } = useFundWallet();
   const isAutonomous = autoSession.active;
 
   // Use real wallet balance when available, fallback to mock cash
@@ -261,7 +260,7 @@ export default function DashboardPage() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {showAddFunds && <AddFundsModal onClose={() => setShowAddFunds(false)} onAdd={addFunds} onrampEnabled={onramp.enabled} openFundingOptions={openFundingOptions} walletAddress={wallet.address} refreshBalance={wallet.refreshBalance} />}
+        {showAddFunds && <AddFundsModal onClose={() => setShowAddFunds(false)} onAdd={addFunds} fundWallet={fundWallet} walletAddress={wallet.address} refreshBalance={wallet.refreshBalance} />}
       </AnimatePresence>
     </div>
   );
@@ -329,11 +328,10 @@ function DonutChart({ stocks, cashPct, total }: { stocks: { ticker: string; allo
 }
 
 /* ─── Add Funds Modal ─── */
-function AddFundsModal({ onClose, onAdd, onrampEnabled, openFundingOptions, walletAddress, refreshBalance }: {
+function AddFundsModal({ onClose, onAdd, fundWallet, walletAddress, refreshBalance }: {
   onClose: () => void;
   onAdd: (amount: number) => void;
-  onrampEnabled: boolean;
-  openFundingOptions: () => void;
+  fundWallet: (params: { address: string }) => Promise<unknown>;
   walletAddress: string | undefined;
   refreshBalance: () => Promise<void>;
 }) {
@@ -346,24 +344,21 @@ function AddFundsModal({ onClose, onAdd, onrampEnabled, openFundingOptions, wall
   const handleAdd = useCallback(async () => {
     if (usd <= 0) return;
 
-    // If Dynamic onramp is available and wallet is connected, open funding UI
-    if (onrampEnabled && walletAddress) {
+    if (walletAddress) {
       try {
-        openFundingOptions();
-        // Mock the local state update so portfolio reflects the intent
+        await fundWallet({ address: walletAddress });
         onAdd(usd);
         setStep("done");
         setTimeout(onClose, 1200);
-        // Refresh real balance in background
         refreshBalance().catch(() => {});
       } catch (err) {
-        console.error("[Onramp] Error:", err);
+        console.error("[Fund] Error:", err);
         onAdd(usd);
         setStep("done");
         setTimeout(onClose, 1200);
       }
     } else {
-      // Fallback: mock flow (no wallet or onramp not configured)
+      // Fallback: mock flow (no wallet connected)
       setStep("processing");
       setTimeout(() => {
         onAdd(usd);
@@ -371,7 +366,7 @@ function AddFundsModal({ onClose, onAdd, onrampEnabled, openFundingOptions, wall
         setTimeout(onClose, 1200);
       }, 1800);
     }
-  }, [usd, onAdd, onClose, onrampEnabled, openFundingOptions, walletAddress, refreshBalance]);
+  }, [usd, onAdd, onClose, fundWallet, walletAddress, refreshBalance]);
 
   return (
     <>

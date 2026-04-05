@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { usePrivy } from "@privy-io/react-auth";
 import { NavAvatar, SectionTitle, P } from "../shared";
 import { useSettings, useUser, AUTO_DURATIONS, PROFILE_LABELS, type AutoDuration } from "../store";
 import { ease, spring } from "../../lib/theme";
@@ -12,7 +12,7 @@ const LIMITS = [100, 250, 500, 1000, 2500];
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { handleLogOut } = useDynamicContext();
+  const { logout } = usePrivy();
   const user = useUser();
   const [form, setForm] = useState({
     firstName: user.firstName,
@@ -344,7 +344,7 @@ export default function SettingsPage() {
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
           onClick={async () => {
-            await handleLogOut();
+            await logout();
             window.location.href = "/landing";
           }}
           className="w-full mt-6 py-4 rounded-xl text-[14px] font-semibold cursor-pointer"

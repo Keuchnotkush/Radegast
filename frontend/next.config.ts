@@ -5,7 +5,6 @@ const nextConfig: NextConfig = {
     return [
       {
         // COEP/COOP only on ZK proof pages — needed for SharedArrayBuffer (Noir.js WASM).
-        // Applying globally breaks Dynamic SDK's embedded wallet iframe.
         source: "/dashboard/solvency/:path*",
         headers: [
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
@@ -22,9 +21,7 @@ const nextConfig: NextConfig = {
     ];
   },
   transpilePackages: [
-    "@dynamic-labs/sdk-react-core",
-    "@dynamic-labs/ethereum",
-    "@dynamic-labs/ethers-v6",
+    "@privy-io/react-auth",
   ],
   turbopack: {},
   webpack: (config, { isServer }) => {

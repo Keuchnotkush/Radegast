@@ -1,12 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  useSocialAccounts,
-  useConnectWithOtp,
-  useIsLoggedIn,
-} from "@dynamic-labs/sdk-react-core";
-import { ProviderEnum } from "@dynamic-labs/sdk-api-core";
+import { usePrivy, useLoginWithEmail, useLoginWithOAuth } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
@@ -77,14 +72,51 @@ function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
   const [name, setName] = useState("");
   const [btnHover, setBtnHover] = useState(0);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [socialLoading, setSocialLoading] = useState(false);
 
-  const isLoggedIn = useIsLoggedIn();
+  const { authenticated } = usePrivy();
   const router = useRouter();
-  const { signInWithSocialAccount, isProcessing: socialLoading } = useSocialAccounts();
-  const { connectWithEmail, verifyOneTimePassword } = useConnectWithOtp();
+
+  const { sendCode, loginWithCode } = useLoginWithEmail({
+    onComplete: (user) => {
+      console.log("[Privy] Email auth success", user);
+      const userEmail = user?.user?.email?.address || email;
+      if (userEmail) {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/user/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: userEmail,
+            firstName: name.trim().split(" ")[0] || localStorage.getItem("radegast_firstName") || "",
+            lastName: name.trim().split(" ").slice(1).join(" ") || "",
+          }),
+        }).catch(() => {});
+      }
+    },
+    onError: (err) => console.error("[Privy] Email error:", err),
+  });
+
+  const { initOAuth } = useLoginWithOAuth({
+    onComplete: (user) => {
+      console.log("[Privy] OAuth success", user);
+      setSocialLoading(false);
+      const userEmail = user?.user?.email?.address;
+      if (userEmail) {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/user/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: userEmail, firstName: "", lastName: "" }),
+        }).catch(() => {});
+      }
+    },
+    onError: (err) => {
+      console.error("[Privy] OAuth error:", err);
+      setSocialLoading(false);
+    },
+  });
 
   useEffect(() => {
-    if (isLoggedIn) {
+    if (authenticated) {
       onLoggedIn();
       if (mode === "signup" && name.trim()) {
         const firstName = name.trim().split(" ")[0];
@@ -101,7 +133,7 @@ function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
         setTimeout(() => router.push("/dashboard"), 600);
       }
     }
-  }, [isLoggedIn, router, mode, name, email, onLoggedIn]);
+  }, [authenticated, router, mode, name, email, onLoggedIn]);
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,10 +141,10 @@ function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
       if (mode === "signup" && name.trim()) {
         localStorage.setItem("radegast_firstName", name.trim().split(" ")[0]);
       }
-      await connectWithEmail(email);
+      await sendCode({ email });
       setOtpSent(true);
     } else {
-      await verifyOneTimePassword(otp);
+      await loginWithCode({ code: otp });
     }
   };
 
@@ -252,7 +284,7 @@ function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
             )}
           </form>
 
-          {/* SOCIAL LOGIN + PASSKEY */}
+          {/* SOCIAL LOGIN */}
           {!otpSent && (
             <>
               <div className="flex items-center gap-4 my-8">
@@ -264,7 +296,7 @@ function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
               {/* Google + Discord */}
               <div className="flex gap-4">
                 <motion.button
-                  onClick={() => signInWithSocialAccount(ProviderEnum.Google, { forcePopup: true })}
+                  onClick={() => { setSocialLoading(true); initOAuth({ provider: "google" }); }}
                   disabled={socialLoading}
                   whileHover={{ scale: 1.04, y: -2 }}
                   whileTap={{ scale: 0.97 }}
@@ -276,7 +308,7 @@ function AuthForm({ onLoggedIn }: { onLoggedIn: () => void }) {
                   Google
                 </motion.button>
                 <motion.button
-                  onClick={() => signInWithSocialAccount(ProviderEnum.Discord, { forcePopup: true })}
+                  onClick={() => { setSocialLoading(true); initOAuth({ provider: "discord" }); }}
                   disabled={socialLoading}
                   whileHover={{ scale: 1.04, y: -2 }}
                   whileTap={{ scale: 0.97 }}
@@ -422,5 +454,3 @@ function DiscordIcon() {
     </svg>
   );
 }
-
-

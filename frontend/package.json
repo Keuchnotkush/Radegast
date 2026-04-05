@@ -10,9 +10,8 @@
   },
   "dependencies": {
     "@aztec/bb.js": "3.0.0-nightly.20251104",
-    "@dynamic-labs/ethereum": "^4.75.0",
-    "@dynamic-labs/sdk-react-core": "^4.75.0",
     "@noir-lang/noir_js": "1.0.0-beta.15",
+    "@privy-io/react-auth": "^3.19.0",
     "framer-motion": "^12.38.0",
     "jspdf": "^4.2.1",
     "next": "16.2.2",
