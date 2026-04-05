@@ -34,6 +34,7 @@ All tokens minted with 15 units to deployer.
 | ProofRegistry | `0x2a768566eF8C8a44129B0b04fD8a2AD240620255` | Simplified attestation store (submit/check without ZK verifier) |
 | ProofOfSolvency | `0x9ad38b9e70a23BE95186C5935930C6Ab05C49dD9` | Stores ZK attestations for bank verification |
 | HonkVerifier | `0x71E560eC76Ac0CBA7F44D6ba557f0706257deFa1` | Noir UltraPlonk verifier (generated) |
+| MockUSDC | `0x0cd4BADcDA55B01d312d4AF9E163090Ab301e694` | Demo stablecoin (6 decimals, MINTER_ROLE mint/burn) |
 
 ## Roles
 
@@ -76,4 +77,5 @@ export CONSENSUS=0x3dBCdad5Da3a7f345353d8387c7BE6EBe5F6524f
 export PROOF_OF_SOLVENCY=0x9ad38b9e70a23BE95186C5935930C6Ab05C49dD9
 export HONK_VERIFIER=0x71E560eC76Ac0CBA7F44D6ba557f0706257deFa1
 export PROOF_REGISTRY=0x2a768566eF8C8a44129B0b04fD8a2AD240620255
+export USDC_ADDRESS=0x0cd4BADcDA55B01d312d4AF9E163090Ab301e694
 ```
