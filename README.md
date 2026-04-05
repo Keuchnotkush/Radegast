@@ -10,7 +10,6 @@
 
 <p align="center">
   <a href="https://youtu.be/I3K0wETMDaY">Demo Video (&lt;3 min)</a> &bull;
-  <a href="https://github.com/0x11semprez/radegast">GitHub</a>
 </p>
 
 <p align="center">
