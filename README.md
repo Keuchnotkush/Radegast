@@ -430,7 +430,7 @@ SMTP_PASS=
 | Name | Role | X | Telegram | Discord |
 |------|------|---|----------|---------|
 | **Kassim** | DevOps, Frontend Engineer, Privy SDK | [@0x11semprez](https://x.com/0x11semprez) | @pupp3tm4st3r | 0x11semprez |
-| **Kamil** | AI + 0G Integration + Backend | | | |
+| **Kamil** | AI + 0G Integration + Backend |@Kx100xx](https://x.com/Kx100xx)|@Kx1000xx |kx1000xx |
 | **Manny** | Smart Contracts (Solidity/Foundry) | [@mvnny0_0](https://x.com/mvnny0_0) | @mvnny_28 | 0x7mvnny |
 | **Keuch** | ZK Circuits (Noir) | [@0xFA2L](https://x.com/0xFA2L) | @BKRTZR | @metallicbat |
 
